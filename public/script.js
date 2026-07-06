@@ -29,7 +29,8 @@ function startQuiz(interest) {
 // 3. FETCH QUESTIONS
 async function loadQuestions() {
     try {
-        const response = await fetch(`http://localhost:3000/api/questions?interest=${userInterest}`);
+        // Correct URL format for the cloud:
+const response = await fetch(`/api/questions?interest=${userInterest}`);
         questions = await response.json();
         renderQuestion();
     } catch (error) {
