@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 1. MASSIVE DYNAMIC QUESTION BANK (6 Categories, 5 Questions Each)
