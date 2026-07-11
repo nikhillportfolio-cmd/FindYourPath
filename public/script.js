@@ -29,8 +29,7 @@ function startQuiz(interest) {
 // 3. FETCH QUESTIONS
 async function loadQuestions() {
     try {
-        // Correct URL format for the cloud:
-const response = await fetch(`/api/questions?interest=${userInterest}`);
+        const response = await fetch(`/api/questions?interest=${userInterest}`);
         questions = await response.json();
         renderQuestion();
     } catch (error) {
@@ -38,7 +37,7 @@ const response = await fetch(`/api/questions?interest=${userInterest}`);
     }
 }
 
-// 4. RENDER DYNAMIC CARD
+// 4. RENDER DYNAMIC CARD (UPDATED WITH BRIGHT UI CLASSES)
 function renderQuestion() {
     const progress = (currentIndex / questions.length) * 100;
     progressBar.style.width = `${progress}%`;
@@ -50,7 +49,10 @@ function renderQuestion() {
     q.options.forEach((option, index) => {
         const btn = document.createElement("button");
         btn.innerText = option.text;
-        btn.className = `w-full text-left p-4 bg-slate-800 border-2 border-slate-700 rounded-xl hover:border-teal-500 hover:bg-slate-700 font-semibold text-slate-200 transition-all duration-200 fade-in`;
+        
+        // Updated class list for bright, student-friendly hover effects
+        btn.className = `w-full text-left p-5 bg-white border-2 border-indigo-50 rounded-2xl hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-1 font-semibold text-slate-700 hover:text-indigo-700 transition-all duration-300 fade-in`;
+        
         btn.style.animationDelay = `${index * 100}ms`; 
         
         btn.onclick = () => handleAnswer(option.tags);
@@ -79,7 +81,7 @@ async function fetchResults() {
     try {
         const payload = { 
             userTraits: userTraits,
-            interest: userInterest // We are now sending this so the server can filter!
+            interest: userInterest 
         };
 
         const response = await fetch('/api/calculate-result', {
@@ -95,7 +97,7 @@ async function fetchResults() {
     }
 }
 
-// 7. RENDER COMPREHENSIVE ROADMAP
+// 7. RENDER COMPREHENSIVE ROADMAP (UPDATED WITH BRIGHT UI CLASSES)
 function showResults(matches) {
     quizSection.classList.add("hidden");
     resultSection.classList.remove("hidden");
@@ -113,12 +115,15 @@ function showResults(matches) {
     
     primaryMatch.phases.forEach((phase, index) => {
         const cardDiv = document.createElement("div");
-        cardDiv.className = "bg-slate-800 p-4 rounded-xl shadow border border-slate-700 fade-in";
+        
+        // Updated class list for bright roadmap cards with a fun left border
+        cardDiv.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-indigo-400 fade-in";
         cardDiv.style.animationDelay = `${index * 150}ms`;
 
+        // Updated text colors inside the roadmap card
         cardDiv.innerHTML = `
-            <h4 class="font-bold text-teal-400 text-sm mb-1">${phase.title}</h4>
-            <p class="text-sm text-slate-300">${phase.steps}</p>
+            <h4 class="font-extrabold text-indigo-600 text-base mb-1">${phase.title}</h4>
+            <p class="text-sm font-medium text-slate-600">${phase.steps}</p>
         `;
         phasesContainer.appendChild(cardDiv);
     });
