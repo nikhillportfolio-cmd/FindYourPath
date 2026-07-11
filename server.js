@@ -41,7 +41,7 @@ app.get('/api/questions', async (req, res) => {
 
         // Call Gemini to generate the questions
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -87,9 +87,9 @@ app.post('/api/calculate-result', async (req, res) => {
             ]
         `;
 
-        // Call Gemini 2.5 Flash, forcing it to return pure JSON
+        // Call Gemini 1.5 Flash, forcing it to return pure JSON
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
