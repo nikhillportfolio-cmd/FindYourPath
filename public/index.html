@@ -148,6 +148,26 @@
                 <h2 id="question-text" class="text-2xl font-bold mb-6 text-slate-800 leading-snug">Loading question...</h2>
                 <div id="options-container" class="space-y-3"></div>
             </div>
+            <!-- PHASE 2.5: AI PERSONALIZATION (NEW) -->
+            <div id="ai-input-section" class="hidden">
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 text-center mb-2">Almost there!</h1>
+                <p class="text-slate-500 text-center mb-6 font-medium">To make your roadmap truly yours, tell us a bit more about yourself.</p>
+                
+                <div class="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 mb-6">
+                    <label class="block text-slate-700 font-bold mb-3 text-lg">What do you enjoy doing in your free time, or what is your dream work environment?</label>
+                    <textarea id="student-text" rows="4" class="w-full p-4 rounded-xl border-2 border-indigo-200 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition-all outline-none text-slate-700 resize-none" placeholder="E.g., I love organizing events, I prefer working alone with headphones on, I want to travel..."></textarea>
+                </div>
+
+                <!-- Loading State (Hidden by default) -->
+                <div id="loading-spinner" class="hidden text-center py-4">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
+                    <p class="text-indigo-600 font-bold animate-pulse">Gemini AI is crafting your custom roadmap...</p>
+                </div>
+
+                <button id="generate-btn" onclick="triggerAI()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg py-4 rounded-2xl hover:shadow-xl hover:shadow-indigo-200 hover:-translate-y-1 transition-all duration-300">
+                    Generate My AI Roadmap ✨
+                </button>
+            </div>
 
             <!-- PHASE 3: RESULTS (HEAVILY UPDATED) -->
             <div id="result-section" class="hidden">

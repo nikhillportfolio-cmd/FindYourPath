@@ -3,9 +3,9 @@ let questions = [];
 let currentIndex = 0;
 let userInterest = ""; 
 let userTraits = {}; 
-let globalMatches = []; // NEW: Store matches globally so we can click them!
+let globalMatches = []; // Store matches globally so we can click them!
 
-// DOM ELEMENTS
+// DOM ELEMENTS - MAIN VIEWS
 const landingIntro = document.getElementById("landing-intro");
 const appWrapper = document.getElementById("app-wrapper");
 const interestSection = document.getElementById("interest-section");
@@ -15,7 +15,13 @@ const questionText = document.getElementById("question-text");
 const optionsContainer = document.getElementById("options-container");
 const progressBar = document.getElementById("progress-bar");
 
-// Result Views
+// DOM ELEMENTS - AI SECTION (NEW)
+const aiInputSection = document.getElementById("ai-input-section");
+const studentTextInput = document.getElementById("student-text");
+const generateBtn = document.getElementById("generate-btn");
+const loadingSpinner = document.getElementById("loading-spinner");
+
+// DOM ELEMENTS - RESULTS VIEWS
 const matchesOverview = document.getElementById("matches-overview");
 const careerDetails = document.getElementById("career-details");
 
@@ -82,40 +88,74 @@ function renderQuestion() {
     });
 }
 
-// 5. COMPILE TRAITS
+// 5. COMPILE TRAITS & SHOW AI INPUT (UPDATED)
 function handleAnswer(tags) {
     for (const [trait, points] of Object.entries(tags)) {
         userTraits[trait] = (userTraits[trait] || 0) + points;
     }
     currentIndex++;
+    
     if (currentIndex < questions.length) {
         renderQuestion();
     } else {
         progressBar.style.width = "100%";
-        setTimeout(fetchResults, 400);
+        
+        // Instead of fetching results directly, we slide up the AI Input box!
+        setTimeout(() => {
+            quizSection.classList.add("hidden");
+            aiInputSection.classList.remove("hidden");
+            aiInputSection.classList.add("slide-up");
+        }, 400);
     }
 }
 
-// 6. FETCH RESULTS
-async function fetchResults() {
+// 6. TRIGGER AI GENERATION (NEW)
+function triggerAI() {
+    const studentInputText = studentTextInput.value.trim();
+    if (studentInputText === "") {
+        alert("Please write a few words so the AI can personalize your roadmap!");
+        return;
+    }
+
+    // Show loading spinner while AI thinks
+    generateBtn.classList.add("hidden");
+    loadingSpinner.classList.remove("hidden");
+
+    // Now we fetch the results, passing the student's text
+    fetchResults(studentInputText);
+}
+
+// 7. FETCH RESULTS FROM GEMINI (UPDATED)
+async function fetchResults(studentInputText) {
     try {
-        const payload = { userTraits: userTraits, interest: userInterest };
+        const payload = { 
+            userTraits: userTraits, 
+            interest: userInterest,
+            studentInput: studentInputText // Sent to the backend AI
+        };
+        
         const response = await fetch('/api/calculate-result', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload) 
         });
         
-        globalMatches = await response.json(); // Save to global variable
+        globalMatches = await response.json(); 
+        
+        // Hide AI section and show Results Grid
+        aiInputSection.classList.add("hidden");
         showResultsOverview();
     } catch (error) {
-        console.error("Failed mathematical matrix evaluation.", error);
+        console.error("AI Generation failed.", error);
+        alert("Oops! The AI is taking a quick break. Please try again.");
+        // If it fails, let them click the button again
+        generateBtn.classList.remove("hidden");
+        loadingSpinner.classList.add("hidden");
     }
 }
 
-// 7. RENDER OVERVIEW (GRID OF 4 MATCHES)
+// 8. RENDER OVERVIEW (GRID OF 4 MATCHES)
 function showResultsOverview() {
-    quizSection.classList.add("hidden");
     resultSection.classList.remove("hidden");
     resultSection.classList.add("slide-up");
 
@@ -125,7 +165,6 @@ function showResultsOverview() {
     globalMatches.forEach((match, index) => {
         const card = document.createElement("button");
         
-        // Number 1 match gets a special gold border/highlight
         let borderClass = index === 0 ? "border-amber-400 shadow-amber-100" : "border-indigo-50 hover:border-indigo-400";
         let badgeHTML = index === 0 ? `<div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-extrabold px-3 py-1 rounded-bl-xl shadow-sm">TOP MATCH</div>` : "";
 
@@ -139,26 +178,22 @@ function showResultsOverview() {
             <p class="text-xs font-medium text-indigo-500 uppercase tracking-widest mb-2">View Roadmap &rarr;</p>
         `;
         
-        // Pass the index to the details function
         card.onclick = () => showCareerDetails(index);
         grid.appendChild(card);
     });
 }
 
-// 8. RENDER DETAILED VIEW (ROADMAP + BOOKS)
+// 9. RENDER DETAILED VIEW (ROADMAP + BOOKS)
 function showCareerDetails(index) {
     const match = globalMatches[index];
 
-    // Hide Overview, Show Details
     matchesOverview.classList.add("hidden");
     careerDetails.classList.remove("hidden");
 
-    // Populate Header
     document.getElementById("detail-icon").innerText = match.icon;
     document.getElementById("detail-title").innerText = match.title;
     document.getElementById("detail-desc").innerText = match.desc;
 
-    // Populate Roadmap Phases
     const roadmapContainer = document.getElementById("detail-roadmap");
     roadmapContainer.innerHTML = ""; 
     match.phases.forEach((phase, i) => {
@@ -172,7 +207,6 @@ function showCareerDetails(index) {
         roadmapContainer.appendChild(phaseDiv);
     });
 
-    // Populate Books
     const booksContainer = document.getElementById("detail-books");
     booksContainer.innerHTML = "";
     if (match.books && match.books.length > 0) {
@@ -187,11 +221,11 @@ function showCareerDetails(index) {
             booksContainer.appendChild(li);
         });
     } else {
-        booksContainer.innerHTML = "<p class='text-slate-500 text-sm'>No specific books recommended at this time. Start with general industry research!</p>";
+        booksContainer.innerHTML = "<p class='text-slate-500 text-sm'>Start with general industry research on this path!</p>";
     }
 }
 
-// 9. BACK BUTTON FUNCTION
+// 10. BACK BUTTON FUNCTION
 function backToMatches() {
     careerDetails.classList.add("hidden");
     matchesOverview.classList.remove("hidden");
