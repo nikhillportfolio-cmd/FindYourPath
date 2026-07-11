@@ -3,228 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Your Path - Bright UI</title>
+    <title>FIND YOUR PATH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* --- 1. BRIGHT & POSITIVE COLOR VARIABLES --- */
-        :root {
-            --bg-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --text-dark: #2d3436;
-            --text-muted: #636e72;
-            --primary-color: #0984e3;
-            --primary-hover: #74b9ff;
-            --accent-color: #00cec9;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--text-dark);
-        }
-
-        /* --- 2. ENTRANCE ANIMATIONS --- */
-        @keyframes fadeSlideUp {
-            0% {
-                opacity: 0;
-                transform: translateY(40px) scale(0.98);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .animate-entry {
-            /* Applies the smooth entrance animation to the main container */
-            animation: fadeSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
-
-        /* --- 3. UI LAYOUT & STYLING --- */
-        .app-container {
-            background: var(--card-bg);
-            width: 90%;
-            max-width: 600px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            padding: 40px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Hiding phases initially */
-        .phase { display: none; }
-        .phase.active { display: block; animation: fadeSlideUp 0.5s ease forwards; }
-
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-            color: var(--text-dark);
-        }
-
-        p {
-            color: var(--text-muted);
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-
-        /* Options Grid */
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .option-card {
-            background: white;
-            border: 2px solid #dfe6e9;
-            border-radius: 16px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        /* Positive Hover Feedback */
-        .option-card:hover {
-            border-color: var(--accent-color);
-            background: var(--accent-color);
-            color: white;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 206, 201, 0.2);
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            width: 100%;
-            background: #dfe6e9;
-            border-radius: 10px;
-            height: 10px;
-            margin-bottom: 30px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: var(--accent-color);
-            width: 33%; /* Example width */
-            border-radius: 10px;
-            transition: width 0.4s ease;
-        }
-
-        /* Results Styling */
-        .match-badge {
-            display: inline-block;
-            background: var(--bg-gradient);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .result-title {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin: 10px 0;
-        }
-
-        .action-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 30px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-
-        .action-btn:hover {
-            background: var(--primary-hover);
-            transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(9, 132, 227, 0.3);
-        }
+        /* Custom animations */
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .fade-out { animation: fadeOut 0.4s ease-in forwards; }
+        .slide-up { animation: slideUp 0.6s ease-out forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.98); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Style scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1A1A1D; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #14B8A6; } 
     </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 flex items-center justify-center min-h-screen p-4 font-sans">
 
-    <!-- Main Container with Entrance Animation applied -->
-    <div class="app-container animate-entry">
+    <div class="bg-slate-900 p-8 rounded-2xl shadow-xl max-w-2xl w-full transition-all duration-500">
         
-        <!-- PHASE 1: WHAT DRIVES YOU -->
-        <div id="phase1" class="phase active">
-            <h1>What Drives You?</h1>
-            <p>Select your primary area of interest to tailor your positive experience.</p>
+        <div id="interest-section" class="fade-in">
+            <h1 class="text-3xl font-extrabold text-teal-400 text-center mb-2">What Drives You?</h1>
+            <p class="text-slate-400 text-center mb-8">Select your primary area of interest to tailor your experience.</p>
             
-            <div class="options-grid">
-                <!-- Example options based on typical app flow -->
-                <div class="option-card" onclick="goToPhase(2)">🎨 Design & Art</div>
-                <div class="option-card" onclick="goToPhase(2)">💻 Technology</div>
-                <div class="option-card" onclick="goToPhase(2)">📈 Business</div>
-                <div class="option-card" onclick="goToPhase(2)">🤝 Helping Others</div>
+            
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="startQuiz('TechAI')" class="p-6 bg-slate-800 rounded-xl border-2 border-slate-700 hover:border-teal-500 hover:-translate-y-1 transition-all duration-300 group text-left">
+                    <div class="text-4xl mb-3">🤖</div>
+                    <h3 class="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">Tech & AI</h3>
+                    <p class="text-sm text-slate-400 mt-2">Software, AI, Cybersecurity.</p>
+                </button>
+                
+                <button onclick="startQuiz('ContentMedia')" class="p-6 bg-slate-800 rounded-xl border-2 border-slate-700 hover:border-teal-500 hover:-translate-y-1 transition-all duration-300 group text-left">
+                    <div class="text-4xl mb-3">📱</div>
+                    <h3 class="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">Content & Media</h3>
+                    <p class="text-sm text-slate-400 mt-2">YouTube, Writing, Journalism.</p>
+                </button>
+
+                <button onclick="startQuiz('Healthcare')" class="p-6 bg-slate-800 rounded-xl border-2 border-slate-700 hover:border-teal-500 hover:-translate-y-1 transition-all duration-300 group text-left">
+                    <div class="text-4xl mb-3">🩺</div>
+                    <h3 class="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">Healthcare</h3>
+                    <p class="text-sm text-slate-400 mt-2">Medicine, Psychology, Research.</p>
+                </button>
+
+                <button onclick="startQuiz('LawAdmin')" class="p-6 bg-slate-800 rounded-xl border-2 border-slate-700 hover:border-teal-500 hover:-translate-y-1 transition-all duration-300 group text-left">
+                    <div class="text-4xl mb-3">🏛️</div>
+                    <h3 class="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">Law & Admin</h3>
+                    <p class="text-sm text-slate-400 mt-2">Advocacy, UPSC, Civil Services.</p>
+                </button>
+
+                <button onclick="startQuiz('BusinessHustle')" class="p-6 bg-slate-800 rounded-xl border-2 border-slate-700 hover:border-teal-500 hover:-translate-y-1 transition-all duration-300 group text-left">
+                    <div class="text-4xl mb-3">🚀</div>
+                    <h3 class="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">Business</h3>
+                    <p class="text-sm text-slate-400 mt-2">Startups, Management, Finance.</p>
+                </button>
+
+                <button onclick="startQuiz('ArtsDesign')" class="p-6 bg-slate-800 rounded-xl border-2 border-slate-700 hover:border-teal-500 hover:-translate-y-1 transition-all duration-300 group text-left">
+                    <div class="text-4xl mb-3">🎨</div>
+                    <h3 class="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">Arts & Design</h3>
+                    <p class="text-sm text-slate-400 mt-2">Architecture, UX/UI, Fine Arts.</p>
+                </button>
             </div>
         </div>
 
-        <!-- PHASE 2: FIND YOUR PATH (QUIZ) -->
-        <div id="phase2" class="phase">
-            <h1>Find Your Path</h1>
-            <p>Answer a few questions to unlock your roadmap.</p>
+        <div id="quiz-section" class="hidden">
+            <h1 class="text-3xl font-extrabold text-teal-400 text-center mb-2">Find Your Path</h1>
+            <p class="text-slate-400 text-center mb-8">Answer a few questions to unlock your roadmap.</p>
             
-            <div class="progress-container">
-                <div class="progress-bar" id="progressBar"></div>
+            <div class="w-full bg-slate-800 rounded-full h-2.5 mb-8">
+                <div id="progress-bar" class="bg-teal-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
 
-            <h2>How do you prefer to solve problems?</h2>
-            
-            <div class="options-grid" style="margin-top: 20px;">
-                <div class="option-card" onclick="goToPhase(3)">Logically & Systematically</div>
-                <div class="option-card" onclick="goToPhase(3)">Creatively & Visually</div>
-            </div>
+            <h2 id="question-text" class="text-xl font-bold mb-6 text-slate-200">Loading question...</h2>
+            <div id="options-container" class="space-y-4">
+                </div>
         </div>
 
-        <!-- PHASE 3: RESULTS -->
-        <div id="phase3" class="phase">
-            <div class="match-badge">#1 MATCH</div>
-            <p style="margin-bottom: 0;">Your Ideal Career</p>
-            <h2 class="result-title">UX/UI Designer</h2>
-            <p>Combine your love for aesthetics with logical user flows.</p>
-            
-            <hr style="border: 0; border-top: 1px solid #dfe6e9; margin: 30px 0;">
+        <div id="result-section" class="hidden">
+            <div class="mb-6 text-xl font-bold text-teal-400 text-center tracking-widest">YOUR RESULTS</div>
 
-            <h3>Your Step-by-Step Roadmap</h3>
-            <div style="text-align: left; background: #f8f9fa; padding: 20px; border-radius: 12px;">
-                <p><strong>Step 1:</strong> Learn the basics of Figma.</p>
-                <p><strong>Step 2:</strong> Study color theory and typography.</p>
-                <p><strong>Step 3:</strong> Build a portfolio of 3 dummy projects.</p>
+            <div class="bg-slate-800 p-6 rounded-xl shadow-lg border-2 border-teal-500/30 mb-6 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-teal-500 text-slate-950 text-xs font-bold px-3 py-1 rounded-bl-lg">#1 MATCH</div>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Your Ideal Career</p>
+                <h2 id="primary-title" class="text-3xl font-extrabold text-teal-300 mt-1 mb-3"></h2>
+                <p id="primary-desc" class="text-slate-300 text-sm leading-relaxed"></p>
+            </div>
+            
+            <h3 class="text-xl font-bold mb-4 text-slate-200">Your Step-by-Step Roadmap</h3>
+            <div id="roadmap-phases" class="space-y-3 mb-8">
+                </div>
+
+            <div class="mt-8 pt-8 border-t border-slate-800">
+                <h3 class="text-lg font-bold mb-4 text-slate-400">Also Consider:</h3>
+                <div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700 flex items-center gap-4">
+                    <div id="secondary-icon" class="text-3xl"></div>
+                    <div>
+                        <h4 id="secondary-title" class="font-bold text-slate-200 text-lg"></h4>
+                        <p id="secondary-desc" class="text-xs text-slate-400 mt-1"></p>
+                    </div>
+                </div>
             </div>
 
-            <button class="action-btn" onclick="goToPhase(1)">Start Over</button>
+            <button onclick="location.reload()" class="mt-8 w-full bg-slate-950 border border-slate-700 text-white font-bold py-4 rounded-xl hover:bg-slate-800 hover:border-teal-500 transition-all">
+                Retake Assessment
+            </button>
         </div>
 
     </div>
 
-    <!-- Simple JavaScript to demonstrate phase transitions and re-triggering animations -->
-    <script>
-        function goToPhase(phaseNumber) {
-            // Hide all phases
-            document.querySelectorAll('.phase').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // Show the target phase
-            const targetPhase = document.getElementById('phase' + phaseNumber);
-            targetPhase.classList.add('active');
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
