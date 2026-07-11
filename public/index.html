@@ -6,7 +6,6 @@
     <title>Find Your Path - Student Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Base animations for the quiz transitions */
         .fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .fade-out { animation: fadeOut 0.4s ease-in forwards; }
         .slide-up { animation: slideUp 0.6s ease-out forwards; }
@@ -15,7 +14,6 @@
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.98); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* SCROLL REVEAL ANIMATIONS */
         .reveal {
             opacity: 0;
             transform: translateY(60px);
@@ -26,7 +24,6 @@
             transform: translateY(0);
         }
 
-        /* Bouncing Arrow Animation */
         @keyframes bounce {
             0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
             40% { transform: translateY(-20px); }
@@ -34,7 +31,6 @@
         }
         .animate-bounce-custom { animation: bounce 2s infinite; }
         
-        /* Bright scrollbar */
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #f8fafc; } 
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; } 
@@ -45,8 +41,6 @@
 
     <!-- INTRODUCTORY SCROLL SECTION -->
     <div id="landing-intro" class="w-full max-w-3xl px-6 flex flex-col items-center transition-all duration-700">
-        
-        <!-- Hero Section (Takes up the first screen) -->
         <div class="min-h-[90vh] flex flex-col items-center justify-center text-center reveal active">
             <div class="bg-white/50 text-indigo-600 font-bold px-4 py-1.5 rounded-full text-sm mb-6 inline-block border border-indigo-100 shadow-sm">
                 🎓 The Ultimate Student Career Compass
@@ -63,7 +57,6 @@
             </div>
         </div>
 
-        <!-- Info Section 1: Why it matters -->
         <div class="min-h-[70vh] flex flex-col items-center justify-center text-center reveal py-20">
             <div class="text-6xl mb-6 shadow-indigo-200">💡</div>
             <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-6">Why does finding your interest matter?</h2>
@@ -77,7 +70,6 @@
             </div>
         </div>
 
-        <!-- Info Section 2: How it works -->
         <div class="min-h-[70vh] flex flex-col items-center justify-center text-center reveal py-20">
             <div class="text-6xl mb-6">🎯</div>
             <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-6">Stop guessing. Start aligning.</h2>
@@ -91,14 +83,12 @@
             </div>
         </div>
 
-        <!-- Transition element pointing to the quiz -->
         <div class="h-[20vh] flex items-center justify-center reveal">
             <h3 class="text-2xl font-bold text-indigo-400 tracking-widest uppercase">Your Journey Starts Here 👇</h3>
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER (The Quiz Box) -->
-    <!-- Added margin at the bottom so it sits nicely at the end of the scroll -->
+    <!-- MAIN APP CONTAINER -->
     <div id="app-wrapper" class="w-full flex justify-center pb-20 px-4 reveal">
         <div class="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] max-w-2xl w-full transition-all duration-500 border border-white">
             
@@ -156,39 +146,51 @@
                 </div>
 
                 <h2 id="question-text" class="text-2xl font-bold mb-6 text-slate-800 leading-snug">Loading question...</h2>
-                <div id="options-container" class="space-y-3">
-                    <!-- Options injected here -->
-                </div>
+                <div id="options-container" class="space-y-3"></div>
             </div>
 
-            <!-- PHASE 3 -->
+            <!-- PHASE 3: RESULTS (HEAVILY UPDATED) -->
             <div id="result-section" class="hidden">
-                <div class="mb-6 text-lg font-bold text-indigo-400 text-center tracking-[0.2em]">YOUR RESULTS</div>
-
-                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 md:p-8 rounded-3xl shadow-lg border-2 border-white mb-8 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-400 text-white text-xs font-extrabold px-4 py-2 rounded-bl-2xl shadow-sm">#1 MATCH</div>
-                    <p class="text-sm font-bold text-indigo-500 uppercase tracking-wider mb-2">Your Ideal Career</p>
-                    <h2 id="primary-title" class="text-4xl font-extrabold text-slate-800 mt-1 mb-4 leading-tight"></h2>
-                    <p id="primary-desc" class="text-slate-600 text-base leading-relaxed font-medium"></p>
-                </div>
                 
-                <h3 class="text-2xl font-bold mb-5 text-slate-800 flex items-center gap-2">📍 Your Step-by-Step Roadmap</h3>
-                <div id="roadmap-phases" class="space-y-4 mb-10">
-                    <!-- Phases injected here -->
-                </div>
-
-                <div class="mt-8 pt-8 border-t-2 border-indigo-50">
-                    <h3 class="text-lg font-bold mb-4 text-slate-500">Also Consider Exploring:</h3>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-shadow">
-                        <div id="secondary-icon" class="text-4xl bg-indigo-50 p-3 rounded-xl"></div>
-                        <div>
-                            <h4 id="secondary-title" class="font-bold text-slate-800 text-xl"></h4>
-                            <p id="secondary-desc" class="text-sm text-slate-500 mt-1 font-medium"></p>
-                        </div>
+                <!-- VIEW 1: Matches Overview (Grid) -->
+                <div id="matches-overview" class="fade-in">
+                    <div class="mb-2 text-lg font-bold text-indigo-400 text-center tracking-[0.2em]">ANALYSIS COMPLETE</div>
+                    <h2 class="text-3xl font-extrabold text-slate-800 text-center mb-2">Your Top Careers</h2>
+                    <p class="text-slate-500 text-center mb-8 font-medium">Click on a career to view your custom roadmap and reading list.</p>
+                    
+                    <div id="matches-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Clickable Match Cards injected here -->
                     </div>
                 </div>
 
-                <button onclick="location.reload()" class="mt-10 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg py-4 rounded-2xl hover:shadow-xl hover:shadow-indigo-200 hover:-translate-y-1 transition-all duration-300">
+                <!-- VIEW 2: Detailed Career View (Hidden initially) -->
+                <div id="career-details" class="hidden fade-in">
+                    <button onclick="backToMatches()" class="mb-6 flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-800 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        Back to Options
+                    </button>
+
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl shadow-sm border border-indigo-100 mb-8">
+                        <div id="detail-icon" class="text-5xl mb-3"></div>
+                        <h2 id="detail-title" class="text-3xl font-extrabold text-slate-800 mb-2 leading-tight"></h2>
+                        <p id="detail-desc" class="text-slate-600 text-base leading-relaxed font-medium"></p>
+                    </div>
+                    
+                    <h3 class="text-2xl font-bold mb-4 text-slate-800 flex items-center gap-2">📍 Step-by-Step Roadmap</h3>
+                    <div id="detail-roadmap" class="space-y-4 mb-10">
+                        <!-- Phases injected here -->
+                    </div>
+
+                    <div class="mt-8 pt-8 border-t-2 border-indigo-50">
+                        <h3 class="text-2xl font-bold mb-4 text-slate-800 flex items-center gap-2">📚 Recommended Reading</h3>
+                        <ul id="detail-books" class="space-y-3">
+                            <!-- Books injected here -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Shared Retake Button -->
+                <button onclick="location.reload()" class="mt-10 w-full bg-slate-100 text-slate-500 font-bold text-lg py-4 rounded-2xl hover:bg-slate-200 hover:text-slate-700 transition-all duration-300">
                     Retake Assessment
                 </button>
             </div>
