@@ -14,17 +14,49 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Initialize Gemini 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// 1. MASSIVE DYNAMIC QUESTION BANK (Keep your existing questionsDB here!)
-const questionsDB = {
-    // ... PASTE YOUR EXISTING questionsDB HERE ...
-};
+// 1. AI DYNAMIC QUESTION GENERATOR
+app.get('/api/questions', async (req, res) => {
+    const requestedInterest = req.query.interest || "General"; 
+    
+    try {
+        const prompt = `
+            You are an expert career counselor and psychologist. A student wants to explore careers in the field of: ${requestedInterest}.
+            Generate a personality and skills assessment quiz with exactly 5 highly specific questions tailored to this field.
+            Each question must have 4 distinct options.
+            Each option must map to 1 or 2 psychological traits (e.g., "Analytical", "Creative", "Leadership", "Empathy", "Technical", "Organized") and assign a point value from 1 to 3.
+            
+            You MUST return the data strictly as a JSON array. Do not wrap the JSON in markdown blocks. It must perfectly match this schema:
+            [
+              {
+                "text": "String (The specific question)",
+                "options": [
+                  { "text": "String (Option A)", "tags": { "Analytical": 2, "Technical": 1 } },
+                  { "text": "String (Option B)", "tags": { "Creative": 3 } },
+                  { "text": "String (Option C)", "tags": { "Leadership": 2, "Empathy": 1 } },
+                  { "text": "String (Option D)", "tags": { "Organized": 3 } }
+                ]
+              }
+            ]
+        `;
 
-app.get('/api/questions', (req, res) => {
-    const requestedInterest = req.query.interest; 
-    const selectedQuestions = questionsDB[requestedInterest] || questionsDB["TechAI"];
-    res.json(selectedQuestions);
+        // Call Gemini to generate the questions
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+            }
+        });
+
+        // Convert the AI's text into a real JavaScript array and send it to the website
+        const aiGeneratedQuestions = JSON.parse(response.text);
+        res.json(aiGeneratedQuestions);
+
+    } catch (error) {
+        console.error("AI Question Generation Error:", error);
+        res.status(500).json({ error: "Failed to generate AI questions." });
+    }
 });
-
 // 2. THE NEW AI MATCHING ENGINE
 app.post('/api/calculate-result', async (req, res) => {
     try {
