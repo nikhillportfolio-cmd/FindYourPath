@@ -97,43 +97,51 @@
                 <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 text-center mb-3">What Drives You?</h1>
                 <p class="text-slate-500 text-center mb-8 font-medium">Select your primary area of interest to tailor your experience.</p>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button onclick="startQuiz('TechAI')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
-                        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🤖</div>
-                        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Tech & AI</h3>
-                        <p class="text-sm text-slate-500 mt-2 font-medium">Software, AI, Cybersecurity.</p>
-                    </button>
-                    
-                    <button onclick="startQuiz('ContentMedia')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
-                        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">📱</div>
-                        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Content & Media</h3>
-                        <p class="text-sm text-slate-500 mt-2 font-medium">YouTube, Writing, Journalism.</p>
-                    </button>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    
+    <!-- 1. TECH & AI -->
+    <button onclick="startQuiz('TechAI')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
+        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🤖</div>
+        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Tech & AI</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Software, AI, Cybersecurity.</p>
+    </button>
+    
+    <!-- 2. LAW & BUSINESS -->
+    <button onclick="startQuiz('LawAdmin')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
+        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🏛️</div>
+        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Law & Business</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Startups, Management, Advocacy.</p>
+    </button>
 
-                    <button onclick="startQuiz('Healthcare')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
-                        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🩺</div>
-                        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Healthcare</h3>
-                        <p class="text-sm text-slate-500 mt-2 font-medium">Medicine, Psychology, Research.</p>
-                    </button>
+    <!-- 3. ARTS & DESIGN -->
+    <button onclick="startQuiz('ArtsDesign')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
+        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🎨</div>
+        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Arts & Design</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Architecture, UX/UI, Fine Arts.</p>
+    </button>
 
-                    <button onclick="startQuiz('LawAdmin')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
-                        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🏛️</div>
-                        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Law & Admin</h3>
-                        <p class="text-sm text-slate-500 mt-2 font-medium">Advocacy, UPSC, Civil Services.</p>
-                    </button>
+    <!-- 4. HEALTHCARE -->
+    <button onclick="startQuiz('Health')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
+        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🩺</div>
+        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Healthcare</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Medicine, Psychology, Research.</p>
+    </button>
 
-                    <button onclick="startQuiz('BusinessHustle')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
-                        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🚀</div>
-                        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Business</h3>
-                        <p class="text-sm text-slate-500 mt-2 font-medium">Startups, Management, Finance.</p>
-                    </button>
+    <!-- 5. ENGINEERING -->
+    <button onclick="startQuiz('Engineering')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
+        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">⚙️</div>
+        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Engineering</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Mechanical, Civil, Aerospace.</p>
+    </button>
 
-                    <button onclick="startQuiz('ArtsDesign')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
-                        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🎨</div>
-                        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Arts & Design</h3>
-                        <p class="text-sm text-slate-500 mt-2 font-medium">Architecture, UX/UI, Fine Arts.</p>
-                    </button>
-                </div>
+    <!-- 6. EDUCATION & SOCIAL WORK -->
+    <button onclick="startQuiz('SocialEdu')" class="p-6 bg-white rounded-2xl border-2 border-indigo-50 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100/50 hover:-translate-y-1.5 transition-all duration-300 group text-left">
+        <div class="text-4xl mb-3 transform group-hover:scale-110 transition-transform">🤝</div>
+        <h3 class="text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Social & Edu</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Teaching, Counseling, NGOs.</p>
+    </button>
+
+</div>
             </div>
 
             <!-- PHASE 2 -->
