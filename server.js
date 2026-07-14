@@ -245,5 +245,60 @@ app.post('/api/calculate-result', async (req, res) => {
         res.status(500).json({ error: "Failed to generate AI roadmap." });
     }
 });
+// =====================================================================
+// QUEUE ENGINE (Paste this near the bottom, just above app.listen)
+// =====================================================================
+const requestQueue = [];
+let isProcessingQueue = false;
 
+async function processQueue() {
+    if (isProcessingQueue || requestQueue.length === 0) return;
+    isProcessingQueue = true;
+
+    // Pull the first student out of the line
+    const { req, res } = requestQueue.shift();
+
+    try {
+        // 🚨 MOVE YOUR EXISTING GEMINI CODE HERE 🚨
+        // Everything from your old calculate-result route goes inside this try block.
+        // It should look something like this:
+        
+        const studentAnswers = req.body.answers;
+        const studentText = req.body.text;
+        
+        const prompt = `...YOUR EXISTING MASSIVE PROMPT HERE...`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-3.5-flash',
+            contents: prompt,
+            config: { responseMimeType: "application/json" }
+        });
+
+        const finalRoadmap = JSON.parse(response.text);
+        res.json(finalRoadmap); // Send the data back to the waiting student
+
+    } catch (error) {
+        console.error("AI Queue Error:", error);
+        res.status(500).json({ error: "Failed to generate roadmap." });
+    }
+
+    // Force a 4000ms (4 second) cooldown before allowing the next API call
+    setTimeout(() => {
+        isProcessingQueue = false;
+        processQueue(); // Loop back and process the next student in line
+    }, 4000); 
+}
+
+// =====================================================================
+// THE NEW ROUTE (This replaces your old one)
+// =====================================================================
+app.post('/api/calculate-result', (req, res) => {
+    // Put the student's request at the back of the line
+    requestQueue.push({ req, res });
+    
+    // Kickstart the engine if it is currently idle
+    processQueue();
+});
+
+// app.listen(...) should be right below this.
 app.listen(PORT, () => console.log(`AI Matching Engine alive on Port ${PORT}`));
