@@ -245,7 +245,8 @@ app.post('/api/calculate-result', async (req, res) => {
         res.status(500).json({ error: "Failed to generate AI roadmap." });
     }
 });
-// =====================================================================
+// ===================================================================
+// ==
 // QUEUE ENGINE (Paste this near the bottom, just above app.listen)
 // =====================================================================
 const requestQueue = [];
@@ -259,27 +260,25 @@ async function processQueue() {
     const { req, res } = requestQueue.shift();
 
     try {
-        // 🚨 MOVE YOUR EXISTING GEMINI CODE HERE 🚨
-        // Everything from your old calculate-result route goes inside this try block.
-        // It should look something like this:
-        
-        const studentAnswers = req.body.answers;
-        const studentText = req.body.text;
-        
-        const prompt = `...YOUR EXISTING MASSIVE PROMPT HERE...`;
-
         const response = await ai.models.generateContent({
             model: 'gemini-3.5-flash',
             contents: prompt,
             config: { responseMimeType: "application/json" }
         });
 
+        // Check if the response was blocked by safety filters
+        if (!response.text) {
+            console.warn("API returned an empty response. Likely a safety filter trigger.");
+            return res.status(400).json({ error: "Your input triggered a safety filter. Please revise your text and try again." });
+        }
+
         const finalRoadmap = JSON.parse(response.text);
-        res.json(finalRoadmap); // Send the data back to the waiting student
+        res.json(finalRoadmap); 
 
     } catch (error) {
         console.error("AI Queue Error:", error);
-        res.status(500).json({ error: "Failed to generate roadmap." });
+        // Send a specific error back so the frontend knows it wasn't just a "break"
+        res.status(500).json({ error: "Failed to generate roadmap. The AI encountered an unexpected issue with the input." });
     }
 
     // Force a 4000ms (4 second) cooldown before allowing the next API call
