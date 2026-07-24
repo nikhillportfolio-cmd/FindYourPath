@@ -2,7 +2,7 @@ require('dotenv').config(); // Loads your .env file
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { GoogleGenAI } = require('@google/genai'); // Import the Gemini SDK
+const OpenAI = require('openai'); // Switched from @google/genai to OpenAI SDK
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,8 +11,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Initialize Gemini 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize API Client (Configured for Nemotron 3 Ultra via OpenRouter or NVIDIA NIM)
+const ai = new OpenAI({
+    baseURL: process.env.NEMOTRON_BASE_URL || 'https://openrouter.ai/api/v1',
+    apiKey: process.env.NEMOTRON_API_KEY || process.env.OPENROUTER_API_KEY,
+});
 
 // 1. MASSIVE STATIC QUESTION POOL (150 Questions)
 const questionsDB = {
@@ -184,20 +187,20 @@ const questionsDB = {
 app.get('/api/questions', (req, res) => {
     const requestedInterest = req.query.interest; 
     
-    // Grab the massive pool of 25 questions for that category
+    // Grab the pool of 25 questions for that category
     const pool = questionsDB[requestedInterest] || questionsDB["TechAI"];
     
     // Shuffle the pool randomly
     const shuffledPool = [...pool].sort(() => 0.5 - Math.random());
     
-    // Slice off exactly 5 questions
+    // Slice off 5 questions
     const selectedQuestions = shuffledPool.slice(0, 5);
     
     res.json(selectedQuestions);
 });
 
 // =====================================================================
-// 3. AI MATCHING QUEUE ENGINE & ROUTE HANDLER
+// 3. AI MATCHING QUEUE ENGINE & ROUTE HANDLER (NEMOTRON 3 ULTRA)
 // =====================================================================
 const requestQueue = [];
 let isProcessingQueue = false;
@@ -212,7 +215,6 @@ async function processQueue() {
     try {
         const { userTraits, interest, studentInput } = req.body;
 
-        // Construct prompt dynamically inside the worker
         const prompt = `
             You are an expert career counselor for high school and college students. 
             A student is deeply interested in the broad category of: ${interest}.
@@ -221,7 +223,7 @@ async function processQueue() {
             
             Analyze their psychological traits alongside their personal context. Recommend 4 highly specific, modern career paths tailored exactly to them. 
             
-            You MUST return the data strictly as a JSON array. Do not wrap the JSON in markdown blocks (like \`\`\`json). The JSON must perfectly match this schema:
+            Return the output strictly as a JSON array of 4 career objects using this schema:
             [
               {
                 "title": "String (Name of career)",
@@ -237,25 +239,41 @@ async function processQueue() {
             ]
         `;
 
-        // Call Gemini using the latest available Flash model
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-            }
+        // Make API request to NVIDIA Nemotron 3 Ultra
+        const response = await ai.chat.completions.create({
+            model: process.env.NEMOTRON_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b:free',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a career counseling assistant that only responds in valid JSON arrays.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            response_format: { type: "json_object" }
         });
 
-        // Check if response was blocked or empty
-        if (!response.text) {
+        const rawContent = response.choices[0]?.message?.content;
+
+        if (!rawContent) {
             return res.status(400).json({ 
-                error: "Your input triggered a safety filter. Please revise your text and try again." 
+                error: "The API returned an empty response. Please try again." 
             });
         }
 
         // Clean out markdown wrappers if present and parse
-        const cleanJsonText = response.text.replace(/```json|```/g, '').trim();
-        const finalRoadmap = JSON.parse(cleanJsonText);
+        const cleanJsonText = rawContent.replace(/```json|```/g, '').trim();
+        let finalRoadmap = JSON.parse(cleanJsonText);
+
+        // If the model wraps the array inside an object key (e.g. { "careers": [...] }), extract the array
+        if (!Array.isArray(finalRoadmap) && typeof finalRoadmap === 'object') {
+            const possibleArray = Object.values(finalRoadmap).find(val => Array.isArray(val));
+            if (possibleArray) {
+                finalRoadmap = possibleArray;
+            }
+        }
         
         res.json(finalRoadmap); 
 
@@ -269,11 +287,11 @@ async function processQueue() {
         setTimeout(() => {
             isProcessingQueue = false;
             processQueue(); 
-        }, 4000); 
+        }, 2000); 
     }
 }
 
-// Single route endpoint that queues incoming requests
+// Queue route endpoint
 app.post('/api/calculate-result', (req, res) => {
     requestQueue.push({ req, res });
     processQueue();
