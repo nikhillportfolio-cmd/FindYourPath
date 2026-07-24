@@ -180,7 +180,7 @@ const questionsDB = {
     ]
 };
 
-// 2. THE RANDOM SHUFFLER
+// 2. RANDOM QUESTION SHUFFLER ROUTE
 app.get('/api/questions', (req, res) => {
     const requestedInterest = req.query.interest; 
     
@@ -195,12 +195,24 @@ app.get('/api/questions', (req, res) => {
     
     res.json(selectedQuestions);
 });
-// 2. THE NEW AI MATCHING ENGINE
-app.post('/api/calculate-result', async (req, res) => {
+
+// =====================================================================
+// 3. AI MATCHING QUEUE ENGINE & ROUTE HANDLER
+// =====================================================================
+const requestQueue = [];
+let isProcessingQueue = false;
+
+async function processQueue() {
+    if (isProcessingQueue || requestQueue.length === 0) return;
+    isProcessingQueue = true;
+
+    // Pull the next request from the queue
+    const { req, res } = requestQueue.shift();
+
     try {
-        const { userTraits, interest, studentInput } = req.body; 
-        
-        // Construct the prompt for Gemini
+        const { userTraits, interest, studentInput } = req.body;
+
+        // Construct prompt dynamically inside the worker
         const prompt = `
             You are an expert career counselor for high school and college students. 
             A student is deeply interested in the broad category of: ${interest}.
@@ -225,79 +237,47 @@ app.post('/api/calculate-result', async (req, res) => {
             ]
         `;
 
-        // Call Gemini 3.5 Flash, forcing it to return pure JSON
+        // Call Gemini using the latest available Flash model
         const response = await ai.models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
             }
         });
 
-        // Parse the AI's string response into an actual JavaScript Array
-        const aiGeneratedRoadmaps = JSON.parse(response.text);
-
-        // Send the AI generated data back to the frontend!
-        res.json(aiGeneratedRoadmaps);
-
-    } catch (error) {
-        console.error("AI Generation Error:", error);
-        res.status(500).json({ error: "Failed to generate AI roadmap." });
-    }
-});
-// ===================================================================
-// ==
-// QUEUE ENGINE (Paste this near the bottom, just above app.listen)
-// =====================================================================
-const requestQueue = [];
-let isProcessingQueue = false;
-
-async function processQueue() {
-    if (isProcessingQueue || requestQueue.length === 0) return;
-    isProcessingQueue = true;
-
-    // Pull the first student out of the line
-    const { req, res } = requestQueue.shift();
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-3.5-flash',
-            contents: prompt,
-            config: { responseMimeType: "application/json" }
-        });
-
-        // Check if the response was blocked by safety filters
+        // Check if response was blocked or empty
         if (!response.text) {
-            console.warn("API returned an empty response. Likely a safety filter trigger.");
-            return res.status(400).json({ error: "Your input triggered a safety filter. Please revise your text and try again." });
+            return res.status(400).json({ 
+                error: "Your input triggered a safety filter. Please revise your text and try again." 
+            });
         }
 
-        const finalRoadmap = JSON.parse(response.text);
+        // Clean out markdown wrappers if present and parse
+        const cleanJsonText = response.text.replace(/```json|```/g, '').trim();
+        const finalRoadmap = JSON.parse(cleanJsonText);
+        
         res.json(finalRoadmap); 
 
     } catch (error) {
         console.error("AI Queue Error:", error);
-        // Send a specific error back so the frontend knows it wasn't just a "break"
-        res.status(500).json({ error: "Failed to generate roadmap. The AI encountered an unexpected issue with the input." });
+        res.status(500).json({ 
+            error: "Failed to generate roadmap. The AI encountered an unexpected issue with the input." 
+        });
+    } finally {
+        // Cooldown ensures rate limiting and guarantees queue processing resumes even on error
+        setTimeout(() => {
+            isProcessingQueue = false;
+            processQueue(); 
+        }, 4000); 
     }
-
-    // Force a 4000ms (4 second) cooldown before allowing the next API call
-    setTimeout(() => {
-        isProcessingQueue = false;
-        processQueue(); // Loop back and process the next student in line
-    }, 4000); 
 }
 
-// =====================================================================
-// THE NEW ROUTE (This replaces your old one)
-// =====================================================================
+// Single route endpoint that queues incoming requests
 app.post('/api/calculate-result', (req, res) => {
-    // Put the student's request at the back of the line
     requestQueue.push({ req, res });
-    
-    // Kickstart the engine if it is currently idle
     processQueue();
 });
 
-// app.listen(...) should be right below this.
+// Start the server
 app.listen(PORT, () => console.log(`AI Matching Engine alive on Port ${PORT}`));
