@@ -1,4 +1,4 @@
-require('dotenv').config(); // Loads your .env file
+require('dotenv').config(); // Loads your .env file locally (ignored on Render)
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -11,10 +11,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ---------------------------------------------------------------------
+// STARTUP CHECK: Ensure API Key exists
+// ---------------------------------------------------------------------
+const activeApiKey = process.env.NEMOTRON_API_KEY || process.env.OPENROUTER_API_KEY;
+
+if (!activeApiKey) {
+    console.error("=====================================================");
+    console.error("🚨 CRITICAL WARNING: Missing API Key!");
+    console.error("Please set OPENROUTER_API_KEY in your environment variables.");
+    console.error("AI matching will fail with a 401 Error until this is set.");
+    console.error("=====================================================");
+}
+
 // Initialize API Client (Configured for Nemotron 3 Ultra via OpenRouter or NVIDIA NIM)
 const ai = new OpenAI({
     baseURL: process.env.NEMOTRON_BASE_URL || 'https://openrouter.ai/api/v1',
-    apiKey: process.env.NEMOTRON_API_KEY || process.env.OPENROUTER_API_KEY,
+    apiKey: activeApiKey || 'missing-key', // Prevents init crash, but will throw 401 on request if missing
 });
 
 // 1. MASSIVE STATIC QUESTION POOL (150 Questions)
