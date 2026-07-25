@@ -125,13 +125,13 @@ function triggerAI() {
     fetchResults(studentInputText);
 }
 
-// 7. FETCH RESULTS FROM GEMINI (UPDATED)
+// 7. FETCH RESULTS FROM GEMINI (UPDATED WITH ERROR HANDLING)
 async function fetchResults(studentInputText) {
     try {
         const payload = { 
             userTraits: userTraits, 
             interest: userInterest,
-            studentInput: studentInputText // Sent to the backend AI
+            studentInput: studentInputText 
         };
         
         const response = await fetch('/api/calculate-result', {
@@ -140,15 +140,28 @@ async function fetchResults(studentInputText) {
             body: JSON.stringify(payload) 
         });
         
-        globalMatches = await response.json(); 
+        // Parse the response body
+        const data = await response.json(); 
+        
+        // NEW: Check if the server sent an error status (like 500 or 400)
+        if (!response.ok) {
+            throw new Error(data.error || "The server encountered an issue.");
+        }
+
+        // If successful, assign the array and move forward
+        globalMatches = data; 
         
         // Hide AI section and show Results Grid
         aiInputSection.classList.add("hidden");
         showResultsOverview();
+
     } catch (error) {
-        console.error("AI Generation failed.", error);
-        alert("Oops! The AI is taking a quick break. Please try again.");
-        // If it fails, let them click the button again
+        console.error("AI Generation failed:", error);
+        
+        // Show a more specific alert based on the caught error
+        alert(`Oops! ${error.message} Please try again.`);
+        
+        // Reset the UI so they can try again
         generateBtn.classList.remove("hidden");
         loadingSpinner.classList.add("hidden");
     }
