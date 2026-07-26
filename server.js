@@ -634,7 +634,7 @@ const careersDB = {
 };
 
 // =====================================================================
-// 3. RANDOM QUESTION SHUFFLER ROUTE (5 Random Questions Out of 25)
+// 3. RANDOM QUESTION SHUFFLER ROUTE (Now serving 8 questions for higher accuracy)
 // =====================================================================
 app.get('/api/questions', (req, res) => {
     const requestedInterest = req.query.interest; 
@@ -645,46 +645,47 @@ app.get('/api/questions', (req, res) => {
     // Shuffle the pool randomly
     const shuffledPool = [...pool].sort(() => 0.5 - Math.random());
     
-    // Slice off 5 questions for the UI session
-    const selectedQuestions = shuffledPool.slice(0, 5);
+    // Serve 8 questions instead of 5. This increases the accuracy of the 
+    // trait profile by giving the matching engine more data points to work with.
+    const selectedQuestions = shuffledPool.slice(0, 8);
     
     res.json(selectedQuestions);
 });
 
 // =====================================================================
-// 4. RULE-BASED MATCHING ENGINE (INSTANT - NO AI DEPENDENCY)
+// 4. RULE-BASED MATCHING ENGINE (Instant Calculation)
 // =====================================================================
 app.post('/api/calculate-result', (req, res) => {
     try {
         const { userTraits, interest } = req.body;
 
-        // Get available careers for selected domain
         const candidateCareers = careersDB[interest] || careersDB["TechAI"];
 
-        // Compute match score for each career against user's aggregated traits
         const scoredCareers = candidateCareers.map(career => {
             let score = 0;
             const targetTraits = career.targetTraits;
 
+            // Mathematical Match: Multiply the user's earned points by the career's required weight
             for (const [trait, targetValue] of Object.entries(targetTraits)) {
                 if (userTraits && userTraits[trait]) {
                     score += userTraits[trait] * targetValue;
                 }
             }
 
-            // Slight random tie-breaker so retakes with subtle variations feel fresh
-            const noise = Math.random() * 0.5;
+            // A tiny random fraction ensures that if two careers tie perfectly, 
+            // the order shuffles slightly on retakes to prevent staleness.
+            const tieBreaker = Math.random() * 0.1;
 
             return {
                 ...career,
-                finalScore: score + noise
+                finalScore: score + tieBreaker
             };
         });
 
         // Sort descending by score
         scoredCareers.sort((a, b) => b.finalScore - a.finalScore);
 
-        // Pick top 4 best matches
+        // Pick top 4 best matches and strip out the backend scoring data before sending to frontend
         const topMatches = scoredCareers.slice(0, 4).map(({ finalScore, targetTraits, ...rest }) => rest);
 
         // Instant return
@@ -698,5 +699,5 @@ app.post('/api/calculate-result', (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Find Your Path - Indian Career Compass Server running on Port ${PORT}`);
+    console.log(`Find Your Path - Fast Rule Engine running on Port ${PORT}`);
 });

@@ -15,12 +15,6 @@ const questionText = document.getElementById("question-text");
 const optionsContainer = document.getElementById("options-container");
 const progressBar = document.getElementById("progress-bar");
 
-// DOM ELEMENTS - AI SECTION
-const aiInputSection = document.getElementById("ai-input-section");
-const studentTextInput = document.getElementById("student-text");
-const generateBtn = document.getElementById("generate-btn");
-const loadingSpinner = document.getElementById("loading-spinner");
-
 // DOM ELEMENTS - RESULTS VIEWS
 const matchesOverview = document.getElementById("matches-overview");
 const careerDetails = document.getElementById("career-details");
@@ -69,7 +63,7 @@ async function loadQuestions() {
     }
 }
 
-// 4. RENDER DYNAMIC CARD (Updated for Dark Mode UI)
+// 4. RENDER DYNAMIC CARD
 function renderQuestion() {
     const progress = (currentIndex / questions.length) * 100;
     progressBar.style.width = `${progress}%`;
@@ -88,8 +82,9 @@ function renderQuestion() {
     });
 }
 
-// 5. COMPILE TRAITS & SHOW AI INPUT
+// 5. COMPILE TRAITS & INSTANTLY FETCH RESULTS
 function handleAnswer(tags) {
+    // Accumulate traits
     for (const [trait, points] of Object.entries(tags)) {
         userTraits[trait] = (userTraits[trait] || 0) + points;
     }
@@ -98,36 +93,19 @@ function handleAnswer(tags) {
     if (currentIndex < questions.length) {
         renderQuestion();
     } else {
+        // Quiz complete - snap progress bar to 100% and fetch results instantly
         progressBar.style.width = "100%";
-        
-        setTimeout(() => {
-            quizSection.classList.add("hidden");
-            aiInputSection.classList.remove("hidden");
-            aiInputSection.classList.add("slide-up");
-        }, 400);
+        quizSection.classList.add("hidden");
+        fetchResults(); 
     }
 }
 
-// 6. TRIGGER AI GENERATION
-function triggerAI() {
-    const studentInputText = studentTextInput.value.trim();
-    if (studentInputText === "") {
-        alert("Please write a few words so the AI can personalize your roadmap!");
-        return;
-    }
-
-    generateBtn.classList.add("hidden");
-    loadingSpinner.classList.remove("hidden");
-    fetchResults(studentInputText);
-}
-
-// 7. FETCH RESULTS FROM API
-async function fetchResults(studentInputText) {
+// 6. FETCH RESULTS FROM API (No Input Box Needed)
+async function fetchResults() {
     try {
         const payload = { 
             userTraits: userTraits, 
-            interest: userInterest,
-            studentInput: studentInputText 
+            interest: userInterest
         };
         
         const response = await fetch('/api/calculate-result', {
@@ -143,18 +121,15 @@ async function fetchResults(studentInputText) {
         }
 
         globalMatches = data; 
-        aiInputSection.classList.add("hidden");
         showResultsOverview();
 
     } catch (error) {
-        console.error("AI Generation failed:", error);
-        alert(`Oops! ${error.message} Please try again.`);
-        generateBtn.classList.remove("hidden");
-        loadingSpinner.classList.add("hidden");
+        console.error("Matching failed:", error);
+        alert(`Oops! ${error.message} Please refresh and try again.`);
     }
 }
 
-// 8. RENDER OVERVIEW (GRID OF MATCHES - Updated for Dark Mode)
+// 7. RENDER OVERVIEW (GRID OF MATCHES)
 function showResultsOverview() {
     resultSection.classList.remove("hidden");
     resultSection.classList.add("slide-up");
@@ -183,7 +158,7 @@ function showResultsOverview() {
     });
 }
 
-// 9. RENDER DETAILED VIEW (Updated for Dark Mode)
+// 8. RENDER DETAILED VIEW
 function showCareerDetails(index) {
     const match = globalMatches[index];
 
@@ -225,7 +200,7 @@ function showCareerDetails(index) {
     }
 }
 
-// 10. BACK BUTTON FUNCTION
+// 9. BACK BUTTON FUNCTION
 function backToMatches() {
     careerDetails.classList.add("hidden");
     matchesOverview.classList.remove("hidden");
