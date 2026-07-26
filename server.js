@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const OpenAI = require('openai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,26 +10,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ---------------------------------------------------------------------
-// STARTUP CHECK: Ensure API Key exists
-// ---------------------------------------------------------------------
-const activeApiKey = process.env.NEMOTRON_API_KEY || process.env.OPENROUTER_API_KEY;
-
-if (!activeApiKey) {
-    console.error("=====================================================");
-    console.error("🚨 CRITICAL WARNING: Missing API Key!");
-    console.error("Please set OPENROUTER_API_KEY or NEMOTRON_API_KEY in your .env");
-    console.error("=====================================================");
-}
-
-const ai = new OpenAI({
-    baseURL: process.env.NEMOTRON_BASE_URL || 'https://openrouter.ai/api/v1',
-    apiKey: activeApiKey || 'missing-key', 
-});
-
-// ---------------------------------------------------------------------
-// MASSIVE QUESTION DATABASE (150 Questions Total - 25 Per Category)
-// ---------------------------------------------------------------------
+// =====================================================================
+// 1. MASSIVE STATIC QUESTION POOL (150 Questions - 25 Per Category)
+// =====================================================================
 const questionsDB = {
     "TechAI": [
         {"text":"When your computer freezes, what is your first reaction?","options":[{"text":"Troubleshoot and fix it myself.","tags":{"Technical":3,"ProblemSolving":2}},{"text":"Search Google/YouTube for a fix.","tags":{"Analytical":2,"Resourceful":3}},{"text":"Ask a friend who is good with tech.","tags":{"Communication":2}},{"text":"Restart it and hope for the best.","tags":{"Easygoing":1}}]},
@@ -196,11 +178,464 @@ const questionsDB = {
     ]
 };
 
-// ---------------------------------------------------------------------
-// 2. RANDOM QUESTION SHUFFLER ROUTE
-// ---------------------------------------------------------------------
-// When a user selects a category, this route grabs the 25 questions, 
-// shuffles them randomly, and returns exactly 5.
+// =====================================================================
+// 2. INDIAN CAREERS DATABASE (Rule-Based Recommendation Base)
+// =====================================================================
+const careersDB = {
+    "TechAI": [
+        {
+            "title": "Software Development Engineer (SDE)",
+            "icon": "💻",
+            "desc": "Build scalable software systems, cloud architectures, and web/mobile apps for top Indian IT giants, product MNCs, and unicorn startups.",
+            "targetTraits": { "Technical": 3, "ProblemSolving": 3, "Analytical": 2 },
+            "phases": [
+                { "title": "Phase 1: Foundation (10+2 & Entrance)", "steps": "Complete Class 12 with PCM (Physics, Chemistry, Math). Appear for JEE Main, JEE Advanced, BITSAT, or State CETs to enter B.Tech Computer Science/IT." },
+                { "title": "Phase 2: Skill Building & Internships", "steps": "Master Data Structures & Algorithms in C++/Java/Python. Solve 300+ LeetCode problems, contribute to open-source, and complete summer internships." },
+                { "title": "Phase 3: Career Entry & Placements", "steps": "Participate in campus placements (Tier 1/2 colleges) or off-campus drives for companies like Google, Amazon, Microsoft, TCS, Swiggy, or Zomato." }
+            ],
+            "books": ["Data Structures and Algorithms Made Easy by Narasimha Karumanchi", "Cracking the Coding Interview by Gayle Laakmann McDowell"]
+        },
+        {
+            "title": "AI / Machine Learning Engineer",
+            "icon": "🤖",
+            "desc": "Design neural networks, computer vision algorithms, and Generative AI models for India's booming AI startup and R&D ecosystem.",
+            "targetTraits": { "Technical": 3, "Analytical": 3, "Logical": 2 },
+            "phases": [
+                { "title": "Phase 1: Academic Preparation", "steps": "Excel in Class 12 Mathematics & Physics. Pursue B.Tech in CSE / AI & Data Science or B.Sc Statistics/Maths at IITs, NITs, or IIITs." },
+                { "title": "Phase 2: Specialization", "steps": "Learn Python, PyTorch, TensorFlow, Calculus, and Linear Algebra. Build NLP or Computer Vision projects on Kaggle." },
+                { "title": "Phase 3: Industry & Higher Studies", "steps": "Secure AI R&D roles in tech MNCs (Bengaluru/Gurgaon), or clear GATE to pursue M.Tech/Ph.D. at IISc Bangalore or IITs." }
+            ],
+            "books": ["Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow by Aurélien Géron", "Deep Learning by Ian Goodfellow & Yoshua Bengio"]
+        },
+        {
+            "title": "Cybersecurity & Ethical Hacker",
+            "icon": "🛡️",
+            "desc": "Protect digital infrastructure, banking systems, and defense networks across India from cyber threats and data breaches.",
+            "targetTraits": { "Technical": 3, "Analytical": 2, "ProblemSolving": 3 },
+            "phases": [
+                { "title": "Phase 1: Tech Fundamentals", "steps": "Pass 10+2 Science stream. Earn a B.Tech in CSE/Cybersecurity or B.Sc IT. Understand computer networking and OS fundamentals." },
+                { "title": "Phase 2: Certifications & Bug Bounties", "steps": "Clear industry certifications like CEH (Certified Ethical Hacker), CompTIA Security+, and OSCP. Participate in CTF challenges and Bug Bounty programs." },
+                { "title": "Phase 3: Placement", "steps": "Join Security Operations Centers (SOCs) at Wipro, Infosys, CERT-In (Govt of India), or specialized cybersecurity firms." }
+            ],
+            "books": ["The Web Application Hacker's Handbook by Dafydd Stuttard", "CompTIA Security+ Study Guide by Mike Chapple"]
+        },
+        {
+            "title": "Data Scientist / Business Analyst",
+            "icon": "📊",
+            "desc": "Transform massive datasets into strategic business decisions for fintech, e-commerce, and consulting firms in India.",
+            "targetTraits": { "Analytical": 3, "Logical": 3, "Organized": 2 },
+            "phases": [
+                { "title": "Phase 1: Undergraduate Degree", "steps": "Pursue B.Tech, B.Sc Statistics, B.S. Data Science, or B.A. Economics (Hons) from reputed Indian universities (DU, ISI, IITs)." },
+                { "title": "Phase 2: Analytics Tooling", "steps": "Master SQL, Python, R, Tableau, and Excel. Learn statistical modeling, A/B testing, and business domain logic." },
+                { "title": "Phase 3: Analytics Entry", "steps": "Apply for Data Analyst or Business Analyst roles at Mu Sigma, Fractal Analytics, Deloitte, Flipkart, or McKinsey." }
+            ],
+            "books": ["Storytelling with Data by Cole Nussbaumer Knaflic", "Python for Data Analysis by Wes McKinney"]
+        },
+        {
+            "title": "UI/UX Product Designer",
+            "icon": "🎨",
+            "desc": "Craft intuitive, accessible user interfaces for digital apps serving hundreds of millions of smartphone users across India.",
+            "targetTraits": { "Creative": 3, "Empathy": 3, "Visual": 2 },
+            "phases": [
+                { "title": "Phase 1: Entrance & Degree", "steps": "Clear NID DAT or UCEED exams to get into National Institute of Design (NID) or IIT Industrial Design Centre (IDC) for B.Des." },
+                { "title": "Phase 2: Portfolio Building", "steps": "Master Figma, Adobe XD, and user research methodologies. Conduct usability testing with real Indian target audiences and build case studies." },
+                { "title": "Phase 3: Design Roles", "steps": "Join product design teams at Razorpay, Paytm, CRED, Zomato, or UX design agencies in Mumbai, Bengaluru, or Delhi NCR." }
+            ],
+            "books": ["The Design of Everyday Things by Don Norman", "Don't Make Me Think by Steve Krug"]
+        },
+        {
+            "title": "Cloud & DevOps Engineer",
+            "icon": "☁️",
+            "desc": "Manage automated deployment pipelines, serverless infrastructure, and cloud security on AWS, Azure, and GCP.",
+            "targetTraits": { "Technical": 3, "Organized": 3, "Practical": 2 },
+            "phases": [
+                { "title": "Phase 1: Computer Science Degree", "steps": "Complete B.Tech in CS/IT or BCA/MCA. Build strong command over Linux CLI, Bash scripting, and networking fundamentals." },
+                { "title": "Phase 2: Cloud Certification", "steps": "Earn AWS Certified Solutions Architect or Azure Administrator credentials. Learn Docker, Kubernetes, Terraform, and Jenkins." },
+                { "title": "Phase 3: Industry Role", "steps": "Join IT consulting, SaaS products, or MNC tech hubs as a Junior DevOps Engineer or Site Reliability Engineer (SRE)." }
+            ],
+            "books": ["The Phoenix Project by Gene Kim", "AWS Certified Solutions Architect Official Study Guide by Joe Baron"]
+        }
+    ],
+
+    "ArtMusic": [
+        {
+            "title": "Music Composer & Sound Producer",
+            "icon": "🎧",
+            "desc": "Compose soundscapes, background scores, and songs for Indian OTT series, Bollywood/regional films, gaming, and ad commercials.",
+            "targetTraits": { "Creative": 3, "Auditory": 3, "Expressive": 2 },
+            "phases": [
+                { "title": "Phase 1: Music Training & Foundation", "steps": "Gain formal training in Indian Classical (Hindustani/Carnatic) or Western Music (Trinity/ABRSM). Learn piano or guitar." },
+                { "title": "Phase 2: Digital Music Production", "steps": "Diploma/Degree in Sound Engineering from Whistling Woods, FTII Pune, or KM Music Conservatory. Master Logic Pro X, Ableton Live, and mixing." },
+                { "title": "Phase 3: Industry Portfolio", "steps": "Compose for indie short films, jingles, and indie artist collaborations. Pitch portfolios to directors and record labels in Mumbai/Chennai." }
+            ],
+            "books": ["Musicophilia by Oliver Sacks", "The Music Producer's Handbook by Bobby Owsinski"]
+        },
+        {
+            "title": "Graphic Designer & Visual Artist",
+            "icon": "🖼️",
+            "desc": "Design visual branding, advertising campaigns, and digital art for leading Indian creative agencies and global brands.",
+            "targetTraits": { "Creative": 3, "Visual": 3, "Expressive": 2 },
+            "phases": [
+                { "title": "Phase 1: Fine Arts / Design Degree", "steps": "Clear NIFT / NID entrance exams or B.FA (Bachelor of Fine Arts) from Sir J.J. School of Art or College of Art, Delhi." },
+                { "title": "Phase 2: Software Mastery & Style", "steps": "Master Adobe Creative Suite (Photoshop, Illustrator, InDesign). Develop a distinct visual storytelling style and Behance portfolio." },
+                { "title": "Phase 3: Agency / Freelance Entry", "steps": "Work with creative agencies like Ogilvy India, Dentsu, or start your own visual design boutique." }
+            ],
+            "books": ["Designing Brand Identity by Alina Wheeler", "Grid Systems in Graphic Design by Josef Müller-Brockmann"]
+        },
+        {
+            "title": "Filmmaker & Video Director",
+            "icon": "🎬",
+            "desc": "Direct visual stories, web series, ad films, and documentaries for the expanding Indian digital and film ecosystem.",
+            "targetTraits": { "Creative": 3, "Communication": 3, "Leadership": 2 },
+            "phases": [
+                { "title": "Phase 1: Entrance & Media School", "steps": "Clear FTII Jet Exam (Film and Television Institute of India, Pune) or SRFTI Kolkata for Direction and Screenwriting." },
+                { "title": "Phase 2: Short Films & Assisting", "steps": "Write and direct independent short films for film festivals. Work as an Assistant Director (AD) under established Indian directors." },
+                { "title": "Phase 3: Debut Feature / Web Series", "steps": "Pitch web series bibles or feature scripts to OTT platforms (Netflix India, Amazon Prime, SonyLIV) and production houses." }
+            ],
+            "books": ["Making Movies by Sidney Lumet", "In the Blink of an Eye by Walter Murch"]
+        },
+        {
+            "title": "3D Animator & Game Artist",
+            "icon": "🎮",
+            "desc": "Create 3D character models, visual effects (VFX), and game environments for top Indian VFX studios and international titles.",
+            "targetTraits": { "Creative": 3, "Technical": 2, "Visual": 3 },
+            "phases": [
+                { "title": "Phase 1: Animation Diploma/Degree", "steps": "Pursue B.Sc in Animation & VFX or B.Des from institutes like MAAC, Arena, or NID." },
+                { "title": "Phase 2: Tool Specialization", "steps": "Learn Blender, Maya, ZBrush, and Unreal Engine 5. Build a high-quality 3D showreel demonstrating lighting, rigging, or modeling." },
+                { "title": "Phase 3: Studio Placement", "steps": "Join premier Indian VFX/Animation studios like Redchillies.vfx, Technicolor India, or gaming studios like Ubisoft India." }
+            ],
+            "books": ["The Animator's Survival Kit by Richard Williams", "Creating 3D Game Art for the Real-Time Engine by Luke Ahearn"]
+        },
+        {
+            "title": "Interior & Space Designer",
+            "icon": "🏛️",
+            "desc": "Transform residential spaces, corporate offices, and luxury retail stores across urban India into functional artistic experiences.",
+            "targetTraits": { "Creative": 3, "Organized": 2, "Visual": 3 },
+            "phases": [
+                { "title": "Phase 1: Design Degree", "steps": "Clear NATA / CEED / NID entrance exams for B.Des Interior Design or B.Arch." },
+                { "title": "Phase 2: CAD & 3D Rendering", "steps": "Learn AutoCAD, SketchUp, 3ds Max, and material sourcing in the local Indian market. Complete site execution internships." },
+                { "title": "Phase 3: Practice or Studio", "steps": "Work with reputed architectural firms or launch an independent Interior Design studio catering to residential and commercial clients." }
+            ],
+            "books": ["Interior Design Illustrated by Francis D. K. Ching", "The Interior Design Handbook by Frida Ramstedt"]
+        },
+        {
+            "title": "Classical / Contemporary Vocalist & Educator",
+            "icon": "🎤",
+            "desc": "Perform, record, and mentor the next generation of vocal talent across Indian classical, fusion, and commercial genres.",
+            "targetTraits": { "Expressive": 3, "Auditory": 3, "Dedicated": 3 },
+            "phases": [
+                { "title": "Phase 1: Classical Guru-Shishya / Academic", "steps": "Undergo rigorous training in Hindustani/Carnatic vocal traditions or complete Sangeet Visharad / M.A. Music." },
+                { "title": "Phase 2: Recordings & Live Stage", "steps": "Collaborate on fusion tracks, perform at classical Sangeet Sammelans, and build a digital YouTube/Spotify presence." },
+                { "title": "Phase 3: Concerts & Vocal Coaching", "steps": "Establish a personal vocal academy, tour internationally, and record playback for regional/commercial projects." }
+            ],
+            "books": ["Ragas and Beyond by Ashok Da. Ranade", "The Voice Book by Michael McCallion"]
+        }
+    ],
+
+    "Healthcare": [
+        {
+            "title": "Medical Specialist (MD / MS Doctor)",
+            "icon": "🩺",
+            "desc": "Diagnose complex illnesses, perform surgeries, and provide primary healthcare in leading Indian government and private hospitals.",
+            "targetTraits": { "Technical": 3, "Empathy": 3, "Dedicated": 3 },
+            "phases": [
+                { "title": "Phase 1: NEET-UG & MBBS", "steps": "Complete 10+2 with PCB (Physics, Chemistry, Biology). Crack NEET-UG to secure an MBBS seat in AIIMS, JIPMER, or state medical colleges." },
+                { "title": "Phase 2: Internship & Specialization", "steps": "Complete 1-year compulsory rotatory internship. Crack NEET-PG or INI-CET to pursue MD/MS in Clinical branches." },
+                { "title": "Phase 3: Clinical Practice", "steps": "Join premier hospitals like Apollo, Fortis, Max, or state civil hospitals; or pursue DM/MCh super-specialization." }
+            ],
+            "books": ["Bailey & Love's Short Practice of Surgery", "BD Chaurasia's Human Anatomy"]
+        },
+        {
+            "title": "Clinical Psychologist / Psychotherapist",
+            "icon": "🧠",
+            "desc": "Provide therapy, mental health assessment, and counseling across schools, hospitals, and private clinics in India.",
+            "targetTraits": { "Empathy": 3, "Psychology": 3, "Communication": 3 },
+            "phases": [
+                { "title": "Phase 1: Undergraduate Studies", "steps": "Complete 10+2 in any stream. Pursue B.A. or B.Sc in Psychology from DU, Christ University, or state universities." },
+                { "title": "Phase 2: Post-Graduation & M.Phil", "steps": "Complete M.A./M.Sc in Clinical Psychology followed by RCI-recognized M.Phil in Clinical Psychology from NIMHANS or CIP Ranchi." },
+                { "title": "Phase 3: RCI License & Practice", "steps": "Register with the Rehabilitation Council of India (RCI) as a licensed Clinical Psychologist and start hospital consultancy or private practice." }
+            ],
+            "books": ["Thinking, Fast and Slow by Daniel Kahneman", "Man's Search for Meaning by Viktor E. Frankl"]
+        },
+        {
+            "title": "Biotechnologist & Medical Researcher",
+            "icon": "🔬",
+            "desc": "Develop new vaccines, biopharmaceuticals, and genetic therapies within India's growing bio-economy and research institutes.",
+            "targetTraits": { "Analytical": 3, "Technical": 3, "Logical": 2 },
+            "phases": [
+                { "title": "Phase 1: B.Tech / B.Sc Biotechnology", "steps": "Pass 10+2 PCB/PCM. Clear entrance exams for B.Tech/B.Sc Biotechnology at IITs, VIT, or Central Universities." },
+                { "title": "Phase 2: Entrance for Research", "steps": "Clear GATE, GAT-B, or CSIR-NET. Complete M.Tech / M.Sc Biotechnology or Integrated Ph.D." },
+                { "title": "Phase 3: R&D Industry Entry", "steps": "Work as an R&D Scientist in pharmaceutical giants like Biocon, Serum Institute of India, Bharat Biotech, or ICMR laboratories." }
+            ],
+            "books": ["Molecular Biology of the Cell by Bruce Alberts", "Biotechnology by U. Satyanarayana"]
+        },
+        {
+            "title": "Physiotherapist (BPT / MPT)",
+            "icon": "🦴",
+            "desc": "Help patients recover from sports injuries, neurological trauma, and post-surgery mobility challenges.",
+            "targetTraits": { "Practical": 3, "Empathy": 3, "Dedicated": 2 },
+            "phases": [
+                { "title": "Phase 1: BPT Admission", "steps": "Complete 10+2 with PCB. Secure admission to Bachelor of Physiotherapy (BPT) via state medical entrance exams or NEET." },
+                { "title": "Phase 2: Clinical Internship & MPT", "steps": "Complete 4.5 years of study including a 6-month hospital internship. Specialize in Orthopedics, Sports, or Neurology via MPT." },
+                { "title": "Phase 3: Practice & Sports Teams", "steps": "Work with Indian sports teams, rehabilitation centers, multi-specialty hospitals, or open an independent clinic." }
+            ],
+            "books": ["Physical Rehabilitation by Susan B. O'Sullivan", "Joint Structure and Function by Pamela K. Levangie"]
+        },
+        {
+            "title": "Healthcare / Hospital Administrator",
+            "icon": "🏥",
+            "desc": "Manage multi-specialty hospital operations, medical ethics, staff logistics, and quality compliance across Indian healthcare networks.",
+            "targetTraits": { "Organized": 3, "Leadership": 3, "Logical": 2 },
+            "phases": [
+                { "title": "Phase 1: Bachelor's Degree", "steps": "Earn a degree in Life Sciences, MBBS, BDS, Nursing, or BBA from a recognized Indian university." },
+                { "title": "Phase 2: MHA / MBA Healthcare", "steps": "Clear CAT / CMAT / TISSNET. Pursue Master of Hospital Administration (MHA) or MBA in Healthcare Management from TISS, AIIMS, or top B-schools." },
+                { "title": "Phase 3: Management Career", "steps": "Join hospital management cadres at Apollo, Fortis, Manipal Hospitals, or medical insurance companies." }
+            ],
+            "books": ["Hospital Administration and Management by C.M. Francis", "High Output Management by Andrew S. Grove"]
+        },
+        {
+            "title": "Pharmacist & Drug Inspector",
+            "icon": "💊",
+            "desc": "Formulate life-saving drugs, oversee pharmacy operations, and enforce drug safety regulations under state and central agencies.",
+            "targetTraits": { "Organized": 3, "Analytical": 2, "Practical": 3 },
+            "phases": [
+                { "title": "Phase 1: B.Pharm Admission", "steps": "Complete Class 12 with PCM/PCB. Pass GPAT or State CET for Bachelor of Pharmacy (B.Pharm)." },
+                { "title": "Phase 2: Registration & Master's", "steps": "Register with the State Pharmacy Council. Optionally clear GPAT for M.Pharm in Pharmaceutics or Pharmacology." },
+                { "title": "Phase 3: Corporate or Govt Exam", "steps": "Join QA/QC in Sun Pharma/Cipla or crack State Public Service Commission exams for Drug Inspector roles." }
+            ],
+            "books": ["Remington: The Science and Practice of Pharmacy", "Pharmacological Basis of Therapeutics by Goodman & Gilman"]
+        }
+    ],
+
+    "GovServices": [
+        {
+            "title": "Civil Servant (IAS / IPS / IFS)",
+            "icon": "🇮🇳",
+            "desc": "Formulate national policies, maintain law and order, and lead district governance as part of India's premier administrative services.",
+            "targetTraits": { "Leadership": 3, "Analytical": 3, "Dedicated": 3 },
+            "phases": [
+                { "title": "Phase 1: Graduation Stream", "steps": "Complete a Bachelor's degree in any discipline (Humanities, Engineering, Medicine, Science) from a recognized university." },
+                { "title": "Phase 2: UPSC CSE Preparation", "steps": "Dedicate 1-2 years to mastering General Studies, CSAT, and an Optional Subject. Clear UPSC CSE Prelims, Mains, and Personality Test." },
+                { "title": "Phase 3: LBSNAA Training & Cadetship", "steps": "Undergo foundational training at LBSNAA Mussoorie (or SVPNPA Hyderabad for IPS) before getting posted as Assistant Collector/SDM." }
+            ],
+            "books": ["Indian Polity by M. Laxmikanth", "India's Struggle for Independence by Bipan Chandra"]
+        },
+        {
+            "title": "Defense Officer (Army / Navy / Air Force)",
+            "icon": "🎖️",
+            "desc": "Command armed units, strategic operations, and defend the sovereignty and security of the Indian republic.",
+            "targetTraits": { "Leadership": 3, "Dedicated": 3, "Practical": 3 },
+            "phases": [
+                { "title": "Phase 1: Written Entrance", "steps": "Appear for NDA exam after 10+2 (PCM for Air Force/Navy) or CDS exam after Graduation conducted by UPSC." },
+                { "title": "Phase 2: SSB Interview & Medicals", "steps": "Clear the 5-day Service Selection Board (SSB) interview evaluating officer-like qualities (OLQs) and physical standards." },
+                { "title": "Phase 3: Military Academy Training", "steps": "Complete 3-4 years training at NDA Khadakwasla, IMA Dehradun, INA Ezhimala, or AFA Dundigal to be commissioned as Lieutenant/Flying Officer." }
+            ],
+            "books": ["SSB Interview: The Complete Guide by Dr. N.K. Natarajan", "The Brave: Param Vir Chakra Stories by Rachna Bisht Rawat"]
+        },
+        {
+            "title": "PSU Engineering Executive (via GATE)",
+            "icon": "⚙️",
+            "desc": "Manage power grids, oil refineries, space programs, and heavy engineering infrastructure in India's top Navratna/Maharatna companies.",
+            "targetTraits": { "Technical": 3, "Organized": 3, "Logical": 2 },
+            "phases": [
+                { "title": "Phase 1: Engineering Degree", "steps": "Earn a B.Tech/B.E. in Mechanical, Electrical, Civil, CS, or Chemical Engineering from an AICTE-approved college." },
+                { "title": "Phase 2: GATE Examination", "steps": "Score an All India Rank (AIR) under 300 in the Graduate Aptitude Test in Engineering (GATE) during final year/after." },
+                { "title": "Phase 3: PSU Executive Trainee", "steps": "Clear interview rounds for Maharatnas like ONGC, IOCL, NTPC, BHEL, ISRO, or DRDO as Assistant Executive Engineer." }
+            ],
+            "books": ["GATE Engineering Mathematics by MADE EASY Editorial Board", "Objective Type Questions in Engineering by R.K. Jain"]
+        },
+        {
+            "title": "Urban Planner & Public Policy Analyst",
+            "icon": "🏙️",
+            "desc": "Design smart cities, sustainable transport networks, and public welfare schemes for state and central government NITI Aayog initiatives.",
+            "targetTraits": { "Analytical": 3, "ProblemSolving": 3, "Organized": 2 },
+            "phases": [
+                { "title": "Phase 1: B.Plan / B.Arch / B.A. Economics", "steps": "Pursue Bachelor of Planning (B.Plan) via JEE Main Paper 2 or B.A. Economics/Political Science." },
+                { "title": "Phase 2: Master's in Policy / Planning", "steps": "Earn M.Plan from SPA Delhi/ISET or M.A. Public Policy from NLSIU Bangalore, TISS, or ISPP." },
+                { "title": "Phase 3: Policy / Urban Body Placement", "steps": "Work with NITI Aayog, Smart City Mission consultancies, World Bank India, or Municipal Corporations." }
+            ],
+            "books": ["Urbanization in India by K.C. Sivaramakrishnan", "Public Policy in India by Rajesh Chakrabarti"]
+        },
+        {
+            "title": "Diplomat / Foreign Service Officer (IFS)",
+            "icon": "🌐",
+            "desc": "Represent India in international summits, manage bilateral treaties, and safeguard Indian diaspora interests worldwide.",
+            "targetTraits": { "Communication": 3, "Analytical": 3, "Leadership": 2 },
+            "phases": [
+                { "title": "Phase 1: Graduation Degree", "steps": "Graduate in International Relations, History, Law, or any subject with a deep command over English and General Studies." },
+                { "title": "Phase 2: UPSC CSE High Rank", "steps": "Secure a top rank (usually Top 100 AIR) in the UPSC Civil Services Examination opting for IFS." },
+                { "title": "Phase 3: Foreign Service Institute (FSI)", "steps": "Complete diplomatic training at Sushma Swaraj Institute of Foreign Service, Delhi, and master a compulsory foreign language." }
+            ],
+            "books": ["The India Way: Strategies for an Uncertain World by S. Jaishankar", "Pax Indica by Shashi Tharoor"]
+        },
+        {
+            "title": "State Public Service Officer (State PSC / Tehsildar)",
+            "icon": "📜",
+            "desc": "Manage revenue administration, rural development, and state welfare distribution at block and sub-divisional levels.",
+            "targetTraits": { "Organized": 3, "Practical": 3, "Leadership": 2 },
+            "phases": [
+                { "title": "Phase 1: Bachelor's Degree", "steps": "Complete graduation in any stream from a recognized university." },
+                { "title": "Phase 2: State PSC Examination", "steps": "Appear for State PSC exams (e.g., MPSC, UPPSC, BPSC, KPSC, RAS). Clear Prelims, Mains, and Interview." },
+                { "title": "Phase 3: Administrative Cadre", "steps": "Get appointed as Deputy Collector, Block Development Officer (BDO), or Commercial Tax Officer in state administration." }
+            ],
+            "books": ["State Specific General Knowledge Manuals (Arihant/Pearson)", "Indian Economy by Ramesh Singh"]
+        }
+    ],
+
+    "Entrepreneurship": [
+        {
+            "title": "Tech Startup Founder (D2C / B2B SaaS)",
+            "icon": "🚀",
+            "desc": "Build scalable technology products solving unique problems for India's 1.4 billion population or global SaaS buyers.",
+            "targetTraits": { "RiskTaking": 3, "Leadership": 3, "ProblemSolving": 3 },
+            "phases": [
+                { "title": "Phase 1: Technical / Business Degree", "steps": "Pursue B.Tech from IITs/NITs or BBA/IPMAT. Build network through E-Cells and hackathons." },
+                { "title": "Phase 2: MVP & Seed Incubation", "steps": "Develop a Minimum Viable Product (MVP). Register under Startup India scheme and pitch to incubators (CIIE IIMA, NSRCEL IIMB)." },
+                { "title": "Phase 3: Venture Capital & Scale", "steps": "Pitch to Indian angel networks (IAN, Surge, Blume Ventures) for Seed/Series A rounds and scale operations." }
+            ],
+            "books": ["The High-Performance Entrepreneur by Subroto Bagchi", "Doglapan by Ashneer Grover"]
+        },
+        {
+            "title": "D2C E-Commerce Brand Creator",
+            "icon": "🛍️",
+            "desc": "Launch, market, and scale consumer lifestyle, beauty, or food brands directly to online consumers across tier 1-3 India.",
+            "targetTraits": { "Creative": 3, "Communication": 3, "Practical": 2 },
+            "phases": [
+                { "title": "Phase 1: Market Research & Supply Chain", "steps": "Identify niche consumer needs. Source manufacturing partners in Indian industrial hubs (Gujarat, Tirupur, NCR)." },
+                { "title": "Phase 2: Digital Marketing & Storefront", "steps": "Build Shopify store, run performance marketing (Meta/Google Ads), and leverage influencer campaigns." },
+                { "title": "Phase 3: Marketplace & Omnichannel", "steps": "Expand brand presence on Amazon India, Flipkart, Blinkit, and retail store chains." }
+            ],
+            "books": ["Building a StoryBrand by Donald Miller", "Shoe Dog by Phil Knight"]
+        },
+        {
+            "title": "Agri-Tech & Rural Innovator",
+            "icon": "🌾",
+            "desc": "Modernize Indian agriculture with IoT sensors, drone spraying, supply chain logistics, and direct farm-to-fork platforms.",
+            "targetTraits": { "ProblemSolving": 3, "Nature": 3, "Practical": 3 },
+            "phases": [
+                { "title": "Phase 1: B.Sc Agriculture / B.Tech", "steps": "Earn B.Sc Agriculture from ICAR institutes or B.Tech in Agricultural Engineering." },
+                { "title": "Phase 2: Ground Validation & NABARD Grants", "steps": "Spend months in rural mandis and farms. Apply for NABARD and Ministry of Agriculture innovation grants." },
+                { "title": "Phase 3: FPO & Supply Chain Integration", "steps": "Partner with Farmer Producer Organizations (FPOs) and institutional buyers to build sustainable rural distribution networks." }
+            ],
+            "books": ["The Lean Startup by Eric Ries", "Banker to the Poor by Muhammad Yunus"]
+        },
+        {
+            "title": "Venture Capital Analyst & Angel Investor",
+            "icon": "💼",
+            "desc": "Evaluate disruptive startups, conduct financial due diligence, and fund high-potential Indian entrepreneurs.",
+            "targetTraits": { "Analytical": 3, "Logical": 3, "Leadership": 2 },
+            "phases": [
+                { "title": "Phase 1: Top Tier Degree", "steps": "Graduate from IITs, SRCC, or earn a B.Com/B.Tech followed by CFA or CA credentials." },
+                { "title": "Phase 2: MBA & IB/Consulting Experience", "steps": "Crack CAT for IIMs/ISB. Work 2-3 years in Investment Banking or Management Consulting (McKinsey/Bain)." },
+                { "title": "Phase 3: VC Fund Associate", "steps": "Join VC firms (Sequoia/Peak XV, Accel India, Elevation Capital) analyzing deal flows and term sheets." }
+            ],
+            "books": ["Venture Deals by Brad Feld and Jason Mendelson", "Zero to One by Peter Thiel"]
+        },
+        {
+            "title": "Social Entrepreneur & NGO Founder",
+            "icon": "🤝",
+            "desc": "Solve grassroots challenges in education, sanitation, and women empowerment through self-sustaining business models.",
+            "targetTraits": { "Empathy": 3, "Leadership": 3, "Social": 3 },
+            "phases": [
+                { "title": "Phase 1: Social Work / Development Degree", "steps": "Pursue B.A./M.A. in Social Work (BSW/MSW) from TISS Mumbai or Azim Premji University." },
+                { "title": "Phase 2: Fellowship & Pilot Project", "steps": "Complete Teach for India or Gandhi Fellowship. Pilot a sustainable, low-cost social impact project." },
+                { "title": "Phase 3: CSR Funding & FCRA", "steps": "Register Section 8 company/NGO, secure Indian corporate CSR grants, and obtain FCRA certification for international support." }
+            ],
+            "books": ["Half the Sky by Nicholas Kristof & Sheryl WuDunn", "To Change the World by Michael Woolcock"]
+        },
+        {
+            "title": "Franchise & Retail Business Owner",
+            "icon": "🏬",
+            "desc": "Build multi-outlet retail chains, QSR food joints, and fitness centers across growing tier-2 Indian cities.",
+            "targetTraits": { "Organized": 3, "Practical": 3, "Leadership": 2 },
+            "phases": [
+                { "title": "Phase 1: BBA / Commerce Foundation", "steps": "Complete B.Com or BBA with a focus on working capital management and retail operations." },
+                { "title": "Phase 2: Master Franchise Rights", "steps": "Identify proven national QSR/retail brands. Negotiate master franchise agreements and site leases." },
+                { "title": "Phase 3: Multi-Unit Expansion", "steps": "Optimize inventory turnover, train floor staff, and reinvest profits into opening multiple regional stores." }
+            ],
+            "books": ["The E-Myth Revisited by Michael E. Gerber", "Retail Management by Swapna Pradhan"]
+        }
+    ],
+
+    "Law": [
+        {
+            "title": "Corporate Law Associate",
+            "icon": "⚖️",
+            "desc": "Advise multinational companies, PE funds, and startups on cross-border M&A, contracts, and SEBI compliance.",
+            "targetTraits": { "Analytical": 3, "Logical": 3, "Organized": 2 },
+            "phases": [
+                { "title": "Phase 1: CLAT & NLU Degree", "steps": "Crack CLAT or AILET exam after Class 12 to secure a seat in top NLUs (NLSIU Bangalore, NALSAR, WBNUJS) for 5-year B.A. LL.B." },
+                { "title": "Phase 2: Law Firm Internships", "steps": "Build strong academic record, participate in moot courts, and complete internships at Tier-1 law firms (AZB, SAM, CAM, Trilegal)." },
+                { "title": "Phase 3: Campus Placement & AIBE", "steps": "Clear All India Bar Examination (AIBE) and join Tier-1/2 corporate law firms as a Junior Associate." }
+            ],
+            "books": ["Introduction to the Constitution of India by D.D. Basu", "Working a Democratic Constitution by Granville Austin"]
+        },
+        {
+            "title": "Litigation Advocate (District / High Court / Supreme Court)",
+            "icon": "🏛️",
+            "desc": "Argue civil and criminal cases directly in courtrooms, defending constitutional rights and client justice.",
+            "targetTraits": { "Communication": 3, "Logical": 3, "Leadership": 2 },
+            "phases": [
+                { "title": "Phase 1: LL.B Degree", "steps": "Complete 5-year integrated LL.B or 3-year LL.B after graduation from a Bar Council of India (BCI) recognized university." },
+                { "title": "Phase 2: Bar Enrollment & Junior Practice", "steps": "Enroll with the State Bar Council, pass AIBE, and join the chambers of a Senior Advocate at High Court or Supreme Court." },
+                { "title": "Phase 3: Independent Practice", "steps": "Develop a specialized practice area (Criminal, Tax, Constitutional Law) and build an independent client base." }
+            ],
+            "books": ["Before Memory Fades by Fali S. Nariman", "Legal Eagles by Indu Bhan"]
+        },
+        {
+            "title": "Judicial Officer (Civil Judge / PCS-J)",
+            "icon": "👩‍⚖️",
+            "desc": "Preside over court trials, interpret statutes, and deliver binding judgments in Indian district judiciary courts.",
+            "targetTraits": { "Logical": 3, "Analytical": 3, "Organized": 3 },
+            "phases": [
+                { "title": "Phase 1: Law Graduation", "steps": "Earn LL.B degree with a deep understanding of IPC/BNS, CrPC/BNSS, Evidence Act, and Code of Civil Procedure." },
+                { "title": "Phase 2: Judicial Services Exam (PCS-J)", "steps": "Prepare for State Judicial Services Examination. Clear Prelims, Mains (judgment writing), and Viva-Voce." },
+                { "title": "Phase 3: Judicial Academy Training", "steps": "Complete 1-year residential training at the State Judicial Academy and get posted as Civil Judge Junior Division / Judicial Magistrate." }
+            ],
+            "books": ["Landmark Judgments That Changed India by Ashok Desai", "Courts and Their Judgments by Arun Shourie"]
+        },
+        {
+            "title": "Cyber & Intellectual Property (IP) Lawyer",
+            "icon": "🔒",
+            "desc": "Protect software patents, trademarks, copyrights, and defend digital privacy disputes in specialized IP forums and tribunals.",
+            "targetTraits": { "Technical": 3, "Analytical": 3, "Logical": 2 },
+            "phases": [
+                { "title": "Phase 1: Science/Engineering + Law", "steps": "Complete B.Tech/B.Sc followed by LL.B, or 5-year B.Tech LL.B (Intellectual Property Rights) specialized degree." },
+                { "title": "Phase 2: Patent Agent Exam", "steps": "Clear the Indian Patent Agent Examination conducted by CGPDTM to become a registered Patent Agent." },
+                { "title": "Phase 3: IP Boutique / Tech Firm", "steps": "Work with IP law boutiques (Anand and Anand, Remfry & Sagar) or tech MNCs protecting patents and trademark portfolios." }
+            ],
+            "books": ["Law Relating to Intellectual Property by Dr. B.L. Wadehra", "Cyber Law in India by Farooq Ahmad"]
+        },
+        {
+            "title": "Public Prosecutor / Government Standing Counsel",
+            "icon": "⚖️",
+            "desc": "Represent state and central government departments in prosecuting criminal offenses and defending government policies.",
+            "targetTraits": { "Dedicated": 3, "Communication": 3, "Logical": 2 },
+            "phases": [
+                { "title": "Phase 1: Law Degree & Active Practice", "steps": "Obtain LL.B degree and complete minimum 3 to 7 years of active litigation practice in criminal courts." },
+                { "title": "Phase 2: Assistant Public Prosecutor (APP) Exam", "steps": "Appear for State Public Service Commission APP / Director of Prosecution recruitment examinations." },
+                { "title": "Phase 3: State Prosecution Officer", "steps": "Serve as State Prosecutor in Magistrate/Sessions courts, conducting criminal trials on behalf of the police and state." }
+            ],
+            "books": ["Criminal Procedure Code by R.V. Kelkar", "Law of Evidence by Batuk Lal"]
+        },
+        {
+            "title": "Arbitrator & Alternative Dispute Resolution Specialist",
+            "icon": "🤝",
+            "desc": "Resolve high-value commercial and infrastructure disputes out of court through international and domestic arbitration.",
+            "targetTraits": { "Communication": 3, "ProblemSolving": 3, "Organized": 2 },
+            "phases": [
+                { "title": "Phase 1: Law Degree & Commercial Focus", "steps": "Graduate in Law and build expertise in Arbitration and Conciliation Act, 1996 and commercial contracts." },
+                { "title": "Phase 2: LL.M / Accreditation", "steps": "Pursue an LL.M in ADR/Commercial Law and earn accreditation from CIArb (Chartered Institute of Arbitrators) or MCIA." },
+                { "title": "Phase 3: Institutional Arbitration", "steps": "Represent clients at Singapore International Arbitration Centre (SIAC) or Mumbai Centre for International Arbitration (MCIA)." }
+            ],
+            "books": ["Law of Arbitration and Conciliation by O.P. Malhotra", "International Commercial Arbitration by Gary Born"]
+        }
+    ]
+};
+
+// =====================================================================
+// 3. RANDOM QUESTION SHUFFLER ROUTE (5 Random Questions Out of 25)
+// =====================================================================
 app.get('/api/questions', (req, res) => {
     const requestedInterest = req.query.interest; 
     
@@ -210,105 +645,58 @@ app.get('/api/questions', (req, res) => {
     // Shuffle the pool randomly
     const shuffledPool = [...pool].sort(() => 0.5 - Math.random());
     
-    // Slice off 5 questions for the UI
+    // Slice off 5 questions for the UI session
     const selectedQuestions = shuffledPool.slice(0, 5);
     
     res.json(selectedQuestions);
 });
 
-// ---------------------------------------------------------------------
-// 3. AI MATCHING QUEUE ENGINE & ROUTE HANDLER
-// ---------------------------------------------------------------------
-const requestQueue = [];
-let isProcessingQueue = false;
-
-async function processQueue() {
-    if (isProcessingQueue || requestQueue.length === 0) return;
-    isProcessingQueue = true;
-
-    // Pull the next request from the queue
-    const { req, res } = requestQueue.shift();
-
+// =====================================================================
+// 4. RULE-BASED MATCHING ENGINE (INSTANT - NO AI DEPENDENCY)
+// =====================================================================
+app.post('/api/calculate-result', (req, res) => {
     try {
-        const { userTraits, interest, studentInput } = req.body;
+        const { userTraits, interest } = req.body;
 
-        const prompt = `
-            You are an expert career counselor for high school and college students. 
-            A student is deeply interested in the broad category of: ${interest}.
-            They completed a behavioral assessment and demonstrated these dominant traits: ${JSON.stringify(userTraits)}.
-            They also provided this personal context about their goals/hobbies: "${studentInput}".
-            
-            Analyze their psychological traits alongside their personal context. Recommend 4 highly specific, modern career paths tailored exactly to them. 
-            
-            Return the output strictly as a JSON array of 4 career objects using this schema:
-            [
-              {
-                "title": "String (Name of career)",
-                "icon": "Emoji",
-                "desc": "String (A short encouraging summary of why it fits them)",
-                "phases": [
-                  { "title": "Phase 1: Foundation", "steps": "String (Specific actionable steps)" },
-                  { "title": "Phase 2: Skill Building", "steps": "String" },
-                  { "title": "Phase 3: Career Entry", "steps": "String" }
-                ],
-                "books": ["String (Book title by Author)", "String"]
-              }
-            ]
-        `;
+        // Get available careers for selected domain
+        const candidateCareers = careersDB[interest] || careersDB["TechAI"];
 
-        // Make API request to NVIDIA Nemotron (or fallback OpenAI model)
-        const response = await ai.chat.completions.create({
-            model: process.env.NEMOTRON_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b:free',
-            messages: [
-                {
-                    role: 'system',
-                    content: 'You are a career counseling assistant that only responds in valid JSON arrays.'
-                },
-                {
-                    role: 'user',
-                    content: prompt
+        // Compute match score for each career against user's aggregated traits
+        const scoredCareers = candidateCareers.map(career => {
+            let score = 0;
+            const targetTraits = career.targetTraits;
+
+            for (const [trait, targetValue] of Object.entries(targetTraits)) {
+                if (userTraits && userTraits[trait]) {
+                    score += userTraits[trait] * targetValue;
                 }
-            ],
-            response_format: { type: "json_object" }
+            }
+
+            // Slight random tie-breaker so retakes with subtle variations feel fresh
+            const noise = Math.random() * 0.5;
+
+            return {
+                ...career,
+                finalScore: score + noise
+            };
         });
 
-        const rawContent = response.choices[0]?.message?.content;
+        // Sort descending by score
+        scoredCareers.sort((a, b) => b.finalScore - a.finalScore);
 
-        if (!rawContent) {
-            return res.status(400).json({ error: "The API returned an empty response. Please try again." });
-        }
+        // Pick top 4 best matches
+        const topMatches = scoredCareers.slice(0, 4).map(({ finalScore, targetTraits, ...rest }) => rest);
 
-        // Clean out markdown wrappers if present and parse
-        const cleanJsonText = rawContent.replace(/```json|```/g, '').trim();
-        let finalRoadmap = JSON.parse(cleanJsonText);
-
-        // Extract array if wrapped in an object
-        if (!Array.isArray(finalRoadmap) && typeof finalRoadmap === 'object') {
-            const possibleArray = Object.values(finalRoadmap).find(val => Array.isArray(val));
-            if (possibleArray) {
-                finalRoadmap = possibleArray;
-            }
-        }
-        
-        res.json(finalRoadmap); 
+        // Instant return
+        res.json(topMatches);
 
     } catch (error) {
-        console.error("AI Queue Error:", error);
-        res.status(500).json({ error: "Failed to generate roadmap. The AI encountered an unexpected issue with the input." });
-    } finally {
-        // Cooldown ensures rate limiting and guarantees queue processing resumes even on error
-        setTimeout(() => {
-            isProcessingQueue = false;
-            processQueue(); 
-        }, 2000); 
+        console.error("Matching Error:", error);
+        res.status(500).json({ error: "Failed to generate roadmap recommendations." });
     }
-}
-
-// Queue route endpoint
-app.post('/api/calculate-result', (req, res) => {
-    requestQueue.push({ req, res });
-    processQueue();
 });
 
 // Start the server
-app.listen(PORT, () => console.log(`AI Matching Engine alive on Port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Find Your Path - Indian Career Compass Server running on Port ${PORT}`);
+});
