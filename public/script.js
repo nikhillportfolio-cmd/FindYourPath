@@ -3,7 +3,7 @@ let questions = [];
 let currentIndex = 0;
 let userInterest = ""; 
 let userTraits = {}; 
-let globalMatches = []; // Store matches globally so we can click them!
+let globalMatches = []; 
 
 // DOM ELEMENTS - MAIN VIEWS
 const landingIntro = document.getElementById("landing-intro");
@@ -15,7 +15,7 @@ const questionText = document.getElementById("question-text");
 const optionsContainer = document.getElementById("options-container");
 const progressBar = document.getElementById("progress-bar");
 
-// DOM ELEMENTS - AI SECTION (NEW)
+// DOM ELEMENTS - AI SECTION
 const aiInputSection = document.getElementById("ai-input-section");
 const studentTextInput = document.getElementById("student-text");
 const generateBtn = document.getElementById("generate-btn");
@@ -65,11 +65,11 @@ async function loadQuestions() {
         questions = await response.json();
         renderQuestion();
     } catch (error) {
-        questionText.innerText = "Error pulling custom question tree. Is server active?";
+        questionText.innerText = "Error pulling custom question tree. Is the server active?";
     }
 }
 
-// 4. RENDER DYNAMIC CARD
+// 4. RENDER DYNAMIC CARD (Updated for Dark Mode UI)
 function renderQuestion() {
     const progress = (currentIndex / questions.length) * 100;
     progressBar.style.width = `${progress}%`;
@@ -81,14 +81,14 @@ function renderQuestion() {
     q.options.forEach((option, index) => {
         const btn = document.createElement("button");
         btn.innerText = option.text;
-        btn.className = `w-full text-left p-5 bg-white border-2 border-indigo-50 rounded-2xl hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-1 font-semibold text-slate-700 hover:text-indigo-700 transition-all duration-300 fade-in`;
+        btn.className = `w-full text-left p-5 glass-card border border-slate-700 rounded-2xl hover:border-sky-400 hover:bg-slate-800 hover:shadow-[0_0_15px_rgba(56,189,248,0.15)] hover:-translate-y-1 font-semibold text-slate-200 hover:text-sky-300 transition-all duration-300 fade-in`;
         btn.style.animationDelay = `${index * 100}ms`; 
         btn.onclick = () => handleAnswer(option.tags);
         optionsContainer.appendChild(btn);
     });
 }
 
-// 5. COMPILE TRAITS & SHOW AI INPUT (UPDATED)
+// 5. COMPILE TRAITS & SHOW AI INPUT
 function handleAnswer(tags) {
     for (const [trait, points] of Object.entries(tags)) {
         userTraits[trait] = (userTraits[trait] || 0) + points;
@@ -100,7 +100,6 @@ function handleAnswer(tags) {
     } else {
         progressBar.style.width = "100%";
         
-        // Instead of fetching results directly, we slide up the AI Input box!
         setTimeout(() => {
             quizSection.classList.add("hidden");
             aiInputSection.classList.remove("hidden");
@@ -109,7 +108,7 @@ function handleAnswer(tags) {
     }
 }
 
-// 6. TRIGGER AI GENERATION (NEW)
+// 6. TRIGGER AI GENERATION
 function triggerAI() {
     const studentInputText = studentTextInput.value.trim();
     if (studentInputText === "") {
@@ -117,15 +116,12 @@ function triggerAI() {
         return;
     }
 
-    // Show loading spinner while AI thinks
     generateBtn.classList.add("hidden");
     loadingSpinner.classList.remove("hidden");
-
-    // Now we fetch the results, passing the student's text
     fetchResults(studentInputText);
 }
 
-// 7. FETCH RESULTS FROM GEMINI (UPDATED WITH ERROR HANDLING)
+// 7. FETCH RESULTS FROM API
 async function fetchResults(studentInputText) {
     try {
         const payload = { 
@@ -140,34 +136,25 @@ async function fetchResults(studentInputText) {
             body: JSON.stringify(payload) 
         });
         
-        // Parse the response body
         const data = await response.json(); 
         
-        // NEW: Check if the server sent an error status (like 500 or 400)
         if (!response.ok) {
             throw new Error(data.error || "The server encountered an issue.");
         }
 
-        // If successful, assign the array and move forward
         globalMatches = data; 
-        
-        // Hide AI section and show Results Grid
         aiInputSection.classList.add("hidden");
         showResultsOverview();
 
     } catch (error) {
         console.error("AI Generation failed:", error);
-        
-        // Show a more specific alert based on the caught error
         alert(`Oops! ${error.message} Please try again.`);
-        
-        // Reset the UI so they can try again
         generateBtn.classList.remove("hidden");
         loadingSpinner.classList.add("hidden");
     }
 }
 
-// 8. RENDER OVERVIEW (GRID OF 4 MATCHES)
+// 8. RENDER OVERVIEW (GRID OF MATCHES - Updated for Dark Mode)
 function showResultsOverview() {
     resultSection.classList.remove("hidden");
     resultSection.classList.add("slide-up");
@@ -178,17 +165,17 @@ function showResultsOverview() {
     globalMatches.forEach((match, index) => {
         const card = document.createElement("button");
         
-        let borderClass = index === 0 ? "border-amber-400 shadow-amber-100" : "border-indigo-50 hover:border-indigo-400";
-        let badgeHTML = index === 0 ? `<div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-extrabold px-3 py-1 rounded-bl-xl shadow-sm">TOP MATCH</div>` : "";
+        let borderClass = index === 0 ? "border-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.2)]" : "border-slate-700 hover:border-indigo-400";
+        let badgeHTML = index === 0 ? `<div class="absolute top-0 right-0 bg-gradient-to-r from-sky-400 to-indigo-500 text-white text-[10px] font-extrabold px-4 py-1 rounded-bl-xl shadow-md tracking-wider">TOP MATCH</div>` : "";
 
-        card.className = `relative w-full text-left p-5 bg-white border-2 rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 fade-in ${borderClass}`;
+        card.className = `relative w-full text-left p-6 glass-card border rounded-2xl hover:bg-slate-800 hover:-translate-y-1 transition-all duration-300 fade-in overflow-hidden ${borderClass}`;
         card.style.animationDelay = `${index * 150}ms`;
         
         card.innerHTML = `
             ${badgeHTML}
-            <div class="text-4xl mb-3">${match.icon}</div>
-            <h3 class="text-xl font-bold text-slate-800 mb-1">${match.title}</h3>
-            <p class="text-xs font-medium text-indigo-500 uppercase tracking-widest mb-2">View Roadmap &rarr;</p>
+            <div class="text-4xl mb-4">${match.icon}</div>
+            <h3 class="text-xl font-bold text-slate-100 mb-2">${match.title}</h3>
+            <p class="text-xs font-bold text-sky-400 uppercase tracking-widest mt-4">View Roadmap &rarr;</p>
         `;
         
         card.onclick = () => showCareerDetails(index);
@@ -196,7 +183,7 @@ function showResultsOverview() {
     });
 }
 
-// 9. RENDER DETAILED VIEW (ROADMAP + BOOKS)
+// 9. RENDER DETAILED VIEW (Updated for Dark Mode)
 function showCareerDetails(index) {
     const match = globalMatches[index];
 
@@ -211,11 +198,11 @@ function showCareerDetails(index) {
     roadmapContainer.innerHTML = ""; 
     match.phases.forEach((phase, i) => {
         const phaseDiv = document.createElement("div");
-        phaseDiv.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-indigo-400 fade-in";
+        phaseDiv.className = "glass-card p-5 rounded-2xl shadow-lg border border-slate-700 border-l-4 border-l-sky-400 fade-in hover:bg-slate-800 transition-colors";
         phaseDiv.style.animationDelay = `${i * 100}ms`;
         phaseDiv.innerHTML = `
-            <h4 class="font-extrabold text-indigo-600 text-base mb-1">${phase.title}</h4>
-            <p class="text-sm font-medium text-slate-600">${phase.steps}</p>
+            <h4 class="font-extrabold text-sky-400 text-base mb-2 tracking-wide">${phase.title}</h4>
+            <p class="text-sm font-medium text-slate-300 leading-relaxed">${phase.steps}</p>
         `;
         roadmapContainer.appendChild(phaseDiv);
     });
@@ -225,11 +212,11 @@ function showCareerDetails(index) {
     if (match.books && match.books.length > 0) {
         match.books.forEach((book, i) => {
             const li = document.createElement("li");
-            li.className = "flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm fade-in";
+            li.className = "flex items-center gap-4 glass-card p-4 rounded-xl border border-slate-700 shadow-sm fade-in hover:border-indigo-400 transition-colors";
             li.style.animationDelay = `${(match.phases.length * 100) + (i * 100)}ms`;
             li.innerHTML = `
-                <div class="text-2xl">📖</div>
-                <span class="font-bold text-slate-700">${book}</span>
+                <div class="text-2xl opacity-80">📖</div>
+                <span class="font-semibold text-slate-200">${book}</span>
             `;
             booksContainer.appendChild(li);
         });
