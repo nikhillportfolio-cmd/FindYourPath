@@ -757,24 +757,80 @@
                     </div>
                 </div>
 
+                <!-- GITHUB-STYLE 30-DAY CONTRIBUTION HEATMAP -->
+                <div class="neu-card p-6 md:p-8 bg-gradient-to-br from-slate-100/90 to-slate-200/50 relative overflow-hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">📊</span>
+                                <h3 class="text-lg font-bold text-slate-800 font-outfit">30-Day Contribution Heatmap</h3>
+                                <span class="neu-badge text-[10px] font-extrabold text-indigo-600 uppercase px-2.5 py-0.5">GitHub Style</span>
+                            </div>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">Interactive visual representation of your daily habit completion intensity</p>
+                        </div>
+                        <div id="heatmap-legend" class="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-500 shrink-0">
+                            <span>Less</span>
+                            <span class="w-3.5 h-3.5 rounded-sm bg-slate-300/60 inline-block neu-trench" title="0% Completed"></span>
+                            <span class="w-3.5 h-3.5 rounded-sm bg-emerald-200 inline-block border border-emerald-300" title="1-25% Completed"></span>
+                            <span class="w-3.5 h-3.5 rounded-sm bg-emerald-400 inline-block border border-emerald-500" title="26-50% Completed"></span>
+                            <span class="w-3.5 h-3.5 rounded-sm bg-emerald-500 inline-block shadow-sm" title="51-75% Completed"></span>
+                            <span class="w-3.5 h-3.5 rounded-sm bg-gradient-to-br from-emerald-500 to-teal-600 inline-block shadow-md" title="76-100% Completed"></span>
+                            <span>More</span>
+                        </div>
+                    </div>
+
+                    <!-- 30-Day Heatmap Grid -->
+                    <div id="heatmap-grid" class="grid grid-cols-6 sm:grid-cols-10 gap-2.5 p-1">
+                        <!-- Dynamic Heatmap Tiles Injected Here -->
+                    </div>
+
+                    <div id="heatmap-detail-banner" class="mt-4 p-3 neu-trench text-center text-xs font-semibold text-slate-600 min-h-[42px] flex items-center justify-center">
+                        Hover or click on any day tile to inspect daily completion details.
+                    </div>
+                </div>
+
                 <!-- HABIT CREATION INPUT SECTION -->
                 <div class="neu-card p-6">
                     <h3 class="text-base font-bold text-slate-800 font-outfit mb-3 flex items-center gap-2">
-                        <span class="text-blue-600">✨</span> Define Your Target Habit
+                        <span class="text-blue-600">✨</span> Define Your Target Habit & Time of Day
                     </h3>
                     <form id="add-habit-form" onsubmit="handleAddHabit(event)" class="flex flex-col sm:flex-row gap-3">
                         <input id="habit-name-input" type="text" placeholder="e.g. Learn React, Workout 30 mins, Drink 3L Water..." 
                             class="neu-input flex-1 px-5 py-3.5 rounded-xl text-slate-700 text-sm font-medium focus:outline-none placeholder-slate-400 bg-[#e0e5ec]" 
                             required />
+                        <select id="habit-time-select" 
+                            class="neu-input px-4 py-3.5 rounded-xl text-slate-700 text-sm font-bold focus:outline-none bg-[#e0e5ec] cursor-pointer shrink-0">
+                            <option value="Morning Routine">🌅 Morning Routine</option>
+                            <option value="Afternoon Focus">☀️ Afternoon Focus</option>
+                            <option value="Evening Wind-down">🌙 Evening Wind-down</option>
+                        </select>
                         <button type="submit" class="neu-btn px-6 py-3.5 font-extrabold text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-2 shrink-0">
                             <span class="text-lg leading-none">+</span> Add Habit
                         </button>
                     </form>
                 </div>
 
+                <!-- CATEGORY FILTER & HABITS SECTION -->
+                <div id="habit-category-nav" class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300/50 pb-3">
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+                        <button type="button" onclick="setCategoryFilter('all')" id="cat-tab-all" class="cat-tab-btn neu-btn px-4 py-2 text-xs font-bold text-blue-600">
+                            ✨ All Routines
+                        </button>
+                        <button type="button" onclick="setCategoryFilter('Morning Routine')" id="cat-tab-morning" class="cat-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600">
+                            🌅 Morning Routine
+                        </button>
+                        <button type="button" onclick="setCategoryFilter('Afternoon Focus')" id="cat-tab-afternoon" class="cat-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600">
+                            ☀️ Afternoon Focus
+                        </button>
+                        <button type="button" onclick="setCategoryFilter('Evening Wind-down')" id="cat-tab-evening" class="cat-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600">
+                            🌙 Evening Wind-down
+                        </button>
+                    </div>
+                </div>
+
                 <!-- HABITS LIST CONTAINER -->
-                <div id="habits-list-container" class="space-y-6">
-                    <!-- Dynamic Habit Cards injected here -->
+                <div id="habits-list-container" class="space-y-8">
+                    <!-- Dynamic Habit Cards grouped by Category injected here -->
                 </div>
 
                 <!-- BLANK SLATE EMPTY STATE -->
@@ -784,7 +840,7 @@
                     </div>
                     <h4 class="text-lg font-bold text-slate-700 font-outfit mb-2">Your Routine Tracker is Blank</h4>
                     <p class="text-xs text-slate-500 font-medium max-w-md">
-                        Start defining the habits you want to track above. Complete your 30-day grid daily to unlock growth analytics and fire streaks!
+                        Start defining habits in Morning Routine, Afternoon Focus, or Evening Wind-down above. Complete your 30-day grid daily to unlock GitHub heatmap analytics and fire streaks!
                     </p>
                 </div>
 
