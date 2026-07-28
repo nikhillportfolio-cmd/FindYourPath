@@ -4,33 +4,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Your Path - Modern Student Edition</title>
+    <title>Find Your Path - Premium Career Compass</title>
+    <!-- Google Fonts: Outfit (Headings) & Inter (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        neu: {
+                            base: '#e0e5ec',
+                            dark: '#1e293b',
+                            text: '#334155',
+                            muted: '#64748b',
+                            accent: '#2563eb',
+                            sky: '#0284c7',
+                            indigo: '#4f46e5'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            background: #0f172a;
-            color: #f8fafc;
-            font-family: 'Inter', sans-serif;
+        :root {
+            --bg-color: #e0e5ec;
+            --shadow-light: #ffffff;
+            --shadow-dark: #b8bec7;
+            --shadow-dark-deep: #a3abb7;
         }
 
-        /* Modern Gradients & Glassmorphism */
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        body {
+            background-color: var(--bg-color);
+            color: #334155;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* -------------------------------------------------------------
+           NEUMORPHIC DESIGN SYSTEM (LIGHT THEME)
+        ------------------------------------------------------------- */
+        .neu-card {
+            background: #e0e5ec;
+            border-radius: 1.5rem;
+            box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .neu-card-sm {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .neu-btn {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .neu-btn:hover {
+            box-shadow: 8px 8px 16px var(--shadow-dark-deep), -8px -8px 16px var(--shadow-light);
+            transform: translateY(-2px);
+        }
+
+        .neu-btn:active, .neu-btn.pressed {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(0);
+        }
+
+        .neu-trench {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+
+        .neu-circle {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+        }
+
+        .neu-circle-pressed {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+
+        .neu-highlight {
+            background: #e0e5ec;
+            border-radius: 1.5rem;
+            box-shadow: 10px 10px 20px var(--shadow-dark-deep), -10px -10px 20px var(--shadow-light), 0 0 0 2px #3b82f6;
+        }
+
+        .neu-badge {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
         }
 
         .text-gradient {
-            background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
-            background-clip: text;
+            background: linear-gradient(135deg, #1e293b 0%, #2563eb 50%, #4f46e5 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Animations */
+        /* -------------------------------------------------------------
+           3D SCROLL-DRIVEN BOOK ANIMATION
+        ------------------------------------------------------------- */
+        .book-viewport {
+            perspective: 1200px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .book-container {
+            transform-style: preserve-3d;
+            transform: rotateX(20deg) rotateY(-20deg);
+            transition: transform 0.15s ease-out;
+        }
+
+        .book {
+            position: relative;
+            width: 200px;
+            height: 270px;
+            transform-style: preserve-3d;
+            border-radius: 6px 14px 14px 6px;
+        }
+
+        .book-cover, .book-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            border-radius: 6px 14px 14px 6px;
+            backface-visibility: hidden;
+            box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .back-cover {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            transform: translateZ(-16px);
+            border-left: 10px solid #0f172a;
+        }
+
+        .book-page {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: inset 4px 0 8px rgba(0,0,0,0.06), 2px 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .book-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 12px;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(0,0,0,0.12), transparent);
+        }
+
+        .page-3 { transform: translateZ(4px); }
+        .page-2 { transform: translateZ(8px); }
+        .page-1 { transform: translateZ(12px); }
+
+        .front-cover {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #ffffff;
+            transform: translateZ(16px);
+            border-left: 10px solid #0f172a;
+            box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .book-shadow {
+            position: absolute;
+            bottom: -30px;
+            left: 5%;
+            width: 90%;
+            height: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            filter: blur(14px);
+            border-radius: 50%;
+            transform: rotateX(80deg);
+        }
+
+        /* -------------------------------------------------------------
+           ANIMATIONS & TRANSITIONS
+        ------------------------------------------------------------- */
         .fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .fade-out {
@@ -38,46 +224,28 @@
         }
 
         .slide-up {
-            animation: slideUp 0.6s ease-out forwards;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeOut {
-            from {
-                opacity: 1;
-            }
-
-            to {
-                opacity: 0;
-                transform: scale(0.98);
-            }
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.96); }
         }
 
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .reveal {
             opacity: 0;
-            transform: translateY(60px);
-            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+            transform: translateY(40px);
+            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .reveal.active {
@@ -85,187 +253,282 @@
             transform: translateY(0);
         }
 
-        @keyframes bounce {
-
-            0%,
-            20%,
-            50%,
-            80%,
-            100% {
-                transform: translateY(0);
-            }
-
-            40% {
-                transform: translateY(-20px);
-            }
-
-            60% {
-                transform: translateY(-10px);
-            }
+        @keyframes bounceSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        .animate-bounce-custom {
-            animation: bounce 2s infinite;
+        .animate-bounce-slow {
+            animation: bounceSlow 2.5s infinite ease-in-out;
         }
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 10px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #0f172a;
+            background: #e0e5ec;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #475569;
+            background: #cbd5e1;
             border-radius: 10px;
+            border: 2px solid #e0e5ec;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #6366f1;
+            background: #94a3b8;
         }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col items-center relative overflow-x-hidden">
+<body class="min-h-screen flex flex-col items-center relative">
 
-    <!-- Background Orbs -->
-    <div
-        class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-indigo-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-30 z-0 pointer-events-none">
-    </div>
-    <div
-        class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-sky-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 z-0 pointer-events-none">
-    </div>
+    <!-- TOP NAVIGATION BAR -->
+    <header class="w-full max-w-5xl px-6 py-6 flex items-center justify-between z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 neu-circle flex items-center justify-center text-blue-600 font-black text-xl">
+                🧭
+            </div>
+            <span class="font-outfit font-extrabold text-xl text-slate-800 tracking-tight">FIND YOUR PATH</span>
+        </div>
+        <div class="neu-badge px-4 py-2 text-xs font-bold text-slate-600 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            AI Compass Active
+        </div>
+    </header>
 
     <!-- INTRODUCTORY SCROLL SECTION -->
-    <div id="landing-intro"
-        class="w-full max-w-4xl px-6 flex flex-col items-center transition-all duration-700 relative z-10">
-        <div class="min-h-[90vh] flex flex-col items-center justify-center text-center reveal active">
-            <div
-                class="glass-card text-sky-300 font-semibold px-5 py-2 rounded-full text-sm mb-6 inline-block shadow-lg">
-                ✨ Next-Gen Career Compass
+    <div id="landing-intro" class="w-full max-w-4xl px-6 flex flex-col items-center transition-all duration-700 relative z-10">
+        
+        <!-- HERO SECTION -->
+        <div class="min-h-[85vh] flex flex-col items-center justify-center text-center reveal active pt-4">
+            <div class="neu-badge text-blue-600 font-semibold px-5 py-2 text-xs uppercase tracking-wider mb-8 inline-flex items-center gap-2">
+                <span>✨</span> Behavioral Science & AI Career Compass
             </div>
-            <h1 class="text-5xl md:text-7xl font-extrabold text-gradient mb-6 leading-tight tracking-tight">
-                Design Your <br> Future.
+
+            <h1 class="text-5xl md:text-7xl font-black text-slate-800 mb-6 leading-tight tracking-tight font-outfit">
+                Design Your <br><span class="text-gradient">Future.</span>
             </h1>
-            <p class="text-lg md:text-xl text-slate-400 mb-12 font-medium max-w-2xl leading-relaxed">
-                Stop guessing your path. We use behavioral science and AI to map your unique traits to a career you will
-                actually love.
+
+            <p class="text-base md:text-lg text-slate-600 mb-8 font-medium max-w-2xl leading-relaxed">
+                Stop guessing your path. We map your unique psychological traits to real-world careers and generate a step-by-step roadmap tailored to you.
             </p>
-            <div class="text-indigo-400 flex flex-col items-center gap-2 animate-bounce-custom mt-8">
-                <span class="text-sm font-bold tracking-widest uppercase">Scroll to begin</span>
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+
+            <!-- 3D SCROLL-DRIVEN BOOK ANIMATION CONTAINER -->
+            <div class="book-viewport my-6">
+                <div class="book-container" id="book-container">
+                    <div class="book-shadow"></div>
+                    <div class="book" id="3d-book">
+                        <div class="book-cover back-cover"></div>
+                        
+                        <!-- PAGE 3 -->
+                        <div class="book-page page-3" id="book-page-3">
+                            <div>
+                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600">Phase 3</span>
+                                <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Custom Roadmap</h4>
+                                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Actionable steps, skill targets & recommended readings.</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-indigo-600">03/03</span>
+                            </div>
+                        </div>
+
+                        <!-- PAGE 2 -->
+                        <div class="book-page page-2" id="book-page-2">
+                            <div>
+                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-sky-600">Phase 2</span>
+                                <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Trait Assessment</h4>
+                                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Analyze problem-solving styles & psychological drivers.</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-sky-600">02/03</span>
+                            </div>
+                        </div>
+
+                        <!-- PAGE 1 -->
+                        <div class="book-page page-1" id="book-page-1">
+                            <div>
+                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-600">Phase 1</span>
+                                <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Domain Selection</h4>
+                                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Select what excites you: Tech, Art, Health, Law & more.</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-blue-600">01/03</span>
+                            </div>
+                        </div>
+
+                        <!-- FRONT COVER -->
+                        <div class="book-cover front-cover" id="book-front-cover">
+                            <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                                <div class="w-14 h-14 neu-circle flex items-center justify-center mb-4 text-blue-600 text-2xl">
+                                    🗺️
+                                </div>
+                                <h3 class="font-black text-white text-lg tracking-wide font-outfit">FIND YOUR PATH</h3>
+                                <span class="text-[11px] font-bold text-slate-300 mt-1 uppercase tracking-widest">Scroll to Flip Open</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCROLL PROMPT -->
+            <div class="text-blue-600 flex flex-col items-center gap-2 animate-bounce-slow mt-6">
+                <span class="text-xs font-bold tracking-widest uppercase">Scroll Down to Explore</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
                 </svg>
             </div>
         </div>
 
-        <div class="min-h-[70vh] flex flex-col items-center justify-center text-center reveal py-20">
-            <div class="text-6xl mb-6">🎯</div>
-            <h2 class="text-3xl md:text-4xl font-bold text-slate-100 mb-6">Stop guessing. Start building.</h2>
-            <div class="glass-card p-8 md:p-10 rounded-[2rem] shadow-2xl max-w-3xl text-left">
-                <p class="text-lg text-slate-300 font-medium leading-relaxed mb-4">
-                    We've combined modern psychology with real-world industry data. You won't find boring, hour-long
-                    tests here.
+        <!-- EXPLANATION SECTION -->
+        <div class="min-h-[60vh] flex flex-col items-center justify-center text-center reveal py-16">
+            <div class="w-16 h-16 neu-circle flex items-center justify-center text-3xl mb-6 text-indigo-600">
+                🎯
+            </div>
+            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-6 font-outfit">
+                Stop guessing. Start building.
+            </h2>
+            <div class="neu-card p-8 md:p-10 max-w-3xl text-left">
+                <p class="text-base text-slate-600 font-medium leading-relaxed mb-4">
+                    We've combined behavioral science with real-world industry requirements. Forget rigid hours-long quizzes that leave you confused.
                 </p>
-                <p class="text-lg text-slate-300 font-medium leading-relaxed">
-                    Answer a few honest questions about how your brain works, what you enjoy creating, and how you solve
-                    problems. We'll handle the rest and generate a step-by-step roadmap just for you.
+                <p class="text-base text-slate-600 font-medium leading-relaxed">
+                    Answer a series of quick, intuitive questions about how your mind operates, what you build, and how you solve problems. We compile your profile and generate a hyper-focused career roadmap.
                 </p>
             </div>
         </div>
 
-        <div class="h-[15vh] flex items-center justify-center reveal">
-            <h3 class="text-xl font-bold text-sky-400 tracking-widest uppercase">Select Your Domain 👇</h3>
+        <div class="h-[12vh] flex items-center justify-center reveal">
+            <h3 class="text-sm font-extrabold text-blue-600 tracking-widest uppercase flex items-center gap-2">
+                <span>Select Your Domain Below</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </h3>
         </div>
     </div>
 
     <!-- MAIN APP CONTAINER -->
-    <div id="app-wrapper" class="w-full flex justify-center pb-20 px-4 reveal relative z-10">
-        <div class="glass-card p-8 md:p-12 rounded-[2.5rem] shadow-2xl max-w-3xl w-full transition-all duration-500">
+    <div id="app-wrapper" class="w-full flex justify-center pb-20 px-4 reveal relative z-10 max-w-4xl">
+        <div class="neu-card p-8 md:p-12 w-full transition-all duration-500">
 
             <!-- PHASE 1: INTEREST SELECTION -->
             <div id="interest-section">
-                <h1 class="text-4xl font-extrabold text-gradient text-center mb-3 tracking-tight">What Drives You?</h1>
-                <p class="text-slate-400 text-center mb-10 font-medium">Select your primary area of interest.</p>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 text-center mb-3 font-outfit tracking-tight">
+                    What Drives You?
+                </h1>
+                <p class="text-slate-500 text-center mb-10 font-medium text-sm">
+                    Select your primary area of interest to begin your tailored assessment.
+                </p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <!-- 1. TECH & AI -->
-                    <button onclick="startQuiz('TechAI')"
-                        class="p-6 glass-card rounded-2xl hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:-translate-y-1 transition-all duration-300 group text-left border border-slate-700">
-                        <div class="text-4xl mb-4 transform group-hover:scale-110 transition-transform">💻</div>
-                        <h3 class="text-xl font-bold text-slate-100 group-hover:text-sky-400 transition-colors">Tech &
-                            AI</h3>
-                        <p class="text-sm text-slate-400 mt-2 font-medium">Software, AI, Cybersecurity.</p>
+                    <button onclick="startQuiz('TechAI')" class="neu-btn p-6 text-left group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-blue-600 group-hover:scale-110 transition-transform">
+                                💻
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 font-outfit group-hover:text-blue-600 transition-colors">Tech & AI</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Software, AI Systems, Cybersecurity & Cloud.</p>
                     </button>
 
                     <!-- 2. ART & MUSIC -->
-                    <button onclick="startQuiz('ArtMusic')"
-                        class="p-6 glass-card rounded-2xl hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:-translate-y-1 transition-all duration-300 group text-left border border-slate-700">
-                        <div class="text-4xl mb-4 transform group-hover:scale-110 transition-transform">🎵</div>
-                        <h3 class="text-xl font-bold text-slate-100 group-hover:text-sky-400 transition-colors">Art</h3>
-                        <p class="text-sm text-slate-400 mt-2 font-medium">Design, Production, Fine Arts.</p>
+                    <button onclick="startQuiz('ArtMusic')" class="neu-btn p-6 text-left group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-indigo-600 group-hover:scale-110 transition-transform">
+                                🎨
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 font-outfit group-hover:text-indigo-600 transition-colors">Art & Creative</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Visual Design, Audio Production & Media.</p>
                     </button>
 
                     <!-- 3. HEALTHCARE -->
-                    <button onclick="startQuiz('Healthcare')"
-                        class="p-6 glass-card rounded-2xl hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:-translate-y-1 transition-all duration-300 group text-left border border-slate-700">
-                        <div class="text-4xl mb-4 transform group-hover:scale-110 transition-transform">🩺</div>
-                        <h3 class="text-xl font-bold text-slate-100 group-hover:text-sky-400 transition-colors">
-                            Healthcare</h3>
-                        <p class="text-sm text-slate-400 mt-2 font-medium">Medicine, Therapy, Research.</p>
+                    <button onclick="startQuiz('Healthcare')" class="neu-btn p-6 text-left group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-emerald-600 group-hover:scale-110 transition-transform">
+                                🩺
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 font-outfit group-hover:text-emerald-600 transition-colors">Healthcare</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Medicine, Therapy, Research & Diagnostics.</p>
                     </button>
 
                     <!-- 4. GOV SERVICES -->
-                    <button onclick="startQuiz('GovServices')"
-                        class="p-6 glass-card rounded-2xl hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:-translate-y-1 transition-all duration-300 group text-left border border-slate-700">
-                        <div class="text-4xl mb-4 transform group-hover:scale-110 transition-transform">🏛️</div>
-                        <h3 class="text-xl font-bold text-slate-100 group-hover:text-sky-400 transition-colors">Gov
-                            Services</h3>
-                        <p class="text-sm text-slate-400 mt-2 font-medium">Policy, Urban Planning, Defense.</p>
+                    <button onclick="startQuiz('GovServices')" class="neu-btn p-6 text-left group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-amber-600 group-hover:scale-110 transition-transform">
+                                🏛️
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 font-outfit group-hover:text-amber-600 transition-colors">Gov & Policy</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Public Policy, Urban Planning & Civil Service.</p>
                     </button>
 
                     <!-- 5. ENTREPRENEURSHIP -->
-                    <button onclick="startQuiz('Entrepreneurship')"
-                        class="p-6 glass-card rounded-2xl hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:-translate-y-1 transition-all duration-300 group text-left border border-slate-700">
-                        <div class="text-4xl mb-4 transform group-hover:scale-110 transition-transform">🚀</div>
-                        <h3 class="text-xl font-bold text-slate-100 group-hover:text-sky-400 transition-colors">
-                            Entrepreneurship</h3>
-                        <p class="text-sm text-slate-400 mt-2 font-medium">Startups, Scaling, Innovation.</p>
+                    <button onclick="startQuiz('Entrepreneurship')" class="neu-btn p-6 text-left group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-purple-600 group-hover:scale-110 transition-transform">
+                                🚀
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 font-outfit group-hover:text-purple-600 transition-colors">Entrepreneurship</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Startups, Scaling Ventures & Product Strategy.</p>
                     </button>
 
                     <!-- 6. LAW -->
-                    <button onclick="startQuiz('Law')"
-                        class="p-6 glass-card rounded-2xl hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:-translate-y-1 transition-all duration-300 group text-left border border-slate-700">
-                        <div class="text-4xl mb-4 transform group-hover:scale-110 transition-transform">⚖️</div>
-                        <h3 class="text-xl font-bold text-slate-100 group-hover:text-sky-400 transition-colors">Law</h3>
-                        <p class="text-sm text-slate-400 mt-2 font-medium">Advocacy, Corporate, Criminal.</p>
+                    <button onclick="startQuiz('Law')" class="neu-btn p-6 text-left group">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-rose-600 group-hover:scale-110 transition-transform">
+                                ⚖️
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 font-outfit group-hover:text-rose-600 transition-colors">Law & Advocacy</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Corporate Law, Criminal Justice & Advocacy.</p>
                     </button>
                 </div>
             </div>
 
             <!-- PHASE 2: QUIZ SECTION -->
             <div id="quiz-section" class="hidden">
-                <h1 class="text-3xl font-extrabold text-gradient text-center mb-2">Analyzing Traits</h1>
-                <p class="text-slate-400 text-center mb-8 font-medium">Answer honestly to map your psychological
-                    profile.</p>
-
-                <div class="w-full bg-slate-800 rounded-full h-2 mb-8 shadow-inner overflow-hidden">
-                    <div id="progress-bar"
-                        class="bg-gradient-to-r from-sky-400 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
-                        style="width: 0%"></div>
+                <div class="flex items-center justify-between mb-6">
+                    <span id="question-count" class="text-xs font-bold uppercase tracking-wider text-blue-600 neu-badge px-3 py-1">
+                        Question 1
+                    </span>
+                    <span id="progress-percent" class="text-xs font-extrabold text-slate-600">
+                        0% Complete
+                    </span>
                 </div>
 
-                <h2 id="question-text" class="text-2xl font-bold mb-8 text-slate-100 leading-snug">Loading question...
+                <div class="w-full neu-trench h-3 mb-8 overflow-hidden p-0.5">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold mb-8 text-slate-800 font-outfit leading-snug">
+                    Loading question...
                 </h2>
                 <div id="options-container" class="space-y-4"></div>
-            </div>
-
-            <!-- PHASE 2.5: AI PERSONALIZATION -->
-            <div id="ai-input-section" class="hidden">
-                <!-- ... all the text area, spinner, and button code ... -->
             </div>
 
             <!-- PHASE 3: RESULTS -->
@@ -273,57 +536,58 @@
 
                 <!-- VIEW 1: Matches Overview (Grid) -->
                 <div id="matches-overview" class="fade-in">
-                    <div class="mb-3 text-sm font-bold text-sky-400 text-center tracking-[0.2em]">ANALYSIS COMPLETE
+                    <div class="mb-3 text-xs font-bold text-blue-600 text-center tracking-[0.2em] neu-badge inline-block px-4 py-1.5 mx-auto">
+                        ANALYSIS COMPLETE
                     </div>
-                    <h2 class="text-4xl font-extrabold text-slate-100 text-center mb-2">Your Top Careers</h2>
-                    <p class="text-slate-400 text-center mb-10 font-medium">Click on a career to view your custom
-                        roadmap.</p>
+                    <h2 class="text-3xl md:text-4xl font-black text-slate-800 text-center mb-2 font-outfit">Your Top Career Matches</h2>
+                    <p class="text-slate-500 text-center mb-10 font-medium text-sm">Select any career below to inspect your step-by-step roadmap.</p>
 
-                    <div id="matches-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div id="matches-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <!-- Clickable Match Cards injected here -->
                     </div>
                 </div>
 
                 <!-- VIEW 2: Detailed Career View -->
                 <div id="career-details" class="hidden fade-in">
-                    <button onclick="backToMatches()"
-                        class="mb-6 flex items-center gap-2 text-sky-400 font-bold hover:text-sky-300 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    <button onclick="backToMatches()" class="mb-8 neu-btn px-5 py-3 text-slate-700 font-bold text-sm flex items-center gap-2 hover:text-blue-600 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
-                        Back to Options
+                        Back to Matches
                     </button>
 
-                    <div
-                        class="glass-card p-8 rounded-3xl shadow-lg border border-slate-700 mb-8 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-sky-500/10 rounded-full blur-2xl"></div>
-                        <div id="detail-icon" class="text-6xl mb-4 relative z-10"></div>
-                        <h2 id="detail-title"
-                            class="text-3xl font-extrabold text-slate-100 mb-3 leading-tight relative z-10"></h2>
-                        <p id="detail-desc" class="text-slate-300 text-base leading-relaxed font-medium relative z-10">
-                        </p>
+                    <div class="neu-card p-8 mb-10 relative overflow-hidden">
+                        <div class="flex items-start gap-5">
+                            <div id="detail-icon" class="w-16 h-16 neu-circle flex items-center justify-center text-4xl shrink-0"></div>
+                            <div>
+                                <h2 id="detail-title" class="text-3xl font-black text-slate-800 mb-3 font-outfit leading-tight"></h2>
+                                <p id="detail-desc" class="text-slate-600 text-sm leading-relaxed font-medium"></p>
+                            </div>
+                        </div>
                     </div>
 
-                    <h3 class="text-2xl font-bold mb-6 text-slate-100 flex items-center gap-3">
-                        <span class="text-sky-400">📍</span> Step-by-Step Roadmap
+                    <h3 class="text-2xl font-bold mb-6 text-slate-800 font-outfit flex items-center gap-3">
+                        <span class="w-8 h-8 neu-circle flex items-center justify-center text-blue-600 text-sm">📍</span>
+                        Step-by-Step Roadmap
                     </h3>
-                    <div id="detail-roadmap" class="space-y-4 mb-10">
+
+                    <!-- TIMELINE UI CONTAINER -->
+                    <div id="detail-roadmap" class="relative pl-6 border-l-2 border-indigo-300 space-y-6 mb-12 ml-4">
                         <!-- Phases injected here -->
                     </div>
 
-                    <div class="mt-8 pt-8 border-t border-slate-700">
-                        <h3 class="text-2xl font-bold mb-6 text-slate-100 flex items-center gap-3">
-                            <span class="text-indigo-400">📚</span> Recommended Reading
+                    <div class="pt-8 border-t border-slate-300">
+                        <h3 class="text-2xl font-bold mb-6 text-slate-800 font-outfit flex items-center gap-3">
+                            <span class="w-8 h-8 neu-circle flex items-center justify-center text-indigo-600 text-sm">📚</span>
+                            Recommended Reading
                         </h3>
-                        <ul id="detail-books" class="space-y-3">
+                        <ul id="detail-books" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <!-- Books injected here -->
                         </ul>
                     </div>
                 </div>
 
-                <button onclick="location.reload()"
-                    class="mt-12 w-full glass-card border border-slate-600 text-slate-300 font-bold text-lg py-4 rounded-2xl hover:bg-slate-800 hover:text-white transition-all duration-300">
+                <button onclick="location.reload()" class="mt-12 w-full neu-btn text-slate-700 font-bold text-base py-4 hover:text-blue-600 transition-all duration-300">
                     Retake Assessment
                 </button>
             </div>
