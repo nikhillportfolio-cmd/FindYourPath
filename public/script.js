@@ -774,12 +774,39 @@ document.addEventListener("DOMContentLoaded", () => {
 loadHabitsFromStorage();
 
 // =====================================================================
-// 12. MODERN LIBRARY CATALOG (100 BOOKS DATASET & INTERACTIVITY)
+// 12. MODERN LIBRARY CATALOG (120 BOOKS DATASET & INTERACTIVITY)
 // =====================================================================
 let currentLibraryGenre = "all";
 let librarySearchQuery = "";
 
 const libraryBooks = [
+    // --- FANTASY (20 BOOKS) ---
+    // Game of Thrones Series (A Song of Ice and Fire)
+    { id: "fy1", title: "A Game of Thrones", author: "George R.R. Martin", genre: "Fantasy", year: 1996, rating: 4.9, isbn: "9780553103540", desc: "Noble families wrestle for control of the Iron Throne of Westeros while an ancient evil awakens in the icy north." },
+    { id: "fy2", title: "A Clash of Kings", author: "George R.R. Martin", genre: "Fantasy", year: 1998, rating: 4.8, isbn: "9780553108033", desc: "Five rival kings contend for power across a war-torn continent while Daenerys Targaryen nurtures her newborn dragons." },
+    { id: "fy3", title: "A Storm of Swords", author: "George R.R. Martin", genre: "Fantasy", year: 2000, rating: 4.9, isbn: "9780553106633", desc: "The War of the Five Kings reaches its shocking climax of betrayal, tragic red weddings, and desperate defense at the Wall." },
+    { id: "fy4", title: "A Feast for Crows", author: "George R.R. Martin", genre: "Fantasy", year: 2005, rating: 4.7, isbn: "9780553801507", desc: "In the aftermath of bloody war, survivors in King's Landing, Dorne, and the Iron Islands struggle to salvage power." },
+    { id: "fy5", title: "A Dance with Dragons", author: "George R.R. Martin", genre: "Fantasy", year: 2011, rating: 4.8, isbn: "9780553801477", desc: "Jon Snow leads the Night's Watch as Lord Commander while Daenerys struggles to govern Meereen amidst rising insurrection." },
+
+    // Harry Potter Series
+    { id: "fy6", title: "Harry Potter and the Sorcerer's Stone", author: "J.K. Rowling", genre: "Fantasy", year: 1997, rating: 4.9, isbn: "9780590353427", desc: "An orphaned boy discovers on his eleventh birthday that he is a wizard and attends Hogwarts School of Witchcraft and Wizardry." },
+    { id: "fy7", title: "Harry Potter and the Chamber of Secrets", author: "J.K. Rowling", genre: "Fantasy", year: 1998, rating: 4.8, isbn: "9780439064873", desc: "Harry returns to Hogwarts for his second year as a mysterious monster petrifies students and the Chamber of Secrets opens." },
+    { id: "fy8", title: "Harry Potter and the Prisoner of Azkaban", author: "J.K. Rowling", genre: "Fantasy", year: 1999, rating: 4.9, isbn: "9780439136358", desc: "Escaped convict Sirius Black breaks out of Azkaban fortress, seemingly targeting Harry during his third year at Hogwarts." },
+    { id: "fy9", title: "Harry Potter and the Goblet of Fire", author: "J.K. Rowling", genre: "Fantasy", year: 2000, rating: 4.9, isbn: "9780439139595", desc: "Harry is mysteriously chosen as a competitor in the perilous Triwizard Tournament amidst rising dark forces." },
+    { id: "fy10", title: "Harry Potter and the Order of the Phoenix", author: "J.K. Rowling", genre: "Fantasy", year: 2003, rating: 4.8, isbn: "9780439358064", desc: "Harry forms Dumbledore's Army to train fellow students while battling Ministry denial of Voldemort's return." },
+    { id: "fy11", title: "Harry Potter and the Half-Blood Prince", author: "J.K. Rowling", genre: "Fantasy", year: 2005, rating: 4.9, isbn: "9780439784542", desc: "Dumbledore explores Voldemort's dark past and Horcruxes to prepare Harry for the inevitable final confrontation." },
+    { id: "fy12", title: "Harry Potter and the Deathly Hallows", author: "J.K. Rowling", genre: "Fantasy", year: 2007, rating: 4.9, isbn: "9780545010221", desc: "Harry, Ron, and Hermione embark on a dangerous quest to hunt and destroy Voldemort's remaining Horcruxes." },
+
+    // Legendary Fantasy Classics
+    { id: "fy13", title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy", year: 1937, rating: 4.9, isbn: "9780547928227", desc: "Bilbo Baggins is swept into an epic quest with thirteen dwarves and Gandalf to reclaim Erebor from Smaug the dragon." },
+    { id: "fy14", title: "The Fellowship of the Ring", author: "J.R.R. Tolkien", genre: "Fantasy", year: 1954, rating: 4.9, isbn: "9780547928210", desc: "Frodo Baggins inherits the One Ring and forms a diverse fellowship to journey toward Mount Doom and defeat Sauron." },
+    { id: "fy15", title: "The Two Towers", author: "J.R.R. Tolkien", genre: "Fantasy", year: 1954, rating: 4.9, isbn: "9780547928203", desc: "The Fellowship is fractured as Aragorn fights for Rohan and Frodo and Sam travel toward Mordor guided by Gollum." },
+    { id: "fy16", title: "The Return of the King", author: "J.R.R. Tolkien", genre: "Fantasy", year: 1955, rating: 4.9, isbn: "9780547928197", desc: "The final battle for Middle-earth rages at Minas Tirith while Frodo and Sam approach Mount Doom to destroy the Ring." },
+    { id: "fy17", title: "The Name of the Wind", author: "Patrick Rothfuss", genre: "Fantasy", year: 2007, rating: 4.8, isbn: "9780756404741", desc: "Kvothe recounts his legendary life from a troupe performer to notorious arcanist, musician, and infamous kingkiller." },
+    { id: "fy18", title: "The Way of Kings", author: "Brandon Sanderson", genre: "Fantasy", year: 2010, rating: 4.9, isbn: "9780765326355", desc: "On the storm-swept world of Roshar, a slave bridging death, a shattered prince, and a young scholar hold humanity's fate." },
+    { id: "fy19", title: "Mistborn: The Final Empire", author: "Brandon Sanderson", genre: "Fantasy", year: 2006, rating: 4.8, isbn: "9780765311788", desc: "Street urchin Vin learns she is a powerful Mistborn and joins a crew attempting to overthrow the immortal Lord Ruler." },
+    { id: "fy20", title: "The Eye of the World", author: "Robert Jordan", genre: "Fantasy", year: 1990, rating: 4.8, isbn: "9780812511810", desc: "Rand al'Thor and his friends flee their village with Aes Sedai Moiraine as the Dark One's shadow falls across the realm." },
+
     // --- SCI-FI (20 BOOKS) ---
     { id: "sf1", title: "Dune", author: "Frank Herbert", genre: "Sci-Fi", year: 1965, rating: 4.9, isbn: "9780441172719", desc: "Set on the desert planet Arrakis, Paul Atreides navigates political intrigue, galactic betrayal, and spice melange to fulfill a heroic destiny." },
     { id: "sf2", title: "Project Hail Mary", author: "Andy Weir", genre: "Sci-Fi", year: 2021, rating: 4.9, isbn: "9780593135204", desc: "A lone astronaut wakes up with amnesia on a desperate space mission to save Earth from an extinction-level solar energy crisis." },
@@ -898,6 +925,7 @@ function getOpenLibraryCoverUrl(isbn) {
 function handleImageError(img, title, author, genre) {
     img.onerror = null; // Prevent infinite loop
     const colorMap = {
+        'Fantasy': ['#3b0764', '#581c87', '#7e22ce'],
         'Sci-Fi': ['#0f172a', '#1e1b4b', '#312e81'],
         'Comedy': ['#78350f', '#92400e', '#b45309'],
         'Literature': ['#0f172a', '#334155', '#475569'],
@@ -961,6 +989,7 @@ function setLibraryGenre(genre) {
     
     const tabs = {
         'all': 'genre-tab-all',
+        'Fantasy': 'genre-tab-fantasy',
         'Sci-Fi': 'genre-tab-scifi',
         'Comedy': 'genre-tab-comedy',
         'Literature': 'genre-tab-literature',

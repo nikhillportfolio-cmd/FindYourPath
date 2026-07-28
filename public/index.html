@@ -755,10 +755,10 @@
             </div>
             <div class="flex flex-col text-left">
                 <span class="text-xs font-black text-indigo-600 uppercase tracking-widest leading-none font-outfit">Modern Library</span>
-                <span class="text-[11px] font-semibold text-slate-500 mt-1 leading-none">100 Books Catalog</span>
+                <span class="text-[11px] font-semibold text-slate-500 mt-1 leading-none">120 Books Catalog</span>
             </div>
             <span class="neu-badge bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ml-1">
-                100
+                120
             </span>
         </button>
 
@@ -964,9 +964,9 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <h2 class="text-2xl md:text-3xl font-black text-slate-800 font-outfit tracking-tight">Modern Library</h2>
-                            <span class="neu-badge text-[10px] font-bold text-indigo-600 uppercase px-2.5 py-0.5">100 Books Catalog</span>
+                            <span class="neu-badge text-[10px] font-bold text-indigo-600 uppercase px-2.5 py-0.5">120 Books Catalog</span>
                         </div>
-                        <p class="text-xs md:text-sm text-slate-500 font-medium mt-0.5">Curated landmark books across 5 key genres with 3D display cases</p>
+                        <p class="text-xs md:text-sm text-slate-500 font-medium mt-0.5">Curated landmark books across 6 key genres with 3D display cases</p>
                     </div>
                 </div>
 
@@ -987,7 +987,10 @@
             <div class="px-6 md:px-8 py-3 bg-slate-200/20 border-b border-slate-300/40 shrink-0">
                 <div id="library-genre-tabs" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
                     <button type="button" onclick="setLibraryGenre('all')" id="genre-tab-all" class="genre-tab-btn neu-btn pressed px-4 py-2 text-xs font-bold text-indigo-600 shrink-0">
-                        ✨ All Genres (100)
+                        ✨ All Genres (120)
+                    </button>
+                    <button type="button" onclick="setLibraryGenre('Fantasy')" id="genre-tab-fantasy" class="genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0">
+                        🐉 Fantasy (20)
                     </button>
                     <button type="button" onclick="setLibraryGenre('Sci-Fi')" id="genre-tab-scifi" class="genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0">
                         🚀 Sci-Fi (20)
@@ -1010,7 +1013,7 @@
             <!-- MODAL SCROLLABLE BODY (BOOK CATALOG GRID) -->
             <div class="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
                 <div id="library-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    <!-- 100 Dynamic 3D Book Display Cases Injected Here -->
+                    <!-- 120 Dynamic 3D Book Display Cases Injected Here -->
                 </div>
                 
                 <div id="library-empty-state" class="hidden neu-card p-12 text-center flex flex-col items-center justify-center">
