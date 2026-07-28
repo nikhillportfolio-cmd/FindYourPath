@@ -697,6 +697,11 @@ app.post('/api/calculate-result', (req, res) => {
     }
 });
 
+// Serve PRAXiS main entry point
+app.get('/praxis', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`PRAXiS - Fast Rule Engine running on Port ${PORT}`);

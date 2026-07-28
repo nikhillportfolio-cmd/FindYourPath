@@ -764,9 +764,12 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-// INITIALIZE TRACKER ON LOAD
+// INITIALIZE TRACKER ON LOAD & UPDATE URL PATH TO /praxis
 document.addEventListener("DOMContentLoaded", () => {
     loadHabitsFromStorage();
+    if (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html')) {
+        window.history.replaceState(null, '', '/praxis');
+    }
 });
 loadHabitsFromStorage();
 
