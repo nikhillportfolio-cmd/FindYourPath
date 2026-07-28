@@ -699,5 +699,5 @@ app.post('/api/calculate-result', (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Find Your Path - Fast Rule Engine running on Port ${PORT}`);
+    console.log(`PRAXiS - Fast Rule Engine running on Port ${PORT}`);
 });
