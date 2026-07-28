@@ -281,6 +281,71 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        /* -------------------------------------------------------------
+           ROUTINE TRACKER & NEUMORPHIC EXTENSIONS
+        ------------------------------------------------------------- */
+        .neu-input {
+            background: #e0e5ec;
+            border-radius: 1rem;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            transition: all 0.25s ease;
+        }
+
+        .neu-input:focus {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-deep), inset -4px -4px 8px var(--shadow-light), 0 0 0 2px #2563eb;
+        }
+
+        .neu-day-btn {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 0.65rem;
+            background: #e0e5ec;
+            box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .neu-day-btn:hover {
+            transform: translateY(-2px) scale(1.08);
+            color: #2563eb;
+            box-shadow: 4px 4px 8px var(--shadow-dark-deep), -4px -4px 8px var(--shadow-light);
+        }
+
+        .neu-day-btn.checked {
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            color: #ffffff;
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.35), inset -2px -2px 4px rgba(255, 255, 255, 0.25);
+            transform: translateY(0) scale(1);
+        }
+
+        .flame-badge {
+            animation: flamePulse 1.8s infinite ease-in-out;
+        }
+
+        @keyframes flamePulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.6)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9)); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(224, 229, 236, 0.5);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
     </style>
 </head>
 
@@ -591,6 +656,138 @@
                 <button onclick="location.reload()" class="mt-12 w-full neu-btn text-slate-700 font-bold text-base py-4 hover:text-blue-600 transition-all duration-300">
                     Retake Assessment
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING ROUTINE TRACKER BUTTON -->
+    <button id="tracker-floating-btn" onclick="openTrackerModal()" title="Open Routine Tracker"
+        class="fixed bottom-6 right-6 z-50 neu-btn px-5 py-3.5 flex items-center gap-3 text-slate-800 font-bold shadow-2xl hover:scale-105 transition-all duration-300 group border border-white/60">
+        <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-amber-500 group-hover:scale-110 transition-transform">
+            🔥
+        </div>
+        <div class="flex flex-col text-left">
+            <span class="text-xs font-black text-blue-600 uppercase tracking-widest leading-none font-outfit">Routine Tracker</span>
+            <span class="text-[11px] font-semibold text-slate-500 mt-1 leading-none">30-Day Growth</span>
+        </div>
+        <span id="tracker-badge-count" class="hidden neu-badge bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-full ml-1">
+            0
+        </span>
+    </button>
+
+    <!-- ROUTINE TRACKER OVERLAY MODAL -->
+    <div id="tracker-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-3 sm:p-5 md:p-8 bg-slate-900/45 backdrop-blur-md transition-opacity duration-300 opacity-0">
+        <div class="neu-card w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden relative shadow-2xl border border-white/70">
+            
+            <!-- MODAL HEADER -->
+            <div class="p-6 md:p-8 pb-5 border-b border-slate-300/60 flex items-center justify-between shrink-0 bg-slate-200/40">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-blue-600 shrink-0">
+                        📈
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-2xl md:text-3xl font-black text-slate-800 font-outfit tracking-tight">Routine & Habit Tracker</h2>
+                            <span class="neu-badge text-[10px] font-bold text-blue-600 uppercase px-2.5 py-0.5">30-Day Analytics</span>
+                        </div>
+                        <p class="text-xs md:text-sm text-slate-500 font-medium mt-0.5">Build daily discipline, track progress & maintain your streaks</p>
+                    </div>
+                </div>
+                <button onclick="closeTrackerModal()" title="Close Tracker" class="neu-circle w-10 h-10 flex items-center justify-center text-slate-600 hover:text-red-500 transition-colors font-black text-lg shrink-0">
+                    ✕
+                </button>
+            </div>
+
+            <!-- MODAL SCROLLABLE BODY -->
+            <div class="p-6 md:p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+                
+                <!-- OVERALL GROWTH DASHBOARD -->
+                <div class="neu-card p-6 md:p-8 bg-gradient-to-br from-slate-100/90 to-slate-200/50 relative overflow-hidden">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                        
+                        <!-- CIRCULAR PROGRESS CHART -->
+                        <div class="flex items-center gap-6">
+                            <div class="relative w-32 h-32 flex items-center justify-center shrink-0">
+                                <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                                    <!-- Background Circle -->
+                                    <circle cx="50" cy="50" r="40" stroke="#cbd5e1" stroke-width="8" fill="transparent" />
+                                    <!-- Progress Circle -->
+                                    <circle id="overall-progress-circle" cx="50" cy="50" r="40" stroke="url(#tracker-gradient)" stroke-width="8" fill="transparent"
+                                        stroke-dasharray="251.327" stroke-dashoffset="251.327" stroke-linecap="round" class="transition-all duration-700 ease-out" />
+                                    <defs>
+                                        <linearGradient id="tracker-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#2563eb" />
+                                            <stop offset="50%" stop-color="#4f46e5" />
+                                            <stop offset="100%" stop-color="#0284c7" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                    <span id="overall-percent-text" class="text-2xl font-black text-slate-800 font-outfit leading-none">0%</span>
+                                    <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-1">Growth</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span class="neu-badge px-3 py-1 text-[10px] font-bold text-blue-600 uppercase tracking-wider inline-block mb-1">Overall Dashboard</span>
+                                <h3 class="text-xl font-bold text-slate-800 font-outfit">Total Routine Completion</h3>
+                                <p id="overall-status-text" class="text-xs text-slate-500 mt-1 font-medium max-w-xs leading-relaxed">
+                                    Add habits below to start measuring your 30-day discipline.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- STATS CARDS GRID -->
+                        <div class="grid grid-cols-3 gap-3 w-full md:w-auto">
+                            <div class="neu-card-sm p-4 text-center min-w-[95px]">
+                                <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Habits</span>
+                                <span id="stat-total-habits" class="text-2xl font-black text-slate-800 font-outfit mt-0.5 block">0</span>
+                            </div>
+                            <div class="neu-card-sm p-4 text-center min-w-[95px]">
+                                <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Days Done</span>
+                                <span id="stat-total-checks" class="text-2xl font-black text-emerald-600 font-outfit mt-0.5 block">0</span>
+                            </div>
+                            <div class="neu-card-sm p-4 text-center min-w-[95px]">
+                                <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Best Streak</span>
+                                <span id="stat-max-streak" class="text-2xl font-black text-amber-500 font-outfit mt-0.5 flex items-center justify-center gap-1">
+                                    🔥<span id="stat-streak-val">0</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HABIT CREATION INPUT SECTION -->
+                <div class="neu-card p-6">
+                    <h3 class="text-base font-bold text-slate-800 font-outfit mb-3 flex items-center gap-2">
+                        <span class="text-blue-600">✨</span> Define Your Target Habit
+                    </h3>
+                    <form id="add-habit-form" onsubmit="handleAddHabit(event)" class="flex flex-col sm:flex-row gap-3">
+                        <input id="habit-name-input" type="text" placeholder="e.g. Learn React, Workout 30 mins, Drink 3L Water..." 
+                            class="neu-input flex-1 px-5 py-3.5 rounded-xl text-slate-700 text-sm font-medium focus:outline-none placeholder-slate-400 bg-[#e0e5ec]" 
+                            required />
+                        <button type="submit" class="neu-btn px-6 py-3.5 font-extrabold text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-2 shrink-0">
+                            <span class="text-lg leading-none">+</span> Add Habit
+                        </button>
+                    </form>
+                </div>
+
+                <!-- HABITS LIST CONTAINER -->
+                <div id="habits-list-container" class="space-y-6">
+                    <!-- Dynamic Habit Cards injected here -->
+                </div>
+
+                <!-- BLANK SLATE EMPTY STATE -->
+                <div id="blank-slate" class="neu-card p-10 text-center flex flex-col items-center justify-center">
+                    <div class="w-16 h-16 neu-circle flex items-center justify-center text-3xl mb-4 text-slate-400">
+                        📋
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-700 font-outfit mb-2">Your Routine Tracker is Blank</h4>
+                    <p class="text-xs text-slate-500 font-medium max-w-md">
+                        Start defining the habits you want to track above. Complete your 30-day grid daily to unlock growth analytics and fire streaks!
+                    </p>
+                </div>
+
             </div>
         </div>
     </div>

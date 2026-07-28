@@ -291,3 +291,312 @@ function backToMatches() {
     careerDetails.classList.add("hidden");
     matchesOverview.classList.remove("hidden");
 }
+
+// -------------------------------------------------------------
+// 11. ROUTINE TRACKER & STREAK ENGINE (LOCAL STORAGE INTEGRATION)
+// -------------------------------------------------------------
+const STORAGE_KEY = "findyourpath_habits";
+let habits = [];
+
+function loadHabitsFromStorage() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        habits = saved ? JSON.parse(saved) : [];
+    } catch (e) {
+        console.error("Failed to parse habits from localStorage:", e);
+        habits = [];
+    }
+    updateFloatingBadge();
+}
+
+function saveHabitsToStorage() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    } catch (e) {
+        console.error("Failed to save habits to localStorage:", e);
+    }
+    updateFloatingBadge();
+}
+
+function updateFloatingBadge() {
+    const badge = document.getElementById("tracker-badge-count");
+    if (badge) {
+        if (habits.length > 0) {
+            badge.innerText = habits.length;
+            badge.classList.remove("hidden");
+        } else {
+            badge.classList.add("hidden");
+        }
+    }
+}
+
+// STREAK CALCULATION ENGINE
+// Detects consecutive checked days across the 30-day grid
+function calculateHabitStreak(days) {
+    let maxStreak = 0;
+    let currentStreak = 0;
+    let temp = 0;
+
+    for (let i = 0; i < days.length; i++) {
+        if (days[i]) {
+            temp++;
+            if (temp > maxStreak) maxStreak = temp;
+        } else {
+            temp = 0;
+        }
+    }
+
+    // Active streak up to last checked day
+    let lastCheckedIndex = -1;
+    for (let i = days.length - 1; i >= 0; i--) {
+        if (days[i]) {
+            lastCheckedIndex = i;
+            break;
+        }
+    }
+    if (lastCheckedIndex !== -1) {
+        for (let i = lastCheckedIndex; i >= 0; i--) {
+            if (days[i]) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return Math.max(currentStreak, maxStreak);
+}
+
+// OVERALL & DAILY GROWTH ANALYTICS
+function updateGrowthCharts() {
+    const overallCircle = document.getElementById("overall-progress-circle");
+    const overallPercentText = document.getElementById("overall-percent-text");
+    const overallStatusText = document.getElementById("overall-status-text");
+    const statHabits = document.getElementById("stat-total-habits");
+    const statChecks = document.getElementById("stat-total-checks");
+    const statStreakVal = document.getElementById("stat-streak-val");
+
+    const totalHabitsCount = habits.length;
+    let totalCheckedDays = 0;
+    let highestStreakAcrossAll = 0;
+
+    habits.forEach(h => {
+        const checkedCount = h.days.filter(Boolean).length;
+        totalCheckedDays += checkedCount;
+        const streak = calculateHabitStreak(h.days);
+        if (streak > highestStreakAcrossAll) highestStreakAcrossAll = streak;
+    });
+
+    const totalPossibleChecks = totalHabitsCount * 30;
+    const overallPercentage = totalPossibleChecks > 0 
+        ? Math.round((totalCheckedDays / totalPossibleChecks) * 100) 
+        : 0;
+
+    // SVG Circle calculation (r = 40, circumference = ~251.327)
+    if (overallCircle) {
+        const circumference = 251.327;
+        const offset = circumference - (overallPercentage / 100) * circumference;
+        overallCircle.style.strokeDashoffset = offset;
+    }
+
+    if (overallPercentText) overallPercentText.innerText = `${overallPercentage}%`;
+    if (statHabits) statHabits.innerText = totalHabitsCount;
+    if (statChecks) statChecks.innerText = totalCheckedDays;
+    if (statStreakVal) statStreakVal.innerText = highestStreakAcrossAll;
+
+    if (overallStatusText) {
+        if (totalHabitsCount === 0) {
+            overallStatusText.innerText = "Add habits below to start measuring your 30-day discipline.";
+        } else if (overallPercentage >= 80) {
+            overallStatusText.innerText = "🔥 Unstoppable Momentum! You are crushing your routine targets!";
+        } else if (overallPercentage >= 40) {
+            overallStatusText.innerText = "⚡ Building Strong Habits! Stay consistent every single day.";
+        } else {
+            overallStatusText.innerText = "🌱 Starting Your Journey! Keep checking off days to build momentum.";
+        }
+    }
+}
+
+// RENDER DYNAMIC HABITS LIST & 30-DAY GRID
+function renderHabitsList() {
+    const container = document.getElementById("habits-list-container");
+    const blankSlate = document.getElementById("blank-slate");
+
+    if (!container || !blankSlate) return;
+
+    if (habits.length === 0) {
+        blankSlate.classList.remove("hidden");
+        container.innerHTML = "";
+        return;
+    }
+
+    blankSlate.classList.add("hidden");
+    container.innerHTML = "";
+
+    habits.forEach((habit, habitIndex) => {
+        const checkedCount = habit.days.filter(Boolean).length;
+        const habitPercentage = Math.round((checkedCount / 30) * 100);
+        const streak = calculateHabitStreak(habit.days);
+
+        const card = document.createElement("div");
+        card.className = "neu-card p-6 relative group transition-all duration-300";
+
+        // Streak Engine Badge HTML
+        let streakBadgeHTML = "";
+        if (streak >= 3) {
+            streakBadgeHTML = `
+                <div class="neu-badge px-3 py-1 bg-amber-500/10 text-amber-600 font-extrabold text-xs flex items-center gap-1.5 flame-badge">
+                    <span class="text-sm">🔥</span> ${streak} Day Streak!
+                </div>
+            `;
+        } else if (streak > 0) {
+            streakBadgeHTML = `
+                <div class="neu-badge px-3 py-1 text-slate-500 font-bold text-xs flex items-center gap-1">
+                    <span>⚡</span> ${streak} Day Streak
+                </div>
+            `;
+        }
+
+        // 30-Day Grid Buttons
+        let gridHTML = `<div class="grid grid-cols-6 sm:grid-cols-10 gap-2 my-5">`;
+        for (let day = 0; day < 30; day++) {
+            const isChecked = habit.days[day];
+            const checkedClass = isChecked ? "checked" : "";
+            gridHTML += `
+                <button type="button" 
+                    onclick="toggleHabitDay(${habitIndex}, ${day})"
+                    title="Day ${day + 1}: ${isChecked ? 'Completed' : 'Pending'}"
+                    class="neu-day-btn ${checkedClass}">
+                    ${isChecked ? '✓' : day + 1}
+                </button>
+            `;
+        }
+        gridHTML += `</div>`;
+
+        card.innerHTML = `
+            <!-- HEADER -->
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 neu-circle flex items-center justify-center text-blue-600 font-black text-sm">
+                        📌
+                    </div>
+                    <h4 class="text-lg font-black text-slate-800 font-outfit">${escapeHtml(habit.name)}</h4>
+                    ${streakBadgeHTML}
+                </div>
+                <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" 
+                    class="text-xs font-bold text-slate-400 hover:text-red-600 transition-colors neu-badge px-3 py-1.5 flex items-center gap-1">
+                    🗑️ Delete
+                </button>
+            </div>
+
+            <!-- 30-DAY GRID -->
+            ${gridHTML}
+
+            <!-- DAILY GROWTH PROGRESS BAR -->
+            <div class="pt-2 border-t border-slate-300/60 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2 text-xs font-bold text-slate-600">
+                    <span class="uppercase tracking-wider text-[10px] text-slate-400 font-extrabold">Habit Growth:</span>
+                    <span>${checkedCount} / 30 Days</span>
+                </div>
+                <div class="flex-1 max-w-xs neu-trench h-3 overflow-hidden p-0.5">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-500 ease-out" 
+                        style="width: ${habitPercentage}%"></div>
+                </div>
+                <span class="text-xs font-black text-blue-600 font-outfit min-w-[36px] text-right">${habitPercentage}%</span>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, function(m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[m];
+    });
+}
+
+function handleAddHabit(event) {
+    event.preventDefault();
+    const input = document.getElementById("habit-name-input");
+    if (!input) return;
+
+    const name = input.value.trim();
+    if (!name) return;
+
+    const newHabit = {
+        id: "habit_" + Date.now(),
+        name: name,
+        days: new Array(30).fill(false),
+        createdAt: Date.now()
+    };
+
+    habits.unshift(newHabit);
+    saveHabitsToStorage();
+    input.value = "";
+    
+    renderHabitsList();
+    updateGrowthCharts();
+}
+
+function toggleHabitDay(habitIndex, dayIndex) {
+    if (habits[habitIndex] && habits[habitIndex].days) {
+        habits[habitIndex].days[dayIndex] = !habits[habitIndex].days[dayIndex];
+        saveHabitsToStorage();
+        renderHabitsList();
+        updateGrowthCharts();
+    }
+}
+
+function deleteHabit(habitIndex) {
+    if (confirm("Are you sure you want to delete this habit?")) {
+        habits.splice(habitIndex, 1);
+        saveHabitsToStorage();
+        renderHabitsList();
+        updateGrowthCharts();
+    }
+}
+
+function openTrackerModal() {
+    const modal = document.getElementById("tracker-modal");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+    requestAnimationFrame(() => {
+        modal.classList.remove("opacity-0");
+        modal.classList.add("opacity-100");
+    });
+    
+    renderHabitsList();
+    updateGrowthCharts();
+}
+
+function closeTrackerModal() {
+    const modal = document.getElementById("tracker-modal");
+    if (!modal) return;
+
+    modal.classList.remove("opacity-100");
+    modal.classList.add("opacity-0");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+    }, 300);
+}
+
+// Close modal on Escape key press
+window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        closeTrackerModal();
+    }
+});
+
+// INITIALIZE TRACKER ON LOAD
+document.addEventListener("DOMContentLoaded", () => {
+    loadHabitsFromStorage();
+});
+loadHabitsFromStorage();
