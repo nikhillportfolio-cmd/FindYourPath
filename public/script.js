@@ -759,6 +759,8 @@ function closeTrackerModal() {
 window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
         closeTrackerModal();
+        closeLibraryModal();
+        closeBookDetailModal();
     }
 });
 
@@ -767,3 +769,344 @@ document.addEventListener("DOMContentLoaded", () => {
     loadHabitsFromStorage();
 });
 loadHabitsFromStorage();
+
+// =====================================================================
+// 12. MODERN LIBRARY CATALOG (100 BOOKS DATASET & INTERACTIVITY)
+// =====================================================================
+let currentLibraryGenre = "all";
+let librarySearchQuery = "";
+
+const libraryBooks = [
+    // --- SCI-FI (20 BOOKS) ---
+    { id: "sf1", title: "Dune", author: "Frank Herbert", genre: "Sci-Fi", year: 1965, rating: 4.9, isbn: "9780441172719", desc: "Set on the desert planet Arrakis, Paul Atreides navigates political intrigue, galactic betrayal, and spice melange to fulfill a heroic destiny." },
+    { id: "sf2", title: "Project Hail Mary", author: "Andy Weir", genre: "Sci-Fi", year: 2021, rating: 4.9, isbn: "9780593135204", desc: "A lone astronaut wakes up with amnesia on a desperate space mission to save Earth from an extinction-level solar energy crisis." },
+    { id: "sf3", title: "Neuromancer", author: "William Gibson", genre: "Sci-Fi", year: 1984, rating: 4.7, isbn: "9780441569595", desc: "The foundational cyberpunk novel following Case, a washed-up hacker hired for a high-stakes heist inside cyberspace matrix." },
+    { id: "sf4", title: "The Martian", author: "Andy Weir", genre: "Sci-Fi", year: 2011, rating: 4.8, isbn: "9780553418026", desc: "Astronaut Mark Watney must use botanical ingenuity and sharp wits to survive stranded alone on Mars after a dust storm." },
+    { id: "sf5", title: "Ender's Game", author: "Orson Scott Card", genre: "Sci-Fi", year: 1985, rating: 4.8, isbn: "9780812550702", desc: "Young tactical genius Ender Wiggin is trained in zero-gravity battle school to command Earth's forces against alien invaders." },
+    { id: "sf6", title: "Snow Crash", author: "Neal Stephenson", genre: "Sci-Fi", year: 1992, rating: 4.7, isbn: "9780553380958", desc: "Pizza delivery hacker Hiro Protagonist discovers a dangerous computer virus spreading through the virtual Metaverse and human minds." },
+    { id: "sf7", title: "Foundation", author: "Isaac Asimov", genre: "Sci-Fi", year: 1951, rating: 4.8, isbn: "9780553293357", desc: "Psychohistorian Hari Seldon predicts the fall of the Galactic Empire and creates a sanctuary to preserve humanity's knowledge." },
+    { id: "sf8", title: "Hyperion", author: "Dan Simmons", genre: "Sci-Fi", year: 1989, rating: 4.8, isbn: "9780553283686", desc: "Seven pilgrims journey to the mysterious Time Tombs on Hyperion to meet the terrifying Shrike and share their haunting tales." },
+    { id: "sf9", title: "Leviathan Wakes", author: "James S.A. Corey", genre: "Sci-Fi", year: 2011, rating: 4.8, isbn: "9780316129084", desc: "An ice-miner officer and a detective uncover a system-wide conspiracy across Mars, Earth, and the Asteroid Belt." },
+    { id: "sf10", title: "The Left Hand of Darkness", author: "Ursula K. Le Guin", genre: "Sci-Fi", year: 1969, rating: 4.7, isbn: "9780441478125", desc: "Human envoy Genly Ai attempts to bring the ambisexual alien world of Gethen into an interstellar galactic alliance." },
+    { id: "sf11", title: "Altered Carbon", author: "Richard K. Morgan", genre: "Sci-Fi", year: 2002, rating: 4.7, isbn: "9780345457684", desc: "Takeshi Kovacs is resleeved in a new body to investigate the murder of a wealthy mogul in a gritty transhuman future." },
+    { id: "sf12", title: "Dark Matter", author: "Blake Crouch", genre: "Sci-Fi", year: 2016, rating: 4.8, isbn: "9781101904220", desc: "Jason Dessen is kidnapped into an alternate reality where his life took a drastically different path across the multiverse." },
+    { id: "sf13", title: "The Three-Body Problem", author: "Cixin Liu", genre: "Sci-Fi", year: 2008, rating: 4.8, isbn: "9780765377067", desc: "Secret military projects make first contact with an alien civilization on the brink of destruction seeking a new home." },
+    { id: "sf14", title: "Children of Time", author: "Adrian Tchaikovsky", genre: "Sci-Fi", year: 2015, rating: 4.8, isbn: "9780316452502", desc: "The last survivors of Earth collide with a terraformed world dominated by an evolved species of spider architecture." },
+    { id: "sf15", title: "Do Androids Dream of Electric Sheep?", author: "Philip K. Dick", genre: "Sci-Fi", year: 1968, rating: 4.7, isbn: "9780345404474", desc: "Bounty hunter Rick Deckard tracks rogue synthetic replicants across a radioactive, desolate future San Francisco." },
+    { id: "sf16", title: "The Moon is a Harsh Mistress", author: "Robert A. Heinlein", genre: "Sci-Fi", year: 1966, rating: 4.7, isbn: "9780312863555", desc: "Lunar penal colony inhabitants ally with a self-aware supercomputer to launch a revolution for independence from Earth." },
+    { id: "sf17", title: "I, Robot", author: "Isaac Asimov", genre: "Sci-Fi", year: 1950, rating: 4.7, isbn: "9780553382563", desc: "Dr. Susan Calvin investigates robot behavior governed by the Three Laws of Robotics across landmark sci-fi cases." },
+    { id: "sf18", title: "Old Man's War", author: "John Scalzi", genre: "Sci-Fi", year: 2005, rating: 4.7, isbn: "9780765348272", desc: "75-year-old John Perry joins the Colonial Defense Force in exchange for a bio-engineered young body and interstellar combat duty." },
+    { id: "sf19", title: "Red Rising", author: "Pierce Brown", genre: "Sci-Fi", year: 2014, rating: 4.8, isbn: "9780345539786", desc: "Darrow, a lowborn Red miner on Mars, infiltrates the ruling Gold caste to tear down a tyrannical color-coded society." },
+    { id: "sf20", title: "The Time Machine", author: "H.G. Wells", genre: "Sci-Fi", year: 1895, rating: 4.6, isbn: "9780451528551", desc: "A Victorian scientist invents a time-travel machine and journeys into the far future to meet the gentle Eloi and underground Morlocks." },
+
+    // --- COMEDY (20 BOOKS) ---
+    { id: "cm1", title: "The Hitchhiker's Guide to the Galaxy", author: "Douglas Adams", genre: "Comedy", year: 1979, rating: 4.9, isbn: "9780345391803", desc: "Arthur Dent is whisked off Earth seconds before its destruction for a galactic highway project with Ford Prefect and a towel." },
+    { id: "cm2", title: "Good Omens", author: "Terry Pratchett & Neil Gaiman", genre: "Comedy", year: 1990, rating: 4.8, isbn: "9780060853983", desc: "A fussy angel and a fast-living demon join forces to stop the impending Apocalypse because they like living on Earth." },
+    { id: "cm3", title: "Bossypants", author: "Tina Fey", genre: "Comedy", year: 2011, rating: 4.7, isbn: "9780316056861", desc: "Tina Fey shares hilarious autobiographical essays on SNL, 30 Rock, motherhood, and surviving in comedy leadership." },
+    { id: "cm4", title: "Catch-22", author: "Joseph Heller", genre: "Comedy", year: 1961, rating: 4.7, isbn: "9781451673319", desc: "Captain John Yossarian tries desperately to survive WWII air combat while trapped in absurd bureaucratic military paradoxes." },
+    { id: "cm5", title: "A Confederacy of Dunces", author: "John Kennedy Toole", genre: "Comedy", year: 1980, rating: 4.7, isbn: "9780802130204", desc: "Eccentric, misanthropic scholar Ignatius J. Reilly wreaks chaotic comedic havoc across 1960s New Orleans." },
+    { id: "cm6", title: "Me Talk Pretty One Day", author: "David Sedaris", genre: "Comedy", year: 2000, rating: 4.7, isbn: "9780316776967", desc: "David Sedaris presents sharp, witty autobiographical essays on moving to Paris, learning French, and family oddities." },
+    { id: "cm7", title: "Three Men in a Boat", author: "Jerome K. Jerome", genre: "Comedy", year: 1889, rating: 4.6, isbn: "9780140437508", desc: "Three hypochondriac Victorian friends and Montmorency the dog take a hilarious boating holiday along the Thames." },
+    { id: "cm8", title: "The Color of Magic", author: "Terry Pratchett", genre: "Comedy", year: 1983, rating: 4.7, isbn: "9780062225672", desc: "The very first Discworld novel featuring incompetent wizard Rincewind and naive tourist Twoflower traveling a flat world." },
+    { id: "cm9", title: "Lamb", author: "Christopher Moore", genre: "Comedy", year: 2002, rating: 4.8, isbn: "9780380813810", desc: "Biff, the childhood best friend of Jesus Christ, recounts the lost humor-filled early years of miraculous adventures." },
+    { id: "cm10", title: "Bridget Jones's Diary", author: "Helen Fielding", genre: "Comedy", year: 1996, rating: 4.6, isbn: "9780140280098", desc: "Bridget Jones documents her single life, career struggles, calorie counting, and romantic dilemmas in 1990s London." },
+    { id: "cm11", title: "Born a Crime", author: "Trevor Noah", genre: "Comedy", year: 2016, rating: 4.9, isbn: "9780399588174", desc: "Daily Show host Trevor Noah recounts his funny, poignant upbringing in South Africa under and after Apartheid." },
+    { id: "cm12", title: "Let's Pretend This Never Happened", author: "Jenny Lawson", genre: "Comedy", year: 2012, rating: 4.7, isbn: "9780425261019", desc: "The Bloggess shares hysterical, bizarre memoirs of growing up with a taxidermist father and living with anxiety." },
+    { id: "cm13", title: "Where'd You Go, Bernadette", author: "Maria Semple", genre: "Comedy", year: 2012, rating: 4.7, isbn: "9780316204262", desc: "An eccentric architect disappears before a family trip to Antarctica, leaving her daughter to solve the mystery via emails." },
+    { id: "cm14", title: "The Princess Bride", author: "William Goldman", genre: "Comedy", year: 1973, rating: 4.8, isbn: "9780156028356", desc: "True love, fencing, fighting, revenge, giants, monsters, chases, escapes, and miracles in a satirical fantasy masterpiece." },
+    { id: "cm15", title: "Cold Comfort Farm", author: "Stella Gibbons", genre: "Comedy", year: 1932, rating: 4.6, isbn: "9780141441597", desc: "Sophisticated Flora Poste moves into a gloomy rural farm and systematically reorganizes her eccentric relatives' lives." },
+    { id: "cm16", title: "The Importance of Being Earnest", author: "Oscar Wilde", genre: "Comedy", year: 1895, rating: 4.8, isbn: "9780486264783", desc: "Oscar Wilde's legendary comedy of manners involving fictional alter-egos, secret identities, and cucumber sandwiches." },
+    { id: "cm17", title: "Sick in the Head", author: "Judd Apatow", genre: "Comedy", year: 2015, rating: 4.6, isbn: "9780812997927", desc: "Director Judd Apatow compiles thirty years of intimate conversations with comedy legends from Jerry Seinfeld to Amy Schumer." },
+    { id: "cm18", title: "Right Ho, Jeeves", author: "P.G. Wodehouse", genre: "Comedy", year: 1934, rating: 4.8, isbn: "9780140008609", desc: "Valet Jeeves steps in to untangle Bertie Wooster's well-meaning but disastrous attempts at matchmaking at Brinkley Court." },
+    { id: "cm19", title: "Hyperbole and a Half", author: "Allie Brosh", genre: "Comedy", year: 2013, rating: 4.8, isbn: "9781451666175", desc: "Allie Brosh presents brilliantly funny illustrated essays about depression, childhood dog antics, and adult life." },
+    { id: "cm20", title: "The Sellout", author: "Paul Beatty", genre: "Comedy", year: 2015, rating: 4.6, isbn: "9780374261139", desc: "A biting, Man Booker Prize-winning satire about race, identity, and an agrarian trial brought to the Supreme Court." },
+
+    // --- LITERATURE (20 BOOKS) ---
+    { id: "lt1", title: "1984", author: "George Orwell", genre: "Literature", year: 1949, rating: 4.9, isbn: "9780451524935", desc: "Winston Smith rebels against totalitarian surveillance, Big Brother, and Thoughtpolice in Oceania." },
+    { id: "lt2", title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Literature", year: 1925, rating: 4.8, isbn: "9780743273565", desc: "Mysterious millionaire Jay Gatsby obsessively pursues former love Daisy Buchanan during the Roaring Twenties on Long Island." },
+    { id: "lt3", title: "To Kill a Mockingbird", author: "Harper Lee", genre: "Literature", year: 1960, rating: 4.9, isbn: "9780060935467", desc: "Scout Finch observes her father Atticus defend Tom Robinson in Alabama, confronting racism, empathy, and justice." },
+    { id: "lt4", title: "Pride and Prejudice", author: "Jane Austen", genre: "Literature", year: 1813, rating: 4.9, isbn: "9780141439518", desc: "Elizabeth Bennet and Fitzwilliam Darcy overcome first impressions, social class, and pride in Regency England." },
+    { id: "lt5", title: "One Hundred Years of Solitude", author: "Gabriel García Márquez", genre: "Literature", year: 1967, rating: 4.8, isbn: "9780060883287", desc: "The multi-generational magical realist epic of the Buendía family in the mythical Colombian town of Macondo." },
+    { id: "lt6", title: "Moby-Dick", author: "Herman Melville", genre: "Literature", year: 1851, rating: 4.7, isbn: "9780142437247", desc: "Captain Ahab leads the Pequod crew on an obsessive nautical quest for revenge against the legendary white whale." },
+    { id: "lt7", title: "Crime and Punishment", author: "Fyodor Dostoevsky", genre: "Literature", year: 1866, rating: 4.8, isbn: "9780143058144", desc: "Former student Rodion Raskolnikov commits murder in Saint Petersburg and faces psychological guilt and redemption." },
+    { id: "lt8", title: "The Catcher in the Rye", author: "J.D. Salinger", genre: "Literature", year: 1951, rating: 4.6, isbn: "9780316769488", desc: "Disillusioned teenager Holden Caulfield wanders New York City grappling with identity, alienation, and loss of innocence." },
+    { id: "lt9", title: "Jane Eyre", author: "Charlotte Brontë", genre: "Literature", year: 1847, rating: 4.8, isbn: "9780141441146", desc: "Independent orphan Jane Eyre becomes governess at Thornfield Hall and discovers dark secrets surrounding Edward Rochester." },
+    { id: "lt10", title: "Beloved", author: "Toni Morrison", genre: "Literature", year: 1987, rating: 4.8, isbn: "9781400033416", desc: "Sethe, a former enslaved woman in post-Civil War Ohio, is haunted physically and spiritually by the memory of her daughter." },
+    { id: "lt11", title: "The Brothers Karamazov", author: "Fyodor Dostoevsky", genre: "Literature", year: 1880, rating: 4.9, isbn: "9780374528379", desc: "A profound philosophical inquiry into faith, free will, and morality centered on the murder of Fyodor Karamazov." },
+    { id: "lt12", title: "Anna Karenina", author: "Leo Tolstoy", genre: "Literature", year: 1877, rating: 4.8, isbn: "9780143035008", desc: "Aristocrat Anna Karenina's tragic affair with Count Vronsky contrasts with Levin's search for rural purpose." },
+    { id: "lt13", title: "The Picture of Dorian Gray", author: "Oscar Wilde", genre: "Literature", year: 1890, rating: 4.7, isbn: "9780141439570", desc: "Dorian Gray remains youthful while a painted portrait ages and absorbs the moral decay of his hedonistic choices." },
+    { id: "lt14", title: "Brave New World", author: "Aldous Huxley", genre: "Literature", year: 1932, rating: 4.7, isbn: "9780060850524", desc: "A futuristic World State conditions citizens through soma and genetics, challenged by outsider John the Savage." },
+    { id: "lt15", title: "Wuthering Heights", author: "Emily Brontë", genre: "Literature", year: 1847, rating: 4.7, isbn: "9780141439556", desc: "The intense, destructive passion between Heathcliff and Catherine Earnshaw across the windswept Yorkshire moors." },
+    { id: "lt16", title: "Fahrenheit 451", author: "Ray Bradbury", genre: "Literature", year: 1953, rating: 4.8, isbn: "9781451673319", desc: "Fireman Guy Montag, tasked with burning outlawed books, experiences an intellectual awakening and revolts against censorship." },
+    { id: "lt17", title: "The Grapes of Wrath", author: "John Steinbeck", genre: "Literature", year: 1939, rating: 4.8, isbn: "9780143039433", desc: "The Joad family migrates from Dust Bowl Oklahoma to California during the Great Depression in search of work." },
+    { id: "lt18", title: "Don Quixote", author: "Miguel de Cervantes", genre: "Literature", year: 1605, rating: 4.7, isbn: "9780060934347", desc: "Spanish noble Don Quixote and squire Sancho Panza ride across Spain fighting windmills and upholding chivalry." },
+    { id: "lt19", title: "Lolita", author: "Vladimir Nabokov", genre: "Literature", year: 1955, rating: 4.6, isbn: "9780679723400", desc: "Humbert Humbert's confessedly unreliable memoir detailing obsession, prose mastery, and moral tragedy across 1950s America." },
+    { id: "lt20", title: "Frankenstein", author: "Mary Shelley", genre: "Literature", year: 1818, rating: 4.7, isbn: "9780141439471", desc: "Victor Frankenstein creates sentient life in a scientific experiment, only to abandon his creature to tragedy and vengeance." },
+
+    // --- BUSINESS & STARTUPS (20 BOOKS) ---
+    { id: "bs1", title: "Zero to One", author: "Peter Thiel", genre: "Business & Startups", year: 2014, rating: 4.8, isbn: "9780804139298", desc: "PayPal co-founder Peter Thiel shares notes on how to build monopoly startups that create breakthrough new value." },
+    { id: "bs2", title: "The Lean Startup", author: "Eric Ries", genre: "Business & Startups", year: 2011, rating: 4.8, isbn: "9780307887894", desc: "Introduces build-measure-learn feedback loops, minimum viable products (MVPs), and validated learning for founders." },
+    { id: "bs3", title: "Atomic Habits", author: "James Clear", genre: "Business & Startups", year: 2018, rating: 4.9, isbn: "9780735211292", desc: "An actionable 4-step framework for building tiny daily habits for massive long-term compound growth." },
+    { id: "bs4", title: "Shoe Dog", author: "Phil Knight", genre: "Business & Startups", year: 2016, rating: 4.9, isbn: "9781501135910", desc: "Nike founder Phil Knight candidly chronicles the gritty early days, near bankruptcies, and rise of an iconic global brand." },
+    { id: "bs5", title: "Good to Great", author: "Jim Collins", genre: "Business & Startups", year: 2001, rating: 4.8, isbn: "9780066620992", desc: "Identifies Level 5 Leadership, Hedgehog Concepts, and Stockdale Paradoxes that elevate average companies to enduring excellence." },
+    { id: "bs6", title: "The Hard Thing About Hard Things", author: "Ben Horowitz", genre: "Business & Startups", year: 2014, rating: 4.8, isbn: "9780062273208", desc: "Andreessen Horowitz founder Ben Horowitz delivers honest advice on navigating crisis management and running tech startups." },
+    { id: "bs7", title: "Thinking, Fast and Slow", author: "Daniel Kahneman", genre: "Business & Startups", year: 2011, rating: 4.8, isbn: "9780374533557", desc: "Nobel laureate Daniel Kahneman explores System 1 fast intuition vs System 2 slow deliberation in human decision-making." },
+    { id: "bs8", title: "Start with Why", author: "Simon Sinek", genre: "Business & Startups", year: 2009, rating: 4.7, isbn: "9781591846444", desc: "Shows how inspiring leaders like Steve Jobs and the Wright Brothers build movements by starting with core purpose." },
+    { id: "bs9", title: "Hooked", author: "Nir Eyal", genre: "Business & Startups", year: 2014, rating: 4.7, isbn: "9781591847786", desc: "Explains the 4-step Hook Model (Trigger, Action, Variable Reward, Investment) behind engaging product design." },
+    { id: "bs10", title: "Outliers", author: "Malcolm Gladwell", genre: "Business & Startups", year: 2008, rating: 4.8, isbn: "9780316017930", desc: "Examines how culture, timing, 10,000 hours of deliberate practice, and opportunity create extreme high achievers." },
+    { id: "bs11", title: "Rework", author: "Jason Fried", genre: "Business & Startups", year: 2010, rating: 4.7, isbn: "9780307463746", desc: "Basecamp founders challenge traditional business dogma, advocating lean execution, remote work, and simplicity." },
+    { id: "bs12", title: "The Innovator's Dilemma", author: "Clayton M. Christensen", genre: "Business & Startups", year: 1997, rating: 4.8, isbn: "9781422196022", desc: "Demonstrates how market leaders fail when disrupted by cheaper, simpler technological innovations." },
+    { id: "bs13", title: "Built to Last", author: "Jim Collins", genre: "Business & Startups", year: 1994, rating: 4.8, isbn: "9780060516406", desc: "Research into 18 visionary companies showing how core ideologies and audacious BHAG goals drive centuries of success." },
+    { id: "bs14", title: "Dare to Lead", author: "Brené Brown", genre: "Business & Startups", year: 2018, rating: 4.8, isbn: "9780399592522", desc: "Brené Brown outlines how vulnerability, courage, empathy, and clear values define transformational leadership." },
+    { id: "bs15", title: "Deep Work", author: "Cal Newport", genre: "Business & Startups", year: 2016, rating: 4.8, isbn: "9781455586691", desc: "Rules for focused, distraction-free cognitive effort to master hard information and produce elite results." },
+    { id: "bs16", title: "Influence", author: "Robert B. Cialdini", genre: "Business & Startups", year: 1984, rating: 4.8, isbn: "9780061241895", desc: "The 6 universal principles of persuasion: Reciprocity, Commitment, Social Proof, Authority, Liking, and Scarcity." },
+    { id: "bs17", title: "Measure What Matters", author: "John Doerr", genre: "Business & Startups", year: 2018, rating: 4.7, isbn: "9780525536222", desc: "Legendary investor John Doerr explains how Objectives and Key Results (OKRs) backed growth at Google and Intel." },
+    { id: "bs18", title: "Crossing the Chasm", author: "Geoffrey A. Moore", genre: "Business & Startups", year: 1991, rating: 4.7, isbn: "9780060517120", desc: "The definitive guide to marketing high-tech products from early adopters to mainstream pragmatic buyers." },
+    { id: "bs19", title: "Never Split the Difference", author: "Chris Voss", genre: "Business & Startups", year: 2016, rating: 4.9, isbn: "9780062407801", desc: "Former FBI hostage negotiator Chris Voss reveals tactical empathy and high-stakes negotiation techniques for business." },
+    { id: "bs20", title: "The E-Myth Revisited", author: "Michael E. Gerber", genre: "Business & Startups", year: 1995, rating: 4.7, isbn: "9780887307287", desc: "Dispels small business myths and explains how to build scalable systems so your business runs without your constant presence." },
+
+    // --- PHILOSOPHY & MINDSET (20 BOOKS) ---
+    { id: "ph1", title: "Meditations", author: "Marcus Aurelius", genre: "Philosophy & Mindset", year: 180, rating: 4.9, isbn: "9780812968255", desc: "Private personal journals of the Roman Emperor practicing Stoic resilience, duty, self-discipline, and inner clarity." },
+    { id: "ph2", title: "Man's Search for Meaning", author: "Viktor E. Frankl", genre: "Philosophy & Mindset", year: 1946, rating: 4.9, isbn: "9780807014295", desc: "Psychiatrist Viktor Frankl chronicles surviving Nazi concentration camps and introduces logotherapy: finding meaning in adversity." },
+    { id: "ph3", title: "The Daily Stoic", author: "Ryan Holiday", genre: "Philosophy & Mindset", year: 2016, rating: 4.8, isbn: "9780735211735", desc: "366 daily meditations on wisdom, perseverance, and the art of living from Seneca, Epictetus, and Marcus Aurelius." },
+    { id: "ph4", title: "The Alchemist", author: "Paulo Coelho", genre: "Philosophy & Mindset", year: 1988, rating: 4.8, isbn: "9780062315007", desc: "Andalusian shepherd boy Santiago journeys across Egypt pursuing his Personal Legend and discovering life's omens." },
+    { id: "ph5", title: "Tao Te Ching", author: "Lao Tzu", genre: "Philosophy & Mindset", year: -400, rating: 4.9, isbn: "9780061142697", desc: "81 poetic chapters presenting Eastern philosophy on living in harmony with the natural flow (the Tao) and Wu Wei (effortless action)." },
+    { id: "ph6", title: "Letters from a Stoic", author: "Seneca", genre: "Philosophy & Mindset", year: 65, rating: 4.8, isbn: "9780140442106", desc: "Epistolary guidance from Roman philosopher Seneca to Lucilius on time management, friendship, and emotional peace." },
+    { id: "ph7", title: "Beyond Good and Evil", author: "Friedrich Nietzsche", genre: "Philosophy & Mindset", year: 1886, rating: 4.7, isbn: "9780679724650", desc: "Nietzsche critiques traditional morality, dogmatic philosophy, and introduces will to power and master-slave moralities." },
+    { id: "ph8", title: "The Myth of Sisyphus", author: "Albert Camus", genre: "Philosophy & Mindset", year: 1942, rating: 4.7, isbn: "9780679733737", desc: "Camus addresses the Absurd and argues we must imagine Sisyphus happy as he embraces his endless rock-rolling task." },
+    { id: "ph9", title: "Zen and the Art of Motorcycle Maintenance", author: "Robert M. Pirsig", genre: "Philosophy & Mindset", year: 1974, rating: 4.6, isbn: "9780060589462", desc: "A motorcycle journey across America weaves together metaphysics, the concept of Quality, and personal healing." },
+    { id: "ph10", title: "Sophie's World", author: "Jostein Gaarder", genre: "Philosophy & Mindset", year: 1991, rating: 4.7, isbn: "9780374530716", desc: "14-year-old Sophie Amundsen receives mysterious letters introducing her to western philosophy from Socrates to Sartre." },
+    { id: "ph11", title: "The Republic", author: "Plato", genre: "Philosophy & Mindset", year: -375, rating: 4.8, isbn: "9780140455113", desc: "Socrates dialogues on justice, the ideal city-state, philosopher kings, and the famous Allegory of the Cave." },
+    { id: "ph12", title: "Thus Spoke Zarathustra", author: "Friedrich Nietzsche", genre: "Philosophy & Mindset", year: 1883, rating: 4.7, isbn: "9780140441185", desc: "Philosophical novel detailing Zarathustra's teachings on the Übermensch, eternal recurrence, and self-overcoming." },
+    { id: "ph13", title: "The Art of War", author: "Sun Tzu", genre: "Philosophy & Mindset", year: -500, rating: 4.8, isbn: "9781590302255", desc: "Ancient military treatise offering timeless strategy on conflict resolution, deception, adaptability, and leadership without fight." },
+    { id: "ph14", title: "Enchiridion", author: "Epictetus", genre: "Philosophy & Mindset", year: 135, rating: 4.8, isbn: "9780486433592", desc: "A practical Stoic manual on controlling what is in your power, accepting externals, and maintaining tranquility." },
+    { id: "ph15", title: "Critique of Pure Reason", author: "Immanuel Kant", genre: "Philosophy & Mindset", year: 1781, rating: 4.7, isbn: "9780140447477", desc: "Kant reconciles rationalism and empiricism through transcendental idealism, examining the limits of human cognition." },
+    { id: "ph16", title: "Fear and Trembling", author: "Søren Kierkegaard", genre: "Philosophy & Mindset", year: 1843, rating: 4.7, isbn: "9780140444490", desc: "Kierkegaard analyzes Abraham's trial of faith, exploring the teleological suspension of the ethical and leaps of faith." },
+    { id: "ph17", title: "Being and Time", author: "Martin Heidegger", genre: "Philosophy & Mindset", year: 1927, rating: 4.6, isbn: "9780061575594", desc: "Foundational existential phenomenology examining Dasein (human being-in-the-world), mortality, and authenticity." },
+    { id: "ph18", title: "The Power of Now", author: "Eckhart Tolle", genre: "Philosophy & Mindset", year: 1997, rating: 4.8, isbn: "9781577314806", desc: "A guide to spiritual enlightenment that emphasizes transcending egoic thoughts and dwelling fully in present moment awareness." },
+    { id: "ph19", title: "Meditations on First Philosophy", author: "René Descartes", genre: "Philosophy & Mindset", year: 1641, rating: 4.7, isbn: "9780872201927", desc: "Descartes applies methodical doubt to find foundational truth, arriving at Cogito, Ergo Sum ('I think, therefore I am')." },
+    { id: "ph20", title: "The Prince", author: "Niccolò Machiavelli", genre: "Philosophy & Mindset", year: 1532, rating: 4.7, isbn: "9780140449150", desc: "Political treatise advising rulers on statecraft, pragmatism, power retention, and whether it is better to be loved or feared." }
+];
+
+function getOpenLibraryCoverUrl(isbn) {
+    return `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
+}
+
+function handleImageError(img, title, author, genre) {
+    img.onerror = null; // Prevent infinite loop
+    const colorMap = {
+        'Sci-Fi': ['#0f172a', '#1e1b4b', '#312e81'],
+        'Comedy': ['#78350f', '#92400e', '#b45309'],
+        'Literature': ['#0f172a', '#334155', '#475569'],
+        'Business & Startups': ['#1e1b4b', '#1e40af', '#2563eb'],
+        'Philosophy & Mindset': ['#312e81', '#3730a3', '#4f46e5']
+    };
+    const colors = colorMap[genre] || ['#1e293b', '#334155', '#475569'];
+
+    const safeTitle = (title || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const safeAuthor = (author || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const safeGenre = (genre || "").toUpperCase();
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450">
+        <defs>
+            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="${colors[0]}" />
+                <stop offset="50%" stop-color="${colors[1]}" />
+                <stop offset="100%" stop-color="${colors[2]}" />
+            </linearGradient>
+        </defs>
+        <rect width="300" height="450" fill="url(#g)" rx="12" />
+        <rect x="14" y="14" width="272" height="422" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" rx="8" />
+        <text x="150" y="70" fill="rgba(255,255,255,0.7)" font-size="11" font-weight="bold" font-family="sans-serif" text-anchor="middle" letter-spacing="2">${safeGenre}</text>
+        <text x="150" y="210" fill="#ffffff" font-size="19" font-weight="900" font-family="sans-serif" text-anchor="middle">
+            ${safeTitle.length > 25 ? safeTitle.substring(0, 24) + '...' : safeTitle}
+        </text>
+        <text x="150" y="360" fill="rgba(255,255,255,0.85)" font-size="13" font-weight="bold" font-family="sans-serif" text-anchor="middle">
+            ${safeAuthor}
+        </text>
+    </svg>`;
+
+    img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+function openLibraryModal() {
+    const modal = document.getElementById("library-modal");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+    requestAnimationFrame(() => {
+        modal.classList.remove("opacity-0");
+        modal.classList.add("opacity-100");
+    });
+
+    renderLibraryGrid();
+}
+
+function closeLibraryModal() {
+    const modal = document.getElementById("library-modal");
+    if (!modal) return;
+
+    modal.classList.remove("opacity-100");
+    modal.classList.add("opacity-0");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+    }, 300);
+}
+
+function setLibraryGenre(genre) {
+    currentLibraryGenre = genre;
+    
+    const tabs = {
+        'all': 'genre-tab-all',
+        'Sci-Fi': 'genre-tab-scifi',
+        'Comedy': 'genre-tab-comedy',
+        'Literature': 'genre-tab-literature',
+        'Business & Startups': 'genre-tab-business',
+        'Philosophy & Mindset': 'genre-tab-philosophy'
+    };
+
+    Object.keys(tabs).forEach(gKey => {
+        const btn = document.getElementById(tabs[gKey]);
+        if (btn) {
+            if (gKey === genre) {
+                btn.className = "genre-tab-btn neu-btn pressed px-4 py-2 text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 shrink-0";
+            } else {
+                btn.className = "genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0";
+            }
+        }
+    });
+
+    renderLibraryGrid();
+}
+
+function handleLibrarySearch() {
+    const input = document.getElementById("library-search-input");
+    librarySearchQuery = input ? input.value.trim().toLowerCase() : "";
+    renderLibraryGrid();
+}
+
+function renderLibraryGrid() {
+    const grid = document.getElementById("library-grid");
+    const emptyState = document.getElementById("library-empty-state");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    const filtered = libraryBooks.filter(book => {
+        const matchesGenre = currentLibraryGenre === "all" || book.genre === currentLibraryGenre;
+        const matchesQuery = !librarySearchQuery || 
+            book.title.toLowerCase().includes(librarySearchQuery) || 
+            book.author.toLowerCase().includes(librarySearchQuery);
+        return matchesGenre && matchesQuery;
+    });
+
+    if (filtered.length === 0) {
+        if (emptyState) emptyState.classList.remove("hidden");
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add("hidden");
+
+    filtered.forEach((book, index) => {
+        const card = document.createElement("div");
+        card.className = "neu-card-sm p-4 flex flex-col justify-between group cursor-pointer hover:shadow-xl transition-all duration-300 relative overflow-hidden fade-in";
+        card.style.animationDelay = `${(index % 12) * 40}ms`;
+
+        const coverUrl = getOpenLibraryCoverUrl(book.isbn);
+
+        card.innerHTML = `
+            <!-- 3D BOOK COVER DISPLAY CASE -->
+            <div class="book-3d-wrapper mb-4">
+                <div class="book-3d-card">
+                    <div class="book-3d-spine"></div>
+                    <div class="book-3d-shine"></div>
+                    <img src="${coverUrl}" 
+                         alt="${escapeHtml(book.title)}" 
+                         class="book-cover-img"
+                         loading="lazy"
+                         onerror="handleImageError(this, '${escapeHtml(book.title)}', '${escapeHtml(book.author)}', '${book.genre}')" />
+                </div>
+            </div>
+
+            <!-- BOOK METADATA -->
+            <div class="flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="neu-badge text-[9px] font-extrabold text-indigo-600 uppercase px-2 py-0.5">${book.genre}</span>
+                        <span class="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">★ ${book.rating}</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-800 font-outfit line-clamp-1 group-hover:text-indigo-600 transition-colors">${escapeHtml(book.title)}</h4>
+                    <p class="text-xs font-semibold text-slate-500 line-clamp-1 mt-0.5">${escapeHtml(book.author)}</p>
+                    <p class="text-[11px] text-slate-600 line-clamp-2 mt-2 leading-relaxed font-medium">${escapeHtml(book.desc)}</p>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-300/50 flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-slate-400">${book.year}</span>
+                    <span class="text-xs font-black text-indigo-600 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                        Inspect &rarr;
+                    </span>
+                </div>
+            </div>
+        `;
+
+        card.onclick = () => openBookDetailModal(book.id);
+        grid.appendChild(card);
+    });
+}
+
+function openBookDetailModal(bookId) {
+    const book = libraryBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    const modal = document.getElementById("book-detail-modal");
+    const coverContainer = document.getElementById("detail-book-cover-container");
+    const genreEl = document.getElementById("detail-book-genre");
+    const yearEl = document.getElementById("detail-book-year");
+    const titleEl = document.getElementById("detail-book-title");
+    const authorEl = document.getElementById("detail-book-author");
+    const descEl = document.getElementById("detail-book-description");
+    const ratingEl = document.getElementById("detail-book-rating");
+    const linkEl = document.getElementById("detail-book-link");
+
+    if (!modal) return;
+
+    const coverUrl = getOpenLibraryCoverUrl(book.isbn);
+
+    if (coverContainer) {
+        coverContainer.innerHTML = `
+            <div class="book-3d-card shadow-2xl">
+                <div class="book-3d-spine"></div>
+                <div class="book-3d-shine"></div>
+                <img src="${coverUrl}" 
+                     alt="${escapeHtml(book.title)}" 
+                     class="book-cover-img"
+                     onerror="handleImageError(this, '${escapeHtml(book.title)}', '${escapeHtml(book.author)}', '${book.genre}')" />
+            </div>
+        `;
+    }
+
+    if (genreEl) genreEl.innerText = book.genre;
+    if (yearEl) yearEl.innerText = `Published ${book.year}`;
+    if (titleEl) titleEl.innerText = book.title;
+    if (authorEl) authorEl.innerText = `by ${book.author}`;
+    if (descEl) descEl.innerText = book.desc;
+    if (ratingEl) ratingEl.innerText = `★ ${book.rating} / 5.0 Rating`;
+    if (linkEl) linkEl.href = `https://openlibrary.org/search?q=${encodeURIComponent(book.title + ' ' + book.author)}`;
+
+    modal.classList.remove("hidden");
+    requestAnimationFrame(() => {
+        modal.classList.remove("opacity-0");
+        modal.classList.add("opacity-100");
+    });
+}
+
+function closeBookDetailModal() {
+    const modal = document.getElementById("book-detail-modal");
+    if (!modal) return;
+
+    modal.classList.remove("opacity-100");
+    modal.classList.add("opacity-0");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+    }, 300);
+}

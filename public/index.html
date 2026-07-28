@@ -337,6 +337,7 @@
 
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
+            height: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: rgba(224, 229, 236, 0.5);
@@ -345,6 +346,70 @@
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 8px;
+        }
+
+        /* -------------------------------------------------------------
+           3D BOOK DISPLAY CASES & HOVER EFFECTS
+        ------------------------------------------------------------- */
+        .book-3d-wrapper {
+            perspective: 900px;
+        }
+
+        .book-3d-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2/3;
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+            border-radius: 4px 12px 12px 4px;
+            box-shadow: 4px 6px 14px rgba(0, 0, 0, 0.18);
+            background: #cbd5e1;
+        }
+
+        .book-3d-card:hover {
+            transform: rotateY(-18deg) rotateX(8deg) translateZ(10px) scale(1.04);
+            box-shadow: 12px 18px 28px rgba(0, 0, 0, 0.28);
+        }
+
+        .book-3d-spine {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 10px;
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.2));
+            border-radius: 4px 0 0 4px;
+            z-index: 10;
+        }
+
+        .book-3d-shine {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.2) 100%);
+            pointer-events: none;
+            border-radius: 4px 12px 12px 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 12;
+        }
+
+        .book-3d-card:hover .book-3d-shine {
+            opacity: 1;
+        }
+
+        .book-cover-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px 12px 12px 4px;
+            display: block;
+        }
+
+        .genre-tab-btn.pressed {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            background: #e0e5ec;
+            color: #4f46e5;
+            border-bottom: 2px solid #4f46e5;
         }
     </style>
 </head>
@@ -660,20 +725,38 @@
         </div>
     </div>
 
-    <!-- FLOATING ROUTINE TRACKER BUTTON -->
-    <button id="tracker-floating-btn" onclick="openTrackerModal()" title="Open Routine Tracker"
-        class="fixed bottom-6 right-6 z-50 neu-btn px-5 py-3.5 flex items-center gap-3 text-slate-800 font-bold shadow-2xl hover:scale-105 transition-all duration-300 group border border-white/60">
-        <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-amber-500 group-hover:scale-110 transition-transform">
-            🔥
-        </div>
-        <div class="flex flex-col text-left">
-            <span class="text-xs font-black text-blue-600 uppercase tracking-widest leading-none font-outfit">Routine Tracker</span>
-            <span class="text-[11px] font-semibold text-slate-500 mt-1 leading-none">30-Day Growth</span>
-        </div>
-        <span id="tracker-badge-count" class="hidden neu-badge bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-full ml-1">
-            0
-        </span>
-    </button>
+    <!-- FLOATING ACTION BUTTONS CONTAINER -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col sm:flex-row items-end sm:items-center gap-3">
+        <!-- MODERN LIBRARY BUTTON -->
+        <button id="library-floating-btn" onclick="openLibraryModal()" title="Open Modern Library"
+            class="neu-btn px-5 py-3.5 flex items-center gap-3 text-slate-800 font-bold shadow-2xl hover:scale-105 transition-all duration-300 group border border-white/60">
+            <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-indigo-600 group-hover:scale-110 transition-transform">
+                📚
+            </div>
+            <div class="flex flex-col text-left">
+                <span class="text-xs font-black text-indigo-600 uppercase tracking-widest leading-none font-outfit">Modern Library</span>
+                <span class="text-[11px] font-semibold text-slate-500 mt-1 leading-none">100 Books Catalog</span>
+            </div>
+            <span class="neu-badge bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ml-1">
+                100
+            </span>
+        </button>
+
+        <!-- ROUTINE TRACKER BUTTON -->
+        <button id="tracker-floating-btn" onclick="openTrackerModal()" title="Open Routine Tracker"
+            class="neu-btn px-5 py-3.5 flex items-center gap-3 text-slate-800 font-bold shadow-2xl hover:scale-105 transition-all duration-300 group border border-white/60">
+            <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-amber-500 group-hover:scale-110 transition-transform">
+                🔥
+            </div>
+            <div class="flex flex-col text-left">
+                <span class="text-xs font-black text-blue-600 uppercase tracking-widest leading-none font-outfit">Routine Tracker</span>
+                <span class="text-[11px] font-semibold text-slate-500 mt-1 leading-none">30-Day Growth</span>
+            </div>
+            <span id="tracker-badge-count" class="hidden neu-badge bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-full ml-1">
+                0
+            </span>
+        </button>
+    </div>
 
     <!-- ROUTINE TRACKER OVERLAY MODAL -->
     <div id="tracker-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-3 sm:p-5 md:p-8 bg-slate-900/45 backdrop-blur-md transition-opacity duration-300 opacity-0">
@@ -844,6 +927,110 @@
                     </p>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- MODERN LIBRARY OVERLAY MODAL -->
+    <div id="library-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-3 sm:p-5 md:p-8 bg-slate-900/45 backdrop-blur-md transition-opacity duration-300 opacity-0">
+        <div class="neu-card w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden relative shadow-2xl border border-white/70">
+            
+            <!-- MODAL HEADER -->
+            <div class="p-6 md:p-8 pb-5 border-b border-slate-300/60 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 bg-slate-200/40">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-indigo-600 shrink-0">
+                        📚
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-2xl md:text-3xl font-black text-slate-800 font-outfit tracking-tight">Modern Library</h2>
+                            <span class="neu-badge text-[10px] font-bold text-indigo-600 uppercase px-2.5 py-0.5">100 Books Catalog</span>
+                        </div>
+                        <p class="text-xs md:text-sm text-slate-500 font-medium mt-0.5">Curated landmark books across 5 key genres with 3D display cases</p>
+                    </div>
+                </div>
+
+                <!-- SEARCH BAR & CLOSE BUTTON -->
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-64">
+                        <input id="library-search-input" type="text" oninput="handleLibrarySearch()" placeholder="Search title or author..." 
+                            class="neu-input w-full pl-9 pr-4 py-2.5 rounded-xl text-slate-700 text-xs font-semibold focus:outline-none placeholder-slate-400 bg-[#e0e5ec]" />
+                        <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+                    </div>
+                    <button onclick="closeLibraryModal()" title="Close Library" class="neu-circle w-10 h-10 flex items-center justify-center text-slate-600 hover:text-red-500 transition-colors font-black text-lg shrink-0">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- GENRE NAVIGATION TABS (HORIZONTALLY SCROLLABLE) -->
+            <div class="px-6 md:px-8 py-3 bg-slate-200/20 border-b border-slate-300/40 shrink-0">
+                <div id="library-genre-tabs" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                    <button type="button" onclick="setLibraryGenre('all')" id="genre-tab-all" class="genre-tab-btn neu-btn pressed px-4 py-2 text-xs font-bold text-indigo-600 shrink-0">
+                        ✨ All Genres (100)
+                    </button>
+                    <button type="button" onclick="setLibraryGenre('Sci-Fi')" id="genre-tab-scifi" class="genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0">
+                        🚀 Sci-Fi (20)
+                    </button>
+                    <button type="button" onclick="setLibraryGenre('Comedy')" id="genre-tab-comedy" class="genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0">
+                        🎭 Comedy (20)
+                    </button>
+                    <button type="button" onclick="setLibraryGenre('Literature')" id="genre-tab-literature" class="genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0">
+                        📖 Literature (20)
+                    </button>
+                    <button type="button" onclick="setLibraryGenre('Business & Startups')" id="genre-tab-business" class="genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0">
+                        💼 Business & Startups (20)
+                    </button>
+                    <button type="button" onclick="setLibraryGenre('Philosophy & Mindset')" id="genre-tab-philosophy" class="genre-tab-btn neu-btn px-4 py-2 text-xs font-bold text-slate-600 shrink-0">
+                        🧠 Philosophy & Mindset (20)
+                    </button>
+                </div>
+            </div>
+
+            <!-- MODAL SCROLLABLE BODY (BOOK CATALOG GRID) -->
+            <div class="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
+                <div id="library-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- 100 Dynamic 3D Book Display Cases Injected Here -->
+                </div>
+                
+                <div id="library-empty-state" class="hidden neu-card p-12 text-center flex flex-col items-center justify-center">
+                    <div class="w-16 h-16 neu-circle flex items-center justify-center text-3xl mb-4 text-slate-400">
+                        🔍
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-700 font-outfit mb-2">No Matching Books Found</h4>
+                    <p class="text-xs text-slate-500 font-medium max-w-md">
+                        Try searching for another title or author, or switch genre categories above.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOK DETAIL INSPECTOR MODAL -->
+    <div id="book-detail-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300 opacity-0">
+        <div class="neu-card w-full max-w-2xl p-6 md:p-8 relative shadow-2xl border border-white/80 overflow-hidden flex flex-col md:flex-row gap-6">
+            <button onclick="closeBookDetailModal()" class="absolute top-4 right-4 neu-circle w-8 h-8 flex items-center justify-center text-slate-600 hover:text-red-500 font-bold z-20">
+                ✕
+            </button>
+            <div id="detail-book-cover-container" class="w-40 h-56 shrink-0 mx-auto md:mx-0 book-3d-wrapper">
+                <!-- 3D Book element injected here -->
+            </div>
+            <div class="flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span id="detail-book-genre" class="neu-badge text-[10px] font-extrabold text-indigo-600 uppercase px-3 py-1 inline-block"></span>
+                        <span id="detail-book-year" class="text-xs font-bold text-slate-400"></span>
+                    </div>
+                    <h3 id="detail-book-title" class="text-2xl font-black text-slate-800 font-outfit leading-tight mb-1"></h3>
+                    <p id="detail-book-author" class="text-sm font-bold text-slate-500 mb-4"></p>
+                    <p id="detail-book-description" class="text-xs text-slate-600 leading-relaxed font-medium mb-4"></p>
+                </div>
+                <div class="pt-4 border-t border-slate-300/60 flex items-center justify-between gap-3">
+                    <span id="detail-book-rating" class="text-xs font-bold text-amber-600 flex items-center gap-1"></span>
+                    <a id="detail-book-link" href="#" target="_blank" class="neu-btn px-4 py-2 text-xs font-extrabold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                        📖 OpenLibrary Record &rarr;
+                    </a>
+                </div>
             </div>
         </div>
     </div>
