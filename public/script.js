@@ -121,13 +121,13 @@ function renderQuestion() {
 
     q.options.forEach((option, index) => {
         const btn = document.createElement("button");
-        btn.className = `neu-btn w-full text-left p-5 font-semibold text-slate-700 hover:text-blue-600 transition-all duration-300 fade-in flex items-center justify-between group`;
+        btn.className = `neu-btn w-full text-left p-3.5 sm:p-5 font-semibold text-slate-700 hover:text-blue-600 transition-all duration-300 fade-in flex items-center justify-between group`;
         btn.style.animationDelay = `${index * 80}ms`; 
         
         btn.innerHTML = `
-            <span class="text-sm md:text-base pr-4">${option.text}</span>
-            <div class="w-8 h-8 neu-circle flex items-center justify-center text-slate-400 group-hover:text-blue-600 shrink-0 group-hover:translate-x-1 transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span class="text-xs sm:text-sm md:text-base pr-2 sm:pr-4">${option.text}</span>
+            <div class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-slate-400 group-hover:text-blue-600 shrink-0 group-hover:translate-x-1 transition-all">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                 </svg>
             </div>
@@ -205,19 +205,19 @@ function showResultsOverview() {
         const card = document.createElement("button");
         
         const isTopMatch = index === 0;
-        const cardClass = isTopMatch ? "neu-highlight p-6 text-left relative overflow-hidden group" : "neu-btn p-6 text-left relative overflow-hidden group";
-        const badgeHTML = isTopMatch ? `<div class="absolute top-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-md tracking-widest font-outfit uppercase">TOP MATCH</div>` : "";
+        const cardClass = isTopMatch ? "neu-highlight p-4 sm:p-6 text-left relative overflow-hidden group" : "neu-btn p-4 sm:p-6 text-left relative overflow-hidden group";
+        const badgeHTML = isTopMatch ? `<div class="absolute top-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] sm:text-[10px] font-black px-3 py-1 sm:px-4 sm:py-1.5 rounded-bl-xl sm:rounded-bl-2xl shadow-md tracking-widest font-outfit uppercase">TOP MATCH</div>` : "";
 
         card.className = `${cardClass} fade-in w-full transition-all duration-300`;
         card.style.animationDelay = `${index * 120}ms`;
         
         card.innerHTML = `
             ${badgeHTML}
-            <div class="w-14 h-14 neu-circle flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+            <div class="w-11 h-11 sm:w-14 sm:h-14 neu-circle flex items-center justify-center text-2xl sm:text-3xl mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
                 ${match.icon}
             </div>
-            <h3 class="text-xl font-black text-slate-800 mb-2 font-outfit group-hover:text-blue-600 transition-colors">${match.title}</h3>
-            <p class="text-xs font-bold text-blue-600 uppercase tracking-widest mt-4 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            <h3 class="text-lg sm:text-xl font-black text-slate-800 mb-2 font-outfit group-hover:text-blue-600 transition-colors">${match.title}</h3>
+            <p class="text-[11px] sm:text-xs font-bold text-blue-600 uppercase tracking-widest mt-3 sm:mt-4 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                 View Roadmap &rarr;
             </p>
         `;
@@ -253,12 +253,12 @@ function showCareerDetails(index) {
         phaseDiv.style.animationDelay = `${i * 100}ms`;
 
         phaseDiv.innerHTML = `
-            <div class="absolute -left-[33px] top-4 w-4 h-4 neu-circle-pressed flex items-center justify-center">
+            <div class="absolute -left-[25px] sm:-left-[33px] top-4 w-4 h-4 neu-circle-pressed flex items-center justify-center">
                 <div class="w-2 h-2 rounded-full bg-blue-600"></div>
             </div>
-            <div class="neu-card-sm p-6">
-                <h4 class="font-black text-blue-600 text-base mb-2 font-outfit tracking-wide">${phase.title}</h4>
-                <p class="text-sm font-medium text-slate-600 leading-relaxed">${phase.steps}</p>
+            <div class="neu-card-sm p-4 sm:p-6">
+                <h4 class="font-black text-blue-600 text-sm sm:text-base mb-1.5 sm:mb-2 font-outfit tracking-wide">${phase.title}</h4>
+                <p class="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">${phase.steps}</p>
             </div>
         `;
         roadmapContainer.appendChild(phaseDiv);
@@ -588,19 +588,19 @@ function renderHabitsList() {
             const streak = calculateHabitStreak(habit.days);
 
             const card = document.createElement("div");
-            card.className = "neu-card p-6 relative group transition-all duration-300";
+            card.className = "neu-card p-4 sm:p-6 relative group transition-all duration-300";
 
             // Streak Engine Badge HTML
             let streakBadgeHTML = "";
             if (streak >= 3) {
                 streakBadgeHTML = `
-                    <div class="neu-badge px-3 py-1 bg-amber-500/10 text-amber-600 font-extrabold text-xs flex items-center gap-1.5 flame-badge">
-                        <span class="text-sm">🔥</span> ${streak} Day Streak!
+                    <div class="neu-badge px-2.5 py-1 bg-amber-500/10 text-amber-600 font-extrabold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 flame-badge">
+                        <span class="text-xs sm:text-sm">🔥</span> ${streak} Day Streak!
                     </div>
                 `;
             } else if (streak > 0) {
                 streakBadgeHTML = `
-                    <div class="neu-badge px-3 py-1 text-slate-500 font-bold text-xs flex items-center gap-1">
+                    <div class="neu-badge px-2.5 py-1 text-slate-500 font-bold text-[10px] sm:text-xs flex items-center gap-1">
                         <span>⚡</span> ${streak} Day Streak
                     </div>
                 `;
@@ -608,13 +608,13 @@ function renderHabitsList() {
 
             // Category Badge HTML for card
             const catBadgeHTML = `
-                <span class="neu-badge px-2.5 py-1 text-[10px] font-bold text-slate-600 flex items-center gap-1">
+                <span class="neu-badge px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold text-slate-600 flex items-center gap-1">
                     ${cat.icon} ${cat.title}
                 </span>
             `;
 
             // 30-Day Grid Buttons
-            let gridHTML = `<div class="grid grid-cols-6 sm:grid-cols-10 gap-2 my-4">`;
+            let gridHTML = `<div class="grid grid-cols-6 sm:grid-cols-10 gap-1.5 sm:gap-2 my-3 sm:my-4">`;
             for (let day = 0; day < 30; day++) {
                 const isChecked = habit.days[day];
                 const checkedClass = isChecked ? "checked" : "";
@@ -631,19 +631,19 @@ function renderHabitsList() {
 
             card.innerHTML = `
                 <!-- HEADER -->
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 neu-circle flex items-center justify-center text-blue-600 font-black text-sm shrink-0">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 neu-circle flex items-center justify-center text-blue-600 font-black text-xs sm:text-sm shrink-0">
                             📌
                         </div>
                         <div>
-                            <h4 class="text-lg font-black text-slate-800 font-outfit">${escapeHtml(habit.name)}</h4>
+                            <h4 class="text-base sm:text-lg font-black text-slate-800 font-outfit leading-snug">${escapeHtml(habit.name)}</h4>
                         </div>
                         ${catBadgeHTML}
                         ${streakBadgeHTML}
                     </div>
                     <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" 
-                        class="text-xs font-bold text-slate-400 hover:text-red-600 transition-colors neu-badge px-3 py-1.5 flex items-center gap-1">
+                        class="text-[11px] sm:text-xs font-bold text-slate-400 hover:text-red-600 transition-colors neu-badge px-2.5 py-1 sm:px-3 sm:py-1.5 flex items-center gap-1 self-start sm:self-auto">
                         🗑️ Delete
                     </button>
                 </div>
