@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRAXiS Admin Studio | Task Management & Analytics</title>
+    <title>PRAXiS Admin Studio | Live Telemetry</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -129,22 +129,7 @@
             filter: brightness(1.05);
         }
 
-        .neo-btn-lavender {
-            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-            box-shadow: var(--shadow-accent-lavender);
-            border-radius: 0.85rem;
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            transition: all 0.2s ease;
-        }
-
-        .neo-btn-lavender:hover {
-            box-shadow: 7px 7px 20px rgba(139, 92, 246, 0.45), -4px -4px 12px #ffffff;
-            transform: translateY(-1.5px);
-            filter: brightness(1.05);
-        }
-
-        /* Neomorphic Inset Surfaces (Inputs, Tracks, Pressed Containers) */
+        /* Neomorphic Inset Surfaces */
         .neo-inset {
             background: #dce4f2;
             box-shadow: var(--shadow-inset);
@@ -174,12 +159,6 @@
             border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
-        .neo-pill-inset {
-            background: #dce4f2;
-            box-shadow: inset 2px 2px 5px rgba(166, 180, 203, 0.5), inset -2px -2px 5px #ffffff;
-            border-radius: 9999px;
-        }
-
         /* Extruded Icon Container */
         .neo-icon {
             background: linear-gradient(145deg, #ffffff, #dce4f2);
@@ -204,12 +183,10 @@
                 transform: scale(0.95);
                 box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
             }
-
             70% {
                 transform: scale(1.1);
                 box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
             }
-
             100% {
                 transform: scale(0.95);
                 box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
@@ -223,23 +200,6 @@
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
-        }
-
-        /* Custom Scrollbar for Neomorphic Containers */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #dce4f2;
-            border-radius: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #b0c2de;
-            border-radius: 8px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #8fa7ce;
         }
     </style>
 </head>
@@ -256,7 +216,7 @@
             </div>
 
             <h2 class="text-2xl font-bold text-slate-800 mb-1">PRAXiS Admin Studio</h2>
-            <p class="text-xs text-slate-500 mb-6 font-medium">Task Management & Live Analytics Dashboard</p>
+            <p class="text-xs text-slate-500 mb-6 font-medium">Live User & Visitor Telemetry Dashboard</p>
 
             <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
                 <div>
@@ -279,53 +239,32 @@
     </div>
 
     <!-- MAIN ADMIN STUDIO DASHBOARD -->
-    <div id="admin-dashboard" class="max-w-7xl mx-auto hidden space-y-6">
+    <div id="admin-dashboard" class="max-w-4xl mx-auto hidden space-y-6">
         
         <!-- HEADER BAR -->
-        <header class="neo-card p-4 sm:p-6 flex flex-col lg:flex-row items-center justify-between gap-4">
+        <header class="neo-card p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             
             <!-- BRANDING & TITLE -->
-            <div class="flex items-center gap-4 w-full lg:w-auto">
+            <div class="flex items-center gap-4 w-full sm:w-auto">
                 <div class="w-12 h-12 neo-icon flex items-center justify-center font-extrabold text-xl bg-gradient-to-br from-softLavender-400 to-softBlue-500 text-white shrink-0 shadow-inner">
                     P
                 </div>
                 <div>
                     <div class="flex items-center gap-2.5 flex-wrap">
-                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Admin Studio</h1>
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Admin Dashboard</h1>
                         <span class="neo-pill px-3 py-1 text-xs font-semibold text-slate-600 flex items-center gap-2">
                             <span class="live-dot"></span> Live Sync
                         </span>
                     </div>
-                    <p class="text-xs text-slate-500 font-medium">Task Management & Telemetry Engine</p>
+                    <p class="text-xs text-slate-500 font-medium">Real-time Traffic & Visitor Telemetry</p>
                 </div>
             </div>
 
-            <!-- DASHBOARD NAV TABS -->
-            <div class="flex items-center gap-1.5 p-1.5 neo-inset w-full sm:w-auto justify-center">
-                <button onclick="switchTab('overview')" id="tab-overview" class="neo-btn px-4 py-2 text-xs font-semibold text-slate-700 active">
-                    Overview
-                </button>
-                <button onclick="switchTab('projects')" id="tab-projects" class="neo-btn px-4 py-2 text-xs font-semibold text-slate-600">
-                    Projects & Tasks
-                </button>
-                <button onclick="switchTab('meetings')" id="tab-meetings" class="neo-btn px-4 py-2 text-xs font-semibold text-slate-600">
-                    Meetings
-                </button>
-                <button onclick="switchTab('analytics')" id="tab-analytics" class="neo-btn px-4 py-2 text-xs font-semibold text-slate-600">
-                    Analytics
-                </button>
-            </div>
-
             <!-- ACTION BUTTONS -->
-            <div class="flex items-center gap-2.5 w-full lg:w-auto justify-between lg:justify-end">
+            <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
                 <span id="last-updated-tag" class="text-[11px] sm:text-xs text-slate-500 font-medium">Syncing...</span>
                 
                 <div class="flex items-center gap-2">
-                    <button onclick="openModal('project-modal')" class="neo-btn-lavender px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span class="hidden sm:inline">+ New Project</span>
-                    </button>
-
                     <button onclick="fetchAdminStats()" title="Refresh Stats" class="neo-btn p-2 text-slate-600 hover:text-softBlue-600">
                         <svg id="refresh-icon" class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -344,532 +283,47 @@
             </div>
         </header>
 
-        <!-- SECTION 1: PROJECT & TELEMETRY METRIC CARDS -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- MAIN HERO METRICS GRID (LIVE USERS & TOTAL VISITORS ONLY) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
             
-            <!-- CARD 1: ACTIVE PROJECTS -->
-            <div class="neo-card p-4 sm:p-5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Projects</span>
-                    <div class="w-9 h-9 neo-icon text-softBlue-500 flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    </div>
-                </div>
+            <!-- CARD 1: LIVE USERS -->
+            <div class="neo-card p-6 sm:p-8 flex items-center justify-between">
                 <div>
-                    <div class="flex items-baseline justify-between">
-                        <span class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="metric-active-projects">14</span>
-                        <span class="neo-pill text-[11px] font-bold text-emerald-600 px-2.5 py-0.5">+3 this week</span>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="live-dot"></span>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Users</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">4 items nearing completion</p>
+                    <span id="stat-active-users" class="text-4xl sm:text-5xl font-extrabold text-slate-800">0</span>
+                    <p class="text-xs text-slate-400 font-medium mt-2">Currently active on site</p>
                 </div>
-            </div>
-
-            <!-- CARD 2: COMPLETED TASKS -->
-            <div class="neo-card p-4 sm:p-5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completed Tasks</span>
-                    <div class="w-9 h-9 neo-icon text-softLavender-500 flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-baseline justify-between">
-                        <span class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="metric-completed-tasks">156</span>
-                        <span class="neo-pill text-[11px] font-bold text-softLavender-600 px-2.5 py-0.5">88% rate</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">28 tasks resolved this sprint</p>
-                </div>
-            </div>
-
-            <!-- CARD 3: LOGGED HOURS & VELOCITY -->
-            <div class="neo-card p-4 sm:p-5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Hours & Velocity</span>
-                    <div class="w-9 h-9 neo-icon text-softBlue-600 flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-baseline justify-between">
-                        <span class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="metric-hours-logged">384h</span>
-                        <span class="neo-pill text-[11px] font-bold text-softBlue-600 px-2.5 py-0.5">94.5% eff</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Average velocity: 4.8 tasks/day</p>
-                </div>
-            </div>
-
-            <!-- CARD 4: CONVERSION & CONTEXT TELEMETRY -->
-            <div class="neo-card p-4 sm:p-5 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Delivery Index</span>
-                    <div class="w-9 h-9 neo-icon text-amber-500 flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-baseline justify-between">
-                        <span class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="stat-conversion-rate">0.0%</span>
-                        <span class="neo-pill text-[11px] font-bold text-emerald-600 px-2.5 py-0.5">Optimal</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Quizzes completed: <span id="stat-quizzes-completed" class="font-bold text-slate-700">0</span></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECONDARY TELEMETRY STRIP -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div class="neo-card-sm p-3.5 flex items-center justify-between">
-                <div>
-                    <span class="text-[11px] font-semibold text-slate-400 block mb-0.5">Live Users</span>
-                    <span id="stat-active-users" class="text-lg font-extrabold text-slate-800">0</span>
-                </div>
-                <div class="w-8 h-8 neo-icon text-emerald-500 flex items-center justify-center font-bold text-xs">
+                <div class="w-14 h-14 neo-icon text-emerald-500 flex items-center justify-center font-bold text-2xl shrink-0">
                     🟢
                 </div>
             </div>
 
-            <div class="neo-card-sm p-3.5 flex items-center justify-between">
+            <!-- CARD 2: TOTAL VISITORS -->
+            <div class="neo-card p-6 sm:p-8 flex items-center justify-between">
                 <div>
-                    <span class="text-[11px] font-semibold text-slate-400 block mb-0.5">Total Visitors</span>
-                    <span id="stat-total-visitors" class="text-lg font-extrabold text-slate-800">0</span>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Visitors</span>
+                    </div>
+                    <span id="stat-total-visitors" class="text-4xl sm:text-5xl font-extrabold text-slate-800">0</span>
+                    <p class="text-xs text-slate-400 font-medium mt-2">Total tracked sessions</p>
                 </div>
-                <div class="w-8 h-8 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-xs">
+                <div class="w-14 h-14 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-2xl shrink-0">
                     👁️
-                </div>
-            </div>
-
-            <div class="neo-card-sm p-3.5 flex items-center justify-between">
-                <div>
-                    <span class="text-[11px] font-semibold text-slate-400 block mb-0.5">Routine Active</span>
-                    <span id="stat-routine-live" class="text-lg font-extrabold text-slate-800">0</span>
-                </div>
-                <div class="w-8 h-8 neo-icon text-softLavender-500 flex items-center justify-center font-bold text-xs">
-                    ⚡
-                </div>
-            </div>
-
-            <div class="neo-card-sm p-3.5 flex items-center justify-between">
-                <div>
-                    <span class="text-[11px] font-semibold text-slate-400 block mb-0.5">Habits Checked</span>
-                    <span id="stat-habits-checked" class="text-lg font-extrabold text-slate-800">0</span>
-                </div>
-                <div class="w-8 h-8 neo-icon text-amber-500 flex items-center justify-center font-bold text-xs">
-                    ✓
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 2: PROJECT ANALYTICS BAR GRAPHS & DOMAINS -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- PROJECT ANALYTICS BAR GRAPH (2 COLS) -->
-            <div class="lg:col-span-2 neo-card p-5 sm:p-6 space-y-5">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/60">
-                    <div>
-                        <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <span>Project Analytics Velocity</span>
-                            <span class="text-xs font-medium text-softLavender-600 neo-pill px-2.5 py-0.5">Gradient Graph</span>
-                        </h2>
-                        <p class="text-xs text-slate-400 font-medium">Task completion and project output over time</p>
-                    </div>
-
-                    <!-- Timeframe Filter Buttons -->
-                    <div class="flex items-center gap-1 p-1 neo-inset">
-                        <button onclick="setGraphTimeframe('weekly')" id="gf-weekly" class="neo-btn px-3 py-1 text-xs font-semibold text-slate-700 active">
-                            Weekly
-                        </button>
-                        <button onclick="setGraphTimeframe('monthly')" id="gf-monthly" class="neo-btn px-3 py-1 text-xs font-semibold text-slate-600">
-                            Monthly
-                        </button>
-                        <button onclick="setGraphTimeframe('quarterly')" id="gf-quarterly" class="neo-btn px-3 py-1 text-xs font-semibold text-slate-600">
-                            Quarterly
-                        </button>
-                    </div>
-                </div>
-
-                <!-- BAR GRAPH CONTAINER WITH NEOMORPHIC EXTRUDED BARS -->
-                <div class="h-64 neo-inset p-4 sm:p-6 flex items-end justify-between gap-2 sm:gap-4 relative overflow-hidden" id="analytics-bar-chart">
-                    <!-- Target Baseline Line -->
-                    <div class="absolute left-0 right-0 top-1/3 border-b-2 border-dashed border-softLavender-300/40 pointer-events-none flex justify-end pr-2">
-                        <span class="text-[10px] font-bold text-softLavender-500 bg-neoBg/90 px-1.5 py-0.5 rounded">Target: 85%</span>
-                    </div>
-
-                    <!-- BAR 1: MON -->
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                        <div class="text-[11px] font-extrabold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">64%</div>
-                        <div class="w-full max-w-[42px] h-[64%] rounded-t-xl bg-gradient-to-t from-softLavender-500 via-softBlue-500 to-softBlue-400 neo-card-sm border-b-0 transition-all duration-500 group-hover:brightness-110 shadow-lg"></div>
-                        <span class="text-[11px] font-semibold text-slate-500">Mon</span>
-                    </div>
-
-                    <!-- BAR 2: TUE -->
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                        <div class="text-[11px] font-extrabold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">78%</div>
-                        <div class="w-full max-w-[42px] h-[78%] rounded-t-xl bg-gradient-to-t from-softLavender-500 via-softBlue-500 to-softBlue-400 neo-card-sm border-b-0 transition-all duration-500 group-hover:brightness-110 shadow-lg"></div>
-                        <span class="text-[11px] font-semibold text-slate-500">Tue</span>
-                    </div>
-
-                    <!-- BAR 3: WED -->
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                        <div class="text-[11px] font-extrabold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">92%</div>
-                        <div class="w-full max-w-[42px] h-[92%] rounded-t-xl bg-gradient-to-t from-softLavender-600 via-softLavender-400 to-softBlue-400 neo-card-sm border-b-0 transition-all duration-500 group-hover:brightness-110 shadow-lg"></div>
-                        <span class="text-[11px] font-bold text-softLavender-600">Wed</span>
-                    </div>
-
-                    <!-- BAR 4: THU -->
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                        <div class="text-[11px] font-extrabold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">85%</div>
-                        <div class="w-full max-w-[42px] h-[85%] rounded-t-xl bg-gradient-to-t from-softLavender-500 via-softBlue-500 to-softBlue-400 neo-card-sm border-b-0 transition-all duration-500 group-hover:brightness-110 shadow-lg"></div>
-                        <span class="text-[11px] font-semibold text-slate-500">Thu</span>
-                    </div>
-
-                    <!-- BAR 5: FRI -->
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                        <div class="text-[11px] font-extrabold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">96%</div>
-                        <div class="w-full max-w-[42px] h-[96%] rounded-t-xl bg-gradient-to-t from-softLavender-600 via-softLavender-400 to-softBlue-400 neo-card-sm border-b-0 transition-all duration-500 group-hover:brightness-110 shadow-lg"></div>
-                        <span class="text-[11px] font-bold text-softLavender-600">Fri</span>
-                    </div>
-
-                    <!-- BAR 6: SAT -->
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                        <div class="text-[11px] font-extrabold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">45%</div>
-                        <div class="w-full max-w-[42px] h-[45%] rounded-t-xl bg-gradient-to-t from-softBlue-400 to-softBlue-300 neo-card-sm border-b-0 transition-all duration-500 group-hover:brightness-110 shadow-lg"></div>
-                        <span class="text-[11px] font-semibold text-slate-500">Sat</span>
-                    </div>
-
-                    <!-- BAR 7: SUN -->
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                        <div class="text-[11px] font-extrabold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">30%</div>
-                        <div class="w-full max-w-[42px] h-[30%] rounded-t-xl bg-gradient-to-t from-softBlue-400 to-softBlue-300 neo-card-sm border-b-0 transition-all duration-500 group-hover:brightness-110 shadow-lg"></div>
-                        <span class="text-[11px] font-semibold text-slate-500">Sun</span>
-                    </div>
-                </div>
-
-                <!-- FOOTER LEGEND -->
-                <div class="flex items-center justify-between text-xs font-semibold text-slate-500 pt-1">
-                    <div class="flex items-center gap-4">
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded-full bg-gradient-to-r from-softLavender-500 to-softBlue-500 inline-block"></span>
-                            Sprint Tasks
-                        </span>
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded-full bg-softBlue-400 inline-block"></span>
-                            Maintenance
-                        </span>
-                    </div>
-                    <span class="text-slate-400">Updated today at 20:00</span>
-                </div>
-            </div>
-
-            <!-- POPULAR DOMAINS & TELEMETRY BREAKDOWN -->
-            <div class="neo-card p-5 sm:p-6 space-y-4 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-200/60">
-                        <h2 class="text-base font-bold text-slate-800">Domain Telemetry</h2>
-                        <span class="text-xs font-semibold text-slate-400">Workload</span>
-                    </div>
-
-                    <div id="domain-stats-container" class="space-y-3.5 mt-4">
-                        <div class="text-xs text-slate-400 text-center py-4">Syncing domain statistics...</div>
-                    </div>
-                </div>
-
-                <div class="p-3.5 neo-inset rounded-xl flex items-center justify-between">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 neo-icon text-softLavender-500 flex items-center justify-center font-bold text-xs">
-                            📊
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800">Total Telemetry Submissions</h4>
-                            <p class="text-[10px] text-slate-400 font-medium">Automatic real-time sync</p>
-                        </div>
-                    </div>
-                    <span class="neo-pill text-xs font-bold text-softBlue-600 px-2.5 py-1" id="stat-total-submissions">0</span>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- SECTION 3: CURRENT MEETING REMINDERS & PROJECT LIST -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- CURRENT MEETING REMINDERS WIDGET (1 COL) -->
-            <div class="neo-card p-5 sm:p-6 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 neo-icon text-softLavender-600 flex items-center justify-center">
-                            <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        </div>
-                        <div>
-                            <h2 class="text-base font-bold text-slate-800">Current Meetings</h2>
-                            <p class="text-[11px] text-slate-400 font-medium">Scheduled reminders & calls</p>
-                        </div>
-                    </div>
-
-                    <button onclick="openModal('meeting-modal')" class="neo-btn p-2 text-softLavender-600 hover:text-softBlue-600" title="Add Meeting Reminder">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    </button>
-                </div>
-
-                <!-- MEETING LIST CONTAINER -->
-                <div id="meeting-list-container" class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                    
-                    <!-- MEETING ITEM 1: IN PROGRESS -->
-                    <div class="p-3.5 neo-card-sm space-y-2 border-l-4 border-l-emerald-500">
-                        <div class="flex items-center justify-between">
-                            <span class="neo-pill px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50/50 flex items-center gap-1.5">
-                                <span class="live-dot"></span> In Progress
-                            </span>
-                            <span class="text-[11px] font-bold text-slate-500">Now - 10:30 AM</span>
-                        </div>
-                        <div>
-                            <h3 class="text-xs sm:text-sm font-bold text-slate-800">UI/UX & Neomorphism Design Audit</h3>
-                            <p class="text-[11px] text-slate-500 font-medium">Reviewing Admin Studio component palette</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-1">
-                            <!-- Attendee Avatars -->
-                            <div class="flex -space-x-2">
-                                <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-softLavender-400 to-softBlue-400 text-white font-bold text-[9px] flex items-center justify-center border-2 border-neoBg">NK</span>
-                                <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-400 text-white font-bold text-[9px] flex items-center justify-center border-2 border-neoBg">AR</span>
-                                <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-400 to-pink-400 text-white font-bold text-[9px] flex items-center justify-center border-2 border-neoBg">SV</span>
-                            </div>
-                            <button class="neo-btn-primary px-3 py-1 text-[11px] font-bold shadow-xs">
-                                Join Call
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- MEETING ITEM 2: UP NEXT -->
-                    <div class="p-3.5 neo-card-sm space-y-2 border-l-4 border-l-softLavender-500">
-                        <div class="flex items-center justify-between">
-                            <span class="neo-pill px-2.5 py-0.5 text-[10px] font-bold text-softLavender-700 bg-softLavender-50">
-                                Up Next (11:30 AM)
-                            </span>
-                            <span class="text-[11px] font-semibold text-slate-400">11:30 AM - 12:15 PM</span>
-                        </div>
-                        <div>
-                            <h3 class="text-xs sm:text-sm font-bold text-slate-800">Sprint Backlog & Task Planning</h3>
-                            <p class="text-[11px] text-slate-500 font-medium">Assigning Q3 career roadmap deliverables</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-1">
-                            <div class="flex -space-x-2">
-                                <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-400 text-white font-bold text-[9px] flex items-center justify-center border-2 border-neoBg">PD</span>
-                                <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white font-bold text-[9px] flex items-center justify-center border-2 border-neoBg">RK</span>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400">Google Meet</span>
-                        </div>
-                    </div>
-
-                    <!-- MEETING ITEM 3: SCHEDULED -->
-                    <div class="p-3.5 neo-card-sm space-y-2 border-l-4 border-l-softBlue-500">
-                        <div class="flex items-center justify-between">
-                            <span class="neo-pill px-2.5 py-0.5 text-[10px] font-bold text-softBlue-700 bg-softBlue-50">
-                                Scheduled
-                            </span>
-                            <span class="text-[11px] font-semibold text-slate-400">02:30 PM - 03:15 PM</span>
-                        </div>
-                        <div>
-                            <h3 class="text-xs sm:text-sm font-bold text-slate-800">Client Architecture & API Sync</h3>
-                            <p class="text-[11px] text-slate-500 font-medium">Evaluating telemetry throughput</p>
-                        </div>
-                        <div class="flex items-center justify-between pt-1">
-                            <div class="flex -space-x-2">
-                                <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-rose-400 to-red-400 text-white font-bold text-[9px] flex items-center justify-center border-2 border-neoBg">AM</span>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400">Zoom Call</span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- PROJECT DIRECTORY & TASK LIST WIDGET (2 COLS) -->
-            <div class="lg:col-span-2 neo-card p-5 sm:p-6 space-y-4">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/60">
-                    <div>
-                        <h2 class="text-base sm:text-lg font-bold text-slate-800">Project Directory & Tasks</h2>
-                        <p class="text-xs text-slate-400 font-medium">Active project tracking, milestones, and priorities</p>
-                    </div>
-
-                    <!-- Search & Filter Controls -->
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <div class="relative flex-1 sm:w-48">
-                            <input type="text" id="project-search-input" onkeyup="filterProjects()" placeholder="Search projects..." 
-                                class="neo-input w-full pl-8 pr-3 py-1.5 text-xs font-medium placeholder-slate-400">
-                            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </div>
-
-                        <select id="project-status-filter" onchange="filterProjects()" class="neo-input px-2.5 py-1.5 text-xs font-semibold text-slate-700">
-                            <option value="all">All Status</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Review">Review</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- DYNAMIC PROJECT CARDS CONTAINER -->
-                <div id="project-cards-container" class="space-y-3.5 max-h-[460px] overflow-y-auto pr-1">
-                    <!-- Project items will be rendered dynamically by JS -->
-                </div>
-            </div>
-
-        </div>
-
-        <!-- SECTION 4: TELEMETRY INSIGHTS & TOP MATCHED CAREERS -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            <!-- TOP MATCHED CAREERS LEADERBOARD -->
-            <div class="neo-card p-5 sm:p-6 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-xs">
-                            🏆
-                        </div>
-                        <h2 class="text-base font-bold text-slate-800">Top Matched Careers</h2>
-                    </div>
-                    <span class="text-xs font-semibold text-slate-400">Live Leaderboard</span>
-                </div>
-
-                <div id="career-stats-container" class="space-y-2.5">
-                    <div class="text-xs text-slate-400 text-center py-4">No career match data recorded yet.</div>
-                </div>
-            </div>
-
-            <!-- MOST VIEWED BOOKS & RESOURCES -->
-            <div class="neo-card p-5 sm:p-6 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-200/60">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 neo-icon text-amber-500 flex items-center justify-center font-bold text-xs">
-                            📖
-                        </div>
-                        <h2 class="text-base font-bold text-slate-800">Most Viewed Books & Specs</h2>
-                    </div>
-                    <span class="text-xs font-semibold text-slate-400">Library Telemetry</span>
-                </div>
-
-                <div id="popular-books-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="text-xs text-slate-400 text-center py-4 sm:col-span-2">No book activity recorded yet.</div>
                 </div>
             </div>
 
         </div>
 
         <!-- FOOTER -->
-        <footer class="text-center text-xs text-slate-400 py-3 font-medium flex items-center justify-center gap-2">
-            <span>PRAXiS Admin Studio</span>
+        <footer class="text-center text-xs text-slate-400 py-4 font-medium flex items-center justify-center gap-2">
+            <span>PRAXiS Admin Dashboard</span>
             <span>&bull;</span>
-            <span>Neomorphic UI Design System</span>
-            <span>&bull;</span>
-            <span>Auto-syncing live metrics</span>
+            <span>Live Telemetry Engine</span>
         </footer>
 
-    </div>
-
-    <!-- MODAL: CREATE NEW PROJECT -->
-    <div id="project-modal" class="fixed inset-0 bg-slate-900/20 backdrop-blur-md hidden items-center justify-center z-50 p-4 transition-all">
-        <div class="neo-card p-6 max-w-lg w-full space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                <h3 class="text-lg font-bold text-slate-800">Add New Project</h3>
-                <button onclick="closeModal('project-modal')" class="neo-btn p-1.5 text-slate-400 hover:text-slate-600">
-                    ✕
-                </button>
-            </div>
-
-            <form id="create-project-form" onsubmit="handleCreateProject(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Project Name</label>
-                    <input type="text" id="np-name" required placeholder="e.g. AI Recommendation Pipeline" 
-                        class="neo-input w-full px-3.5 py-2.5 text-xs font-medium">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Domain</label>
-                        <select id="np-domain" class="neo-input w-full px-3 py-2.5 text-xs font-semibold text-slate-700">
-                            <option value="Tech & AI">Tech & AI</option>
-                            <option value="UI/UX Design">UI/UX Design</option>
-                            <option value="Data Analytics">Data Analytics</option>
-                            <option value="Engineering">Engineering</option>
-                            <option value="Healthcare">Healthcare</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Priority</label>
-                        <select id="np-priority" class="neo-input w-full px-3 py-2.5 text-xs font-semibold text-slate-700">
-                            <option value="High">High Priority</option>
-                            <option value="Medium">Medium Priority</option>
-                            <option value="Normal">Normal Priority</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Total Tasks</label>
-                        <input type="number" id="np-tasks" value="12" min="1" max="100" 
-                            class="neo-input w-full px-3.5 py-2.5 text-xs font-medium">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Due Date</label>
-                        <input type="date" id="np-date" value="2026-08-15" 
-                            class="neo-input w-full px-3.5 py-2.5 text-xs font-medium">
-                    </div>
-                </div>
-
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('project-modal')" class="neo-btn px-4 py-2 text-xs font-semibold text-slate-600">
-                        Cancel
-                    </button>
-                    <button type="submit" class="neo-btn-lavender px-5 py-2 text-xs font-bold shadow-md">
-                        Create Project
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: ADD MEETING REMINDER -->
-    <div id="meeting-modal" class="fixed inset-0 bg-slate-900/20 backdrop-blur-md hidden items-center justify-center z-50 p-4 transition-all">
-        <div class="neo-card p-6 max-w-md w-full space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                <h3 class="text-lg font-bold text-slate-800">Add Meeting Reminder</h3>
-                <button onclick="closeModal('meeting-modal')" class="neo-btn p-1.5 text-slate-400 hover:text-slate-600">
-                    ✕
-                </button>
-            </div>
-
-            <form id="create-meeting-form" onsubmit="handleCreateMeeting(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Meeting Title</label>
-                    <input type="text" id="nm-title" required placeholder="e.g. Design & Tech Alignment Sync" 
-                        class="neo-input w-full px-3.5 py-2.5 text-xs font-medium">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Time Slot</label>
-                    <input type="text" id="nm-time" required placeholder="e.g. 03:00 PM - 03:45 PM" 
-                        class="neo-input w-full px-3.5 py-2.5 text-xs font-medium">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Status</label>
-                    <select id="nm-status" class="neo-input w-full px-3 py-2.5 text-xs font-semibold text-slate-700">
-                        <option value="Scheduled">Scheduled</option>
-                        <option value="Up Next">Up Next</option>
-                        <option value="In Progress">In Progress</option>
-                    </select>
-                </div>
-
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('meeting-modal')" class="neo-btn px-4 py-2 text-xs font-semibold text-slate-600">
-                        Cancel
-                    </button>
-                    <button type="submit" class="neo-btn-primary px-5 py-2 text-xs font-bold shadow-md">
-                        Add Reminder
-                    </button>
-                </div>
-            </form>
-        </div>
     </div>
 
     <!-- MAIN DASHBOARD SCRIPT -->
@@ -877,63 +331,10 @@
         let adminPassword = sessionStorage.getItem('praxis_admin_pwd') || '';
         let statsInterval = null;
 
-        // Sample initial projects dataset
-        let projectsData = [
-            {
-                id: 1,
-                name: "PRAXiS Career Path AI Engine",
-                domain: "Tech & AI",
-                priority: "High",
-                status: "In Progress",
-                progress: 84,
-                completedTasks: 21,
-                totalTasks: 25,
-                dueDate: "Aug 05, 2026",
-                team: ["NK", "AR", "SV"]
-            },
-            {
-                id: 2,
-                name: "Admin Studio Neomorphism UI/UX",
-                domain: "UI/UX Design",
-                priority: "High",
-                status: "In Progress",
-                progress: 92,
-                completedTasks: 12,
-                totalTasks: 13,
-                dueDate: "Aug 01, 2026",
-                team: ["NK", "PD"]
-            },
-            {
-                id: 3,
-                name: "Real-time Telemetry Pipeline",
-                domain: "Data Engineering",
-                priority: "Medium",
-                status: "Review",
-                progress: 75,
-                completedTasks: 15,
-                totalTasks: 20,
-                dueDate: "Aug 10, 2026",
-                team: ["AR", "RK"]
-            },
-            {
-                id: 4,
-                name: "Student Resource Library Hub",
-                domain: "Education Tech",
-                priority: "Normal",
-                status: "Completed",
-                progress: 100,
-                completedTasks: 18,
-                totalTasks: 18,
-                dueDate: "Jul 28, 2026",
-                team: ["SV", "PD"]
-            }
-        ];
-
         document.addEventListener('DOMContentLoaded', () => {
             if (adminPassword) {
                 verifyAndShowDashboard();
             }
-            renderProjectsList(projectsData);
         });
 
         async function handleLogin(event) {
@@ -1022,382 +423,11 @@
         }
 
         function renderStats(data) {
-            // Primary Overview Telemetry
-            document.getElementById('stat-active-users').innerText = data.activeUsers || 0;
-            document.getElementById('stat-total-visitors').innerText = data.totalVisitors || 0;
-            document.getElementById('stat-quizzes-completed').innerText = data.totalQuizzesCompleted || 0;
-            document.getElementById('stat-conversion-rate').innerText = data.conversionRate || "0.0%";
-
-            // Routine Tracker Stats
-            const routineStats = data.routineStats || {};
-            document.getElementById('stat-routine-live').innerText = routineStats.liveActiveUsers || 0;
-            document.getElementById('stat-habits-checked').innerText = routineStats.totalHabitCheckoffs || 0;
-
-            // Domain Telemetry Breakdown
-            const domainContainer = document.getElementById('domain-stats-container');
-            const domainStats = data.domainStats || {};
-            const domainEntries = Object.entries(domainStats);
-            const totalDomainSubmissions = domainEntries.reduce((sum, [_, count]) => sum + count, 0);
-
-            document.getElementById('stat-total-submissions').innerText = totalDomainSubmissions;
-
-            if (domainEntries.length === 0) {
-                domainContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">No domain telemetry recorded yet.</div>`;
-            } else {
-                domainEntries.sort((a, b) => b[1] - a[1]);
-                
-                const domainNames = {
-                    "TechAI": "Tech & Artificial Intelligence",
-                    "Design": "Creative & UI/UX Design",
-                    "Business": "Business & Management",
-                    "Healthcare": "Healthcare & Medicine",
-                    "Engineering": "Engineering & Physics",
-                    "Law": "Law & Legal Studies"
-                };
-
-                domainContainer.innerHTML = domainEntries.map(([domainKey, count], idx) => {
-                    const percentage = totalDomainSubmissions > 0 ? Math.round((count / totalDomainSubmissions) * 100) : 0;
-                    const label = domainNames[domainKey] || domainKey;
-
-                    return `
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-slate-700">${label}</span>
-                                <span class="text-slate-500 font-semibold">${count} (${percentage}%)</span>
-                            </div>
-                            <div class="h-2 w-full neo-pill-inset overflow-hidden p-0.5">
-                                <div class="h-full rounded-full bg-gradient-to-r from-softLavender-500 to-softBlue-500 transition-all duration-500" style="width: ${percentage}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // Top Matched Careers Leaderboard
-            const careerContainer = document.getElementById('career-stats-container');
-            const careerStats = data.careerStats || {};
-            const careerEntries = Object.entries(careerStats);
-
-            if (careerEntries.length === 0) {
-                careerContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">No career matches recorded yet.</div>`;
-            } else {
-                careerEntries.sort((a, b) => b[1] - a[1]);
-                const topCareers = careerEntries.slice(0, 5);
-
-                careerContainer.innerHTML = topCareers.map(([title, count], idx) => {
-                    return `
-                        <div class="p-3 neo-card-sm flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <span class="w-6 h-6 neo-pill text-softBlue-600 flex items-center justify-center font-bold text-xs">
-                                    ${idx + 1}
-                                </span>
-                                <span class="font-bold text-slate-800 text-xs sm:text-sm">${title}</span>
-                            </div>
-                            <span class="neo-pill text-softLavender-600 font-bold text-xs px-2.5 py-1">
-                                ${count} ${count === 1 ? 'match' : 'matches'}
-                            </span>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // Popular Books Stats
-            const booksContainer = document.getElementById('popular-books-container');
-            const libraryStats = data.libraryStats || {};
-            const popularBooks = libraryStats.popularBooks || {};
-            const bookEntries = Object.entries(popularBooks);
-
-            if (bookEntries.length === 0) {
-                booksContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-4 sm:col-span-2">No book views recorded yet.</div>`;
-            } else {
-                bookEntries.sort((a, b) => b[1] - a[1]);
-                const topBooks = bookEntries.slice(0, 4);
-
-                booksContainer.innerHTML = topBooks.map(([title, count], idx) => {
-                    return `
-                        <div class="p-3 neo-card-sm flex items-center justify-between">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-7 h-7 neo-icon text-amber-500 flex items-center justify-center text-xs shrink-0 font-bold">
-                                    📖
-                                </div>
-                                <div class="truncate">
-                                    <h4 class="font-bold text-slate-800 text-xs truncate">${title}</h4>
-                                    <span class="text-[10px] text-slate-400 font-medium">Rank #${idx + 1}</span>
-                                </div>
-                            </div>
-                            <span class="neo-pill text-amber-600 font-bold text-xs px-2 py-0.5 shrink-0">
-                                ${count}
-                            </span>
-                        </div>
-                    `;
-                }).join('');
-            }
-        }
-
-        // Render Projects Cards inside Neomorphic Grid
-        function renderProjectsList(projects) {
-            const container = document.getElementById('project-cards-container');
-            if (!container) return;
-
-            if (projects.length === 0) {
-                container.innerHTML = `<div class="text-xs text-slate-400 text-center py-8">No matching projects found.</div>`;
-                return;
-            }
-
-            container.innerHTML = projects.map(p => {
-                const statusColors = {
-                    "In Progress": "text-softBlue-600 bg-softBlue-50",
-                    "Review": "text-softLavender-600 bg-softLavender-50",
-                    "Completed": "text-emerald-600 bg-emerald-50"
-                };
-                const priorityColors = {
-                    "High": "text-rose-600",
-                    "Medium": "text-amber-600",
-                    "Normal": "text-slate-500"
-                };
-
-                return `
-                    <div class="p-4 neo-card-sm space-y-3 hover:scale-[1.005] transition-transform">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h3 class="text-sm font-bold text-slate-800">${p.name}</h3>
-                                    <span class="neo-pill text-[10px] font-bold px-2.5 py-0.5 ${statusColors[p.status] || 'text-slate-600'}">
-                                        ${p.status}
-                                    </span>
-                                </div>
-                                <p class="text-[11px] text-slate-400 font-medium mt-0.5">${p.domain} &bull; <span class="font-bold ${priorityColors[p.priority]}">${p.priority} Priority</span></p>
-                            </div>
-                            
-                            <div class="flex items-center gap-2 justify-between sm:justify-end">
-                                <span class="text-[11px] font-bold text-slate-500 neo-pill px-2.5 py-0.5">Due: ${p.dueDate}</span>
-                                <button onclick="toggleProjectStatus(${p.id})" class="neo-btn p-1.5 text-xs text-slate-500 hover:text-softBlue-600" title="Toggle Status">
-                                    ✓
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Progress Bar & Task Ratio -->
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs font-semibold">
-                                <span class="text-slate-500">Progress: <strong class="text-slate-700">${p.progress}%</strong></span>
-                                <span class="text-slate-400">${p.completedTasks}/${p.totalTasks} Tasks</span>
-                            </div>
-                            <div class="h-2 w-full neo-pill-inset overflow-hidden p-0.5">
-                                <div class="h-full rounded-full bg-gradient-to-r from-softLavender-500 via-softBlue-500 to-softBlue-400 transition-all duration-500" style="width: ${p.progress}%"></div>
-                            </div>
-                        </div>
-
-                        <!-- Team Avatars Stack -->
-                        <div class="flex items-center justify-between pt-1">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[11px] text-slate-400 font-semibold">Assigned:</span>
-                                <div class="flex -space-x-1.5">
-                                    ${p.team.map(m => `
-                                        <span class="w-5.5 h-5.5 rounded-full bg-gradient-to-tr from-softLavender-400 to-softBlue-400 text-white font-extrabold text-[9px] flex items-center justify-center border border-white shadow-xs">
-                                            ${m}
-                                        </span>
-                                    `).join('')}
-                                </div>
-                            </div>
-
-                            <button onclick="deleteProject(${p.id})" class="text-[11px] font-semibold text-rose-500 hover:underline">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            // Update main active metrics
-            const activeCount = projectsData.filter(p => p.status !== 'Completed').length;
-            const completedTasksSum = projectsData.reduce((sum, p) => sum + p.completedTasks, 0);
-            document.getElementById('metric-active-projects').innerText = activeCount;
-            document.getElementById('metric-completed-tasks').innerText = completedTasksSum;
-        }
-
-        function filterProjects() {
-            const query = document.getElementById('project-search-input').value.toLowerCase();
-            const status = document.getElementById('project-status-filter').value;
-
-            const filtered = projectsData.filter(p => {
-                const matchesQuery = p.name.toLowerCase().includes(query) || p.domain.toLowerCase().includes(query);
-                const matchesStatus = status === 'all' || p.status === status;
-                return matchesQuery && matchesStatus;
-            });
-
-            renderProjectsList(filtered);
-        }
-
-        function toggleProjectStatus(id) {
-            const proj = projectsData.find(p => p.id === id);
-            if (!proj) return;
-
-            if (proj.status === 'In Progress') {
-                proj.status = 'Review';
-            } else if (proj.status === 'Review') {
-                proj.status = 'Completed';
-                proj.progress = 100;
-                proj.completedTasks = proj.totalTasks;
-            } else {
-                proj.status = 'In Progress';
-                proj.progress = Math.round((proj.completedTasks / proj.totalTasks) * 100);
-            }
-
-            filterProjects();
-        }
-
-        function deleteProject(id) {
-            projectsData = projectsData.filter(p => p.id !== id);
-            filterProjects();
-        }
-
-        // Modal triggers
-        function openModal(id) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('hidden');
-                el.classList.add('flex');
-            }
-        }
-
-        function closeModal(id) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.add('hidden');
-                el.classList.remove('flex');
-            }
-        }
-
-        function handleCreateProject(event) {
-            event.preventDefault();
-            const name = document.getElementById('np-name').value.trim();
-            const domain = document.getElementById('np-domain').value;
-            const priority = document.getElementById('np-priority').value;
-            const tasks = parseInt(document.getElementById('np-tasks').value) || 10;
-            const dateStr = document.getElementById('np-date').value;
-
-            if (!name) return;
-
-            const newProj = {
-                id: Date.now(),
-                name: name,
-                domain: domain,
-                priority: priority,
-                status: "In Progress",
-                progress: 15,
-                completedTasks: Math.round(tasks * 0.15),
-                totalTasks: tasks,
-                dueDate: dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : "Aug 15, 2026",
-                team: ["NK", "AI"]
-            };
-
-            projectsData.unshift(newProj);
-            filterProjects();
-            closeModal('project-modal');
-            event.target.reset();
-        }
-
-        function handleCreateMeeting(event) {
-            event.preventDefault();
-            const title = document.getElementById('nm-title').value.trim();
-            const time = document.getElementById('nm-time').value.trim();
-            const status = document.getElementById('nm-status').value;
-
-            if (!title || !time) return;
-
-            const container = document.getElementById('meeting-list-container');
-            const statusBadgeColors = {
-                "In Progress": "text-emerald-700 bg-emerald-50",
-                "Up Next": "text-softLavender-700 bg-softLavender-50",
-                "Scheduled": "text-softBlue-700 bg-softBlue-50"
-            };
-
-            const borderColors = {
-                "In Progress": "border-l-emerald-500",
-                "Up Next": "border-l-softLavender-500",
-                "Scheduled": "border-l-softBlue-500"
-            };
-
-            const newMeetingHtml = `
-                <div class="p-3.5 neo-card-sm space-y-2 border-l-4 ${borderColors[status] || 'border-l-softBlue-500'}">
-                    <div class="flex items-center justify-between">
-                        <span class="neo-pill px-2.5 py-0.5 text-[10px] font-bold ${statusBadgeColors[status]}">
-                            ${status}
-                        </span>
-                        <span class="text-[11px] font-semibold text-slate-400">${time}</span>
-                    </div>
-                    <div>
-                        <h3 class="text-xs sm:text-sm font-bold text-slate-800">${title}</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">Newly scheduled reminder</p>
-                    </div>
-                    <div class="flex items-center justify-between pt-1">
-                        <div class="flex -space-x-2">
-                            <span class="w-6 h-6 rounded-full bg-gradient-to-tr from-softLavender-400 to-softBlue-400 text-white font-bold text-[9px] flex items-center justify-center border-2 border-neoBg">NK</span>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-400">Calendar Sync</span>
-                    </div>
-                </div>
-            `;
-
-            container.insertAdjacentHTML('afterbegin', newMeetingHtml);
-            closeModal('meeting-modal');
-            event.target.reset();
-        }
-
-        // Timeframe bar chart data switcher
-        function setGraphTimeframe(tf) {
-            ['weekly', 'monthly', 'quarterly'].forEach(t => {
-                const btn = document.getElementById(`gf-${t}`);
-                if (btn) {
-                    if (t === tf) {
-                        btn.classList.add('active', 'text-slate-700');
-                        btn.classList.remove('text-slate-600');
-                    } else {
-                        btn.classList.remove('active', 'text-slate-700');
-                        btn.classList.add('text-slate-600');
-                    }
-                }
-            });
-
-            const chart = document.getElementById('analytics-bar-chart');
-            if (!chart) return;
-
-            let heights = [64, 78, 92, 85, 96, 45, 30];
-            let labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-            if (tf === 'monthly') {
-                heights = [72, 88, 65, 94, 82, 90, 76];
-                labels = ["W1", "W2", "W3", "W4", "W5", "W6", "W7"];
-            } else if (tf === 'quarterly') {
-                heights = [55, 74, 86, 95, 88, 92, 60];
-                labels = ["Q1-A", "Q1-B", "Q2-A", "Q2-B", "Q3-A", "Q3-B", "Q4"];
-            }
-
-            const bars = chart.querySelectorAll('.flex-1');
-            bars.forEach((bar, idx) => {
-                const valEl = bar.querySelector('.font-extrabold');
-                const barEl = bar.querySelector('.max-w-\\[42px\\]');
-                const labelEl = bar.querySelector('.font-semibold, .font-bold');
-
-                if (valEl) valEl.innerText = `${heights[idx]}%`;
-                if (barEl) barEl.style.height = `${heights[idx]}%`;
-                if (labelEl) labelEl.innerText = labels[idx];
-            });
-        }
-
-        // Tab Switcher
-        function switchTab(tab) {
-            ['overview', 'projects', 'meetings', 'analytics'].forEach(t => {
-                const btn = document.getElementById(`tab-${t}`);
-                if (btn) {
-                    if (t === tab) {
-                        btn.classList.add('active', 'text-slate-700');
-                    } else {
-                        btn.classList.remove('active', 'text-slate-700');
-                    }
-                }
-            });
+            const activeUsersEl = document.getElementById('stat-active-users');
+            const totalVisitorsEl = document.getElementById('stat-total-visitors');
+            
+            if (activeUsersEl) activeUsersEl.innerText = data.activeUsers || 0;
+            if (totalVisitorsEl) totalVisitorsEl.innerText = data.totalVisitors || 0;
         }
     </script>
 </body>
