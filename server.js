@@ -920,7 +920,26 @@ app.get('/praxis', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`PRAXiS - Fast Rule Engine running on Port ${PORT}`);
+// Fallback route for all other requests
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start the server bound to 0.0.0.0 to ensure IPv4 & IPv6 localhost access
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n==================================================`);
+    console.log(`🚀 PRAXiS Server active and ready!`);
+    console.log(`👉 Local Web App: http://localhost:${PORT}`);
+    console.log(`👉 Loopback IP:  http://127.0.0.1:${PORT}`);
+    console.log(`👉 Admin Studio: http://localhost:${PORT}/admin`);
+    console.log(`==================================================\n`);
+});
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use by another process.`);
+        console.error(`💡 Tip: Close the existing Node process or specify a different PORT env variable.`);
+    } else {
+        console.error(`❌ Server error:`, err);
+    }
 });
