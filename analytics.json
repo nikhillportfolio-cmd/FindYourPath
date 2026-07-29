@@ -1,10 +1,26 @@
 {
-  "totalVisitors": 1,
+  "totalVisitors": 2,
   "totalQuizzesCompleted": 1,
   "domainStats": {
     "TechAI": 1
   },
   "careerStats": {
     "Cybersecurity & Ethical Hacker": 1
+  },
+  "libraryStats": {
+    "totalViews": 1,
+    "bookViews": 1,
+    "popularBooks": {
+      "Atomic Habits": 1
+    }
+  },
+  "routineStats": {
+    "totalInteractions": 1,
+    "totalHabitCheckoffs": 1,
+    "dailyUsers": {
+      "2026-07-29": [
+        "routine_user_1"
+      ]
+    }
   }
 }

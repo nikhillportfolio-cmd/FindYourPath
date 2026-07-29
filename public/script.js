@@ -711,14 +711,17 @@ function handleAddHabit(event) {
     
     renderHabitsList();
     updateGrowthCharts();
+    trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: false });
 }
 
 function toggleHabitDay(habitIndex, dayIndex) {
     if (habits[habitIndex] && habits[habitIndex].days) {
         habits[habitIndex].days[dayIndex] = !habits[habitIndex].days[dayIndex];
+        const isNowChecked = habits[habitIndex].days[dayIndex];
         saveHabitsToStorage();
         renderHabitsList();
         updateGrowthCharts();
+        trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: isNowChecked });
     }
 }
 
@@ -1210,6 +1213,7 @@ function openLibraryModal() {
     });
 
     renderLibraryGrid();
+    trackEvent({ type: 'library_open' });
 }
 
 function closeLibraryModal() {
@@ -1344,6 +1348,8 @@ function openBookDetailModal(bookId) {
     }
     if (!book) return;
 
+    trackEvent({ type: 'book_view', bookTitle: book.title });
+
     const modal = document.getElementById("book-detail-modal");
     const coverContainer = document.getElementById("detail-book-cover-container");
     const genreEl = document.getElementById("detail-book-genre");
@@ -1409,6 +1415,18 @@ function getOrCreateClientId() {
     return clientId;
 }
 
+async function trackEvent(payload) {
+    try {
+        await fetch('/api/track-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        // silent catch
+    }
+}
+
 function initPingEngine() {
     const clientId = getOrCreateClientId();
     const hasVisited = sessionStorage.getItem("praxis_session_active");
@@ -1420,10 +1438,12 @@ function initPingEngine() {
 
     const sendPing = async (isNew = false) => {
         try {
+            const routineSection = document.getElementById("routine-tracker-section");
+            const isRoutineActive = routineSection && !routineSection.classList.contains("hidden");
             await fetch("/api/ping", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ clientId, isNewVisit: isNew })
+                body: JSON.stringify({ clientId, isNewVisit: isNew, isRoutineActive: !!isRoutineActive })
             });
         } catch (err) {
             // silent catch for background ping

@@ -17,20 +17,37 @@ app.use(express.static(path.join(__dirname, 'public')));
 const ANALYTICS_FILE = path.join(__dirname, 'analytics.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const activeSessions = new Map(); // clientId -> lastPingTimestamp
+const activeRoutineSessions = new Map(); // clientId -> lastPingTimestamp
 const PING_TIMEOUT_MS = 45000; // 45 seconds (ping sent every 30s)
 
 let analyticsData = {
     totalVisitors: 0,
     totalQuizzesCompleted: 0,
     domainStats: {},
-    careerStats: {}
+    careerStats: {},
+    libraryStats: {
+        totalViews: 0,
+        bookViews: 0,
+        popularBooks: {}
+    },
+    routineStats: {
+        totalInteractions: 0,
+        totalHabitCheckoffs: 0,
+        dailyUsers: {} // dateString -> array of clientIds
+    }
 };
 
 // Load existing analytics from JSON file on server startup
 try {
     if (fs.existsSync(ANALYTICS_FILE)) {
         const fileData = fs.readFileSync(ANALYTICS_FILE, 'utf8');
-        analyticsData = { ...analyticsData, ...JSON.parse(fileData) };
+        const parsed = JSON.parse(fileData);
+        analyticsData = {
+            ...analyticsData,
+            ...parsed,
+            libraryStats: { ...analyticsData.libraryStats, ...(parsed.libraryStats || {}) },
+            routineStats: { ...analyticsData.routineStats, ...(parsed.routineStats || {}) }
+        };
         console.log("📊 Loaded existing analytics data:", analyticsData);
     } else {
         fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(analyticsData, null, 2), 'utf8');
@@ -56,6 +73,19 @@ function getActiveUserCount() {
             count++;
         } else {
             activeSessions.delete(clientId);
+        }
+    }
+    return count;
+}
+
+function getActiveRoutineUserCount() {
+    const now = Date.now();
+    let count = 0;
+    for (const [clientId, timestamp] of activeRoutineSessions.entries()) {
+        if (now - timestamp <= PING_TIMEOUT_MS) {
+            count++;
+        } else {
+            activeRoutineSessions.delete(clientId);
         }
     }
     return count;
@@ -765,12 +795,23 @@ app.post('/api/calculate-result', (req, res) => {
 
 // Ping route for live active user tracking & page visit counts
 app.post('/api/ping', (req, res) => {
-    const { clientId, isNewVisit } = req.body || {};
+    const { clientId, isNewVisit, isRoutineActive } = req.body || {};
     if (!clientId) {
         return res.status(400).json({ error: "clientId is required" });
     }
 
     activeSessions.set(clientId, Date.now());
+
+    if (isRoutineActive) {
+        activeRoutineSessions.set(clientId, Date.now());
+        const today = new Date().toISOString().split('T')[0];
+        analyticsData.routineStats = analyticsData.routineStats || { totalInteractions: 0, totalHabitCheckoffs: 0, dailyUsers: {} };
+        analyticsData.routineStats.dailyUsers[today] = analyticsData.routineStats.dailyUsers[today] || [];
+        if (!analyticsData.routineStats.dailyUsers[today].includes(clientId)) {
+            analyticsData.routineStats.dailyUsers[today].push(clientId);
+            saveAnalytics();
+        }
+    }
 
     if (isNewVisit) {
         analyticsData.totalVisitors = (analyticsData.totalVisitors || 0) + 1;
@@ -782,6 +823,41 @@ app.post('/api/ping', (req, res) => {
         activeUsers: getActiveUserCount(),
         totalVisitors: analyticsData.totalVisitors
     });
+});
+
+// Event tracking endpoint for Modern Library & Routine Tracker
+app.post('/api/track-event', (req, res) => {
+    const { type, clientId, bookTitle, isCheckoff } = req.body || {};
+    const today = new Date().toISOString().split('T')[0];
+
+    analyticsData.libraryStats = analyticsData.libraryStats || { totalViews: 0, bookViews: 0, popularBooks: {} };
+    analyticsData.routineStats = analyticsData.routineStats || { totalInteractions: 0, totalHabitCheckoffs: 0, dailyUsers: {} };
+
+    if (type === 'library_open') {
+        analyticsData.libraryStats.totalViews = (analyticsData.libraryStats.totalViews || 0) + 1;
+        saveAnalytics();
+    } else if (type === 'book_view') {
+        analyticsData.libraryStats.bookViews = (analyticsData.libraryStats.bookViews || 0) + 1;
+        if (bookTitle) {
+            analyticsData.libraryStats.popularBooks[bookTitle] = (analyticsData.libraryStats.popularBooks[bookTitle] || 0) + 1;
+        }
+        saveAnalytics();
+    } else if (type === 'routine_interaction') {
+        if (clientId) {
+            activeRoutineSessions.set(clientId, Date.now());
+            analyticsData.routineStats.dailyUsers[today] = analyticsData.routineStats.dailyUsers[today] || [];
+            if (!analyticsData.routineStats.dailyUsers[today].includes(clientId)) {
+                analyticsData.routineStats.dailyUsers[today].push(clientId);
+            }
+        }
+        analyticsData.routineStats.totalInteractions = (analyticsData.routineStats.totalInteractions || 0) + 1;
+        if (isCheckoff) {
+            analyticsData.routineStats.totalHabitCheckoffs = (analyticsData.routineStats.totalHabitCheckoffs || 0) + 1;
+        }
+        saveAnalytics();
+    }
+
+    res.json({ success: true });
 });
 
 // Admin login verification route
@@ -803,6 +879,11 @@ app.get('/api/admin/stats', (req, res) => {
     const totalVisitors = analyticsData.totalVisitors || 0;
     const totalQuizzes = analyticsData.totalQuizzesCompleted || 0;
     const conversionRate = totalVisitors > 0 ? ((totalQuizzes / totalVisitors) * 100).toFixed(1) : "0.0";
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dailyRoutineUsers = (analyticsData.routineStats && analyticsData.routineStats.dailyUsers && analyticsData.routineStats.dailyUsers[todayStr]) 
+        ? analyticsData.routineStats.dailyUsers[todayStr].length 
+        : 0;
 
     res.json({
         activeUsers: getActiveUserCount(),
@@ -811,6 +892,17 @@ app.get('/api/admin/stats', (req, res) => {
         conversionRate: `${conversionRate}%`,
         domainStats: analyticsData.domainStats || {},
         careerStats: analyticsData.careerStats || {},
+        libraryStats: {
+            totalViews: analyticsData.libraryStats?.totalViews || 0,
+            bookViews: analyticsData.libraryStats?.bookViews || 0,
+            popularBooks: analyticsData.libraryStats?.popularBooks || {}
+        },
+        routineStats: {
+            liveActiveUsers: getActiveRoutineUserCount(),
+            dailyUsersToday: dailyRoutineUsers,
+            totalInteractions: analyticsData.routineStats?.totalInteractions || 0,
+            totalHabitCheckoffs: analyticsData.routineStats?.totalHabitCheckoffs || 0
+        },
         timestamp: new Date().toISOString()
     });
 });

@@ -289,6 +289,70 @@
             </div>
         </div>
 
+        <!-- FEATURE METRICS GRID: ROUTINE TRACKER & MODERN LIBRARY -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- ROUTINE LIVE USERS -->
+            <div class="neu-card p-6 border-l-4 border-emerald-500">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Routine Users</span>
+                    <div class="neu-circle p-2 text-emerald-600">
+                        <span class="live-dot"></span>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-routine-live" class="text-4xl font-black text-slate-800">0</span>
+                    <span class="text-xs font-semibold text-emerald-600">active habit trackers</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Active in Routine section right now</p>
+            </div>
+
+            <!-- ROUTINE DAILY USERS TODAY -->
+            <div class="neu-card p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Daily Routine Users</span>
+                    <div class="neu-circle p-2 text-blue-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-routine-today" class="text-4xl font-black text-slate-800">0</span>
+                    <span class="text-xs font-semibold text-blue-600">unique users today</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Unique daily habit planners</p>
+            </div>
+
+            <!-- HABITS CHECKED OFF -->
+            <div class="neu-card p-6 border-l-4 border-indigo-500">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Habits Checked Off</span>
+                    <div class="neu-circle p-2 text-indigo-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-habits-checked" class="text-4xl font-black text-slate-800">0</span>
+                    <span class="text-xs font-semibold text-indigo-600">total checkoffs</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Cumulative habit completions</p>
+            </div>
+
+            <!-- MODERN LIBRARY VIEWS -->
+            <div class="neu-card p-6 border-l-4 border-amber-500">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Library Opens</span>
+                    <div class="neu-circle p-2 text-amber-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-library-views" class="text-4xl font-black text-slate-800">0</span>
+                    <span class="text-xs font-semibold text-amber-600">modal views</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2"><span id="stat-book-views">0</span> individual book opens</p>
+            </div>
+        </div>
+
         <!-- BREAKDOWN SECTION -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
@@ -324,6 +388,21 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- MODERN LIBRARY INSIGHTS -->
+        <div class="neu-card p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">Most Viewed Books (Modern Library)</h2>
+                    <p class="text-xs text-slate-500">Books users are exploring and reading the most</p>
+                </div>
+                <span class="neu-card-sm px-3 py-1 text-xs font-bold text-amber-600">Library Insights</span>
+            </div>
+
+            <div id="popular-books-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="text-sm text-slate-400 text-center py-6 col-span-2">No book views recorded yet.</div>
+            </div>
         </div>
 
         <!-- FOOTER INFO -->
@@ -431,11 +510,22 @@
         }
 
         function renderStats(data) {
-            // Stat Cards
+            // Main Stat Cards
             document.getElementById('stat-active-users').innerText = data.activeUsers || 0;
             document.getElementById('stat-total-visitors').innerText = data.totalVisitors || 0;
             document.getElementById('stat-quizzes-completed').innerText = data.totalQuizzesCompleted || 0;
             document.getElementById('stat-conversion-rate').innerText = data.conversionRate || "0.0%";
+
+            // Routine Tracker Stats
+            const routineStats = data.routineStats || {};
+            document.getElementById('stat-routine-live').innerText = routineStats.liveActiveUsers || 0;
+            document.getElementById('stat-routine-today').innerText = routineStats.dailyUsersToday || 0;
+            document.getElementById('stat-habits-checked').innerText = routineStats.totalHabitCheckoffs || 0;
+
+            // Library Stats
+            const libraryStats = data.libraryStats || {};
+            document.getElementById('stat-library-views').innerText = libraryStats.totalViews || 0;
+            document.getElementById('stat-book-views').innerText = libraryStats.bookViews || 0;
 
             // Domain Stats
             const domainContainer = document.getElementById('domain-stats-container');
@@ -510,6 +600,37 @@
                             </div>
                             <div class="neu-trench px-3 py-1 text-xs font-extrabold text-blue-600">
                                 ${count} ${count === 1 ? 'match' : 'matches'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Popular Books Stats
+            const booksContainer = document.getElementById('popular-books-container');
+            const popularBooks = libraryStats.popularBooks || {};
+            const bookEntries = Object.entries(popularBooks);
+
+            if (bookEntries.length === 0) {
+                booksContainer.innerHTML = `<div class="text-sm text-slate-400 text-center py-6 col-span-2">No book views recorded yet. Users exploring the Modern Library will appear here!</div>`;
+            } else {
+                bookEntries.sort((a, b) => b[1] - a[1]);
+                const topBooks = bookEntries.slice(0, 6);
+
+                booksContainer.innerHTML = topBooks.map(([title, count], idx) => {
+                    return `
+                        <div class="neu-card-sm p-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 neu-circle flex items-center justify-center text-amber-600 font-extrabold text-xs">
+                                    📖
+                                </span>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm line-clamp-1">${title}</h4>
+                                    <span class="text-[10px] text-slate-400 font-medium">Rank #${idx + 1} Most Viewed</span>
+                                </div>
+                            </div>
+                            <div class="neu-trench px-3 py-1 text-xs font-extrabold text-amber-600">
+                                ${count} ${count === 1 ? 'view' : 'views'}
                             </div>
                         </div>
                     `;
