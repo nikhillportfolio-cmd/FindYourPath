@@ -235,6 +235,7 @@ function showResultsOverview() {
 // -------------------------------------------------------------
 function showCareerDetails(index) {
     const match = globalMatches[index];
+    window.currentCareerMatch = match;
 
     matchesOverview.classList.add("hidden");
     careerDetails.classList.remove("hidden");
@@ -918,13 +919,251 @@ const libraryBooks = [
     { id: "ph20", title: "The Prince", author: "Niccolò Machiavelli", genre: "Philosophy & Mindset", year: 1532, rating: 4.7, isbn: "9780140449150", desc: "Political treatise advising rulers on statecraft, pragmatism, power retention, and whether it is better to be loved or feared." }
 ];
 
+const KNOWN_CAREER_BOOK_ISBNS = {
+    // Tech & Engineering
+    "Data Structures and Algorithms Made Easy": "9788192107554",
+    "Cracking the Coding Interview": "9780984782857",
+    "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow": "9781492032649",
+    "Deep Learning": "9780262035613",
+    "The Web Application Hacker's Handbook": "9781118026472",
+    "CompTIA Security+ Study Guide": "9781119736257",
+    "Storytelling with Data": "9781119002253",
+    "Python for Data Analysis": "9781491957660",
+    "The Design of Everyday Things": "9780465050659",
+    "Don't Make Me Think": "9780321965516",
+    "The Phoenix Project": "9780988262591",
+    "AWS Certified Solutions Architect Official Study Guide": "9781119138556",
+    // Arts & Creative
+    "Musicophilia": "9781400033539",
+    "The Music Producer's Handbook": "9781423492818",
+    "Designing Brand Identity": "9781118980842",
+    "Grid Systems in Graphic Design": "9783721201451",
+    "Making Movies": "9780679756606",
+    "In the Blink of an Eye": "9781879505629",
+    "The Animator's Survival Kit": "9780952907404",
+    "Creating 3D Game Art for the Real-Time Engine": "9780240818290",
+    "Interior Design Illustrated": "9781118024010",
+    "The Interior Design Handbook": "9780593139318",
+    "Ragas and Beyond": "9788124602690",
+    "The Voice Book": "9780571195619",
+    // Medical & Healthcare
+    "Bailey & Love's Short Practice of Surgery": "9781498796507",
+    "BD Chaurasia's Human Anatomy": "9789388902731",
+    "Thinking, Fast and Slow": "9780374533557",
+    "Man's Search for Meaning": "9780807014295",
+    "Molecular Biology of the Cell": "9780815344322",
+    "Biotechnology": "9788186809211",
+    "Physical Rehabilitation": "9780803661622",
+    "Joint Structure and Function": "9780803620629",
+    "Hospital Administration and Management": "9788123904948",
+    "High Output Management": "9780679762881",
+    "Remington: The Science and Practice of Pharmacy": "9780857110626",
+    "Pharmacological Basis of Therapeutics": "9781259584732",
+    // Govt & Civil Services
+    "Indian Polity": "9789352604883",
+    "India's Struggle for Independence": "9780140107814",
+    "SSB Interview: The Complete Guide": "9788183553988",
+    "The Brave: Param Vir Chakra Stories": "9780143422358",
+    "GATE Engineering Mathematics": "9789388137355",
+    "Objective Type Questions in Engineering": "9788174090539",
+    "Urbanization in India": "9780143033509",
+    "Public Policy in India": "9780199466542",
+    "The India Way: Strategies for an Uncertain World": "9789353579791",
+    "Pax Indica": "9780670085743",
+    "State Specific General Knowledge Manuals": "9789324198273",
+    "Indian Economy": "9789353162818",
+    // Business & Entrepreneurship
+    "The High-Performance Entrepreneur": "9780143062226",
+    "Doglapan": "9789356295629",
+    "Building a StoryBrand": "9780718033323",
+    "Shoe Dog": "9781501135910",
+    "The Lean Startup": "9780307887894",
+    "Banker to the Poor": "9780140280081",
+    "Venture Deals": "9781119594079",
+    "Zero to One": "9780804139298",
+    "Half the Sky": "9780307387097",
+    "To Change the World": "9780199730803",
+    "The E-Myth Revisited": "9780887307287",
+    "Retail Management": "9780070144903",
+    // Law & Legal
+    "Introduction to the Constitution of India": "9789351435266",
+    "Working a Democratic Constitution": "9780195656107",
+    "Before Memory Fades": "9789380658681",
+    "Legal Eagles": "9780143425946",
+    "Landmark Judgments That Changed India": "9788129135087",
+    "Courts and Their Judgments": "9788129104082",
+    "Law Relating to Intellectual Property": "9788175349506",
+    "Cyber Law in India": "9788190367301",
+    "Criminal Procedure Code": "9789388548236",
+    "Law of Evidence": "9788188219503",
+    "Law of Arbitration and Conciliation": "9788131238902",
+    "International Commercial Arbitration": "9789041152183"
+};
+
+let recommendationBooks = [];
+const openLibraryCoverCache = {};
+
+function findIsbnForBookTitle(title) {
+    if (!title) return null;
+    const cleanTitle = title.trim();
+    if (KNOWN_CAREER_BOOK_ISBNS[cleanTitle]) return KNOWN_CAREER_BOOK_ISBNS[cleanTitle];
+
+    for (const [key, isbn] of Object.entries(KNOWN_CAREER_BOOK_ISBNS)) {
+        if (cleanTitle.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(cleanTitle.toLowerCase())) {
+            return isbn;
+        }
+    }
+
+    const libMatch = libraryBooks.find(b => 
+        b.title.toLowerCase().includes(cleanTitle.toLowerCase()) || 
+        cleanTitle.toLowerCase().includes(b.title.toLowerCase())
+    );
+    if (libMatch && libMatch.isbn) return libMatch.isbn;
+
+    return null;
+}
+
+async function fetchOpenLibraryCoverDynamic(bookId, title, author) {
+    const key = `${title}_${author}`;
+    if (openLibraryCoverCache[key]) {
+        return openLibraryCoverCache[key];
+    }
+    try {
+        const query = encodeURIComponent(`${title} ${author}`);
+        const res = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=1`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data.docs && data.docs.length > 0) {
+            const doc = data.docs[0];
+            let coverUrl = null;
+            if (doc.cover_i) {
+                coverUrl = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
+            } else if (doc.isbn && doc.isbn.length > 0) {
+                coverUrl = `https://covers.openlibrary.org/b/isbn/${doc.isbn[0]}-M.jpg`;
+            }
+            if (coverUrl) {
+                openLibraryCoverCache[key] = coverUrl;
+                const imgEl = document.querySelector(`img[data-book-id="${bookId}"]`);
+                if (imgEl) {
+                    imgEl.src = coverUrl;
+                }
+                return coverUrl;
+            }
+        }
+    } catch (e) {
+        console.warn("Open Library dynamic cover fetch failed for:", title, e);
+    }
+    return null;
+}
+
 function getOpenLibraryCoverUrl(isbn) {
     return `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
+}
+
+function openLibraryWithRecommendations(careerBooks) {
+    if (!careerBooks || !Array.isArray(careerBooks) || careerBooks.length === 0) {
+        if (window.currentCareerMatch && window.currentCareerMatch.books && window.currentCareerMatch.books.length > 0) {
+            careerBooks = window.currentCareerMatch.books;
+        } else if (typeof globalMatches !== 'undefined' && globalMatches && globalMatches.length > 0 && globalMatches[0].books) {
+            careerBooks = globalMatches[0].books;
+        } else {
+            careerBooks = [
+                "Atomic Habits by James Clear",
+                "Zero to One by Peter Thiel",
+                "Thinking, Fast and Slow by Daniel Kahneman",
+                "Deep Work by Cal Newport"
+            ];
+        }
+    }
+
+    const careerTitle = window.currentCareerMatch ? window.currentCareerMatch.title : "Your Career Path";
+
+    recommendationBooks = careerBooks.map((bookItem, idx) => {
+        let title = typeof bookItem === 'string' ? bookItem : (bookItem.title || 'Recommended Book');
+        let author = typeof bookItem === 'string' ? 'Recommended Author' : (bookItem.author || 'Recommended Author');
+        
+        if (typeof bookItem === 'string' && bookItem.includes(" by ")) {
+            const parts = bookItem.split(" by ");
+            title = parts[0].trim();
+            author = parts[1].trim();
+        }
+
+        const matchedLib = libraryBooks.find(b => 
+            b.title.toLowerCase().includes(title.toLowerCase()) || 
+            title.toLowerCase().includes(b.title.toLowerCase())
+        );
+
+        const isbn = matchedLib ? matchedLib.isbn : findIsbnForBookTitle(title);
+        const year = matchedLib ? matchedLib.year : 2023;
+        const rating = matchedLib ? matchedLib.rating : 4.9;
+        const desc = matchedLib ? matchedLib.desc : `Essential foundational reading handpicked for your ${careerTitle} roadmap.`;
+
+        const bId = `rec_${idx}_${Date.now()}`;
+
+        if (!isbn) {
+            fetchOpenLibraryCoverDynamic(bId, title, author);
+        }
+
+        return {
+            id: bId,
+            title: title,
+            author: author,
+            genre: "Your Recommendations",
+            year: year,
+            rating: rating,
+            isbn: isbn,
+            desc: desc,
+            isRecommendation: true
+        };
+    });
+
+    const tabCountEl = document.getElementById("recommendations-tab-count");
+    if (tabCountEl) {
+        tabCountEl.innerText = recommendationBooks.length;
+    }
+
+    openLibraryModal();
+    setLibraryGenre('recommendations');
+}
+
+function populateDefaultRecommendations() {
+    const defaultBooks = [
+        "Atomic Habits by James Clear",
+        "Zero to One by Peter Thiel",
+        "Thinking, Fast and Slow by Daniel Kahneman",
+        "Deep Work by Cal Newport",
+        "Shoe Dog by Phil Knight",
+        "The Lean Startup by Eric Ries"
+    ];
+
+    recommendationBooks = defaultBooks.map((bookItem, idx) => {
+        const parts = bookItem.split(" by ");
+        const title = parts[0].trim();
+        const author = parts[1].trim();
+        const matchedLib = libraryBooks.find(b => b.title.toLowerCase() === title.toLowerCase());
+        return {
+            id: `rec_def_${idx}`,
+            title: title,
+            author: author,
+            genre: "Your Recommendations",
+            year: matchedLib ? matchedLib.year : 2020,
+            rating: matchedLib ? matchedLib.rating : 4.9,
+            isbn: matchedLib ? matchedLib.isbn : findIsbnForBookTitle(title),
+            desc: matchedLib ? matchedLib.desc : `Top rated career and mindset book recommendation.`,
+            isRecommendation: true
+        };
+    });
+
+    const tabCountEl = document.getElementById("recommendations-tab-count");
+    if (tabCountEl) {
+        tabCountEl.innerText = recommendationBooks.length;
+    }
 }
 
 function handleImageError(img, title, author, genre) {
     img.onerror = null; // Prevent infinite loop
     const colorMap = {
+        'Your Recommendations': ['#1e1b4b', '#3730a3', '#4f46e5'],
         'Fantasy': ['#3b0764', '#581c87', '#7e22ce'],
         'Sci-Fi': ['#0f172a', '#1e1b4b', '#312e81'],
         'Comedy': ['#78350f', '#92400e', '#b45309'],
@@ -988,6 +1227,7 @@ function setLibraryGenre(genre) {
     currentLibraryGenre = genre;
     
     const tabs = {
+        'recommendations': 'genre-tab-recommendations',
         'all': 'genre-tab-all',
         'Fantasy': 'genre-tab-fantasy',
         'Sci-Fi': 'genre-tab-scifi',
@@ -1024,8 +1264,18 @@ function renderLibraryGrid() {
 
     grid.innerHTML = "";
 
-    const filtered = libraryBooks.filter(book => {
-        const matchesGenre = currentLibraryGenre === "all" || book.genre === currentLibraryGenre;
+    let booksToFilter = [];
+    if (currentLibraryGenre === "recommendations") {
+        if (!recommendationBooks || recommendationBooks.length === 0) {
+            populateDefaultRecommendations();
+        }
+        booksToFilter = recommendationBooks;
+    } else {
+        booksToFilter = libraryBooks;
+    }
+
+    const filtered = booksToFilter.filter(book => {
+        const matchesGenre = currentLibraryGenre === "recommendations" || currentLibraryGenre === "all" || book.genre === currentLibraryGenre;
         const matchesQuery = !librarySearchQuery || 
             book.title.toLowerCase().includes(librarySearchQuery) || 
             book.author.toLowerCase().includes(librarySearchQuery);
@@ -1044,7 +1294,7 @@ function renderLibraryGrid() {
         card.className = "neu-card-sm p-4 flex flex-col justify-between group cursor-pointer hover:shadow-xl transition-all duration-300 relative overflow-hidden fade-in";
         card.style.animationDelay = `${(index % 12) * 40}ms`;
 
-        const coverUrl = getOpenLibraryCoverUrl(book.isbn);
+        const coverUrl = book.isbn ? getOpenLibraryCoverUrl(book.isbn) : (openLibraryCoverCache[`${book.title}_${book.author}`] || `https://covers.openlibrary.org/b/isbn/9780000000000-M.jpg`);
 
         card.innerHTML = `
             <!-- 3D BOOK COVER DISPLAY CASE -->
@@ -1053,6 +1303,7 @@ function renderLibraryGrid() {
                     <div class="book-3d-spine"></div>
                     <div class="book-3d-shine"></div>
                     <img src="${coverUrl}" 
+                         data-book-id="${book.id}"
                          alt="${escapeHtml(book.title)}" 
                          class="book-cover-img"
                          loading="lazy"
@@ -1064,7 +1315,7 @@ function renderLibraryGrid() {
             <div class="flex-1 flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <span class="neu-badge text-[9px] font-extrabold text-indigo-600 uppercase px-2 py-0.5">${book.genre}</span>
+                        <span class="neu-badge text-[9px] font-extrabold text-indigo-600 uppercase px-2 py-0.5">${escapeHtml(book.genre)}</span>
                         <span class="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">★ ${book.rating}</span>
                     </div>
                     <h4 class="text-sm font-black text-slate-800 font-outfit line-clamp-1 group-hover:text-indigo-600 transition-colors">${escapeHtml(book.title)}</h4>
@@ -1087,7 +1338,10 @@ function renderLibraryGrid() {
 }
 
 function openBookDetailModal(bookId) {
-    const book = libraryBooks.find(b => b.id === bookId);
+    let book = recommendationBooks.find(b => b.id === bookId);
+    if (!book) {
+        book = libraryBooks.find(b => b.id === bookId);
+    }
     if (!book) return;
 
     const modal = document.getElementById("book-detail-modal");
@@ -1102,7 +1356,7 @@ function openBookDetailModal(bookId) {
 
     if (!modal) return;
 
-    const coverUrl = getOpenLibraryCoverUrl(book.isbn);
+    const coverUrl = book.isbn ? getOpenLibraryCoverUrl(book.isbn) : (openLibraryCoverCache[`${book.title}_${book.author}`] || `https://covers.openlibrary.org/b/isbn/9780000000000-M.jpg`);
 
     if (coverContainer) {
         coverContainer.innerHTML = `
