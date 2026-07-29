@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRAXiS Admin Analytics Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        neu: {
+                            base: '#e0e5ec',
+                            text: '#334155',
+                            muted: '#64748b',
+                            accent: '#2563eb',
+                            emerald: '#10b981',
+                            purple: '#8b5cf6',
+                            rose: '#f43f5e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-color: #e0e5ec;
+            --shadow-light: #ffffff;
+            --shadow-dark: #b8bec7;
+            --shadow-dark-deep: #a3abb7;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #334155;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* -------------------------------------------------------------
+           NEUMORPHIC DESIGN SYSTEM
+        ------------------------------------------------------------- */
+        .neu-card {
+            background: #e0e5ec;
+            border-radius: 1.5rem;
+            box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .neu-card-sm {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .neu-btn {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .neu-btn:hover {
+            box-shadow: 8px 8px 16px var(--shadow-dark-deep), -8px -8px 16px var(--shadow-light);
+            transform: translateY(-2px);
+        }
+
+        .neu-btn:active, .neu-btn.pressed {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(0);
+        }
+
+        .neu-input {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            transition: all 0.2s ease;
+        }
+
+        .neu-input:focus {
+            outline: none;
+            box-shadow: inset 5px 5px 10px var(--shadow-dark-deep), inset -5px -5px 10px var(--shadow-light), 0 0 0 2px #2563eb;
+        }
+
+        .neu-trench {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+
+        .neu-circle {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+        }
+
+        /* Live Pulse Dot */
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+
+    <!-- LOGIN MODAL / AUTH OVERLAY -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
+        <div class="neu-card p-8 max-w-md w-full text-center relative overflow-hidden">
+            <div class="neu-circle w-16 h-16 mx-auto flex items-center justify-center mb-6 text-blue-600">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+            </div>
+
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">PRAXiS Admin</h2>
+            <p class="text-sm text-slate-500 mb-6">Enter your security password to access live tracking and analytics.</p>
+
+            <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
+                <div class="relative">
+                    <input type="password" id="admin-password-input" placeholder="Password (default: admin123)" required
+                        class="neu-input w-full px-5 py-3 text-slate-800 placeholder-slate-400 text-center font-medium">
+                </div>
+                
+                <p id="login-error" class="text-xs text-rose-500 font-semibold hidden mb-2"></p>
+
+                <button type="submit" class="neu-btn w-full py-3 px-6 text-blue-600 font-bold tracking-wide">
+                    Unlock Studio
+                </button>
+            </form>
+            <div class="mt-6">
+                <a href="/praxis" class="text-xs font-semibold text-slate-400 hover:text-blue-600 transition-colors">← Back to Main App</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN ADMIN DASHBOARD -->
+    <div id="admin-dashboard" class="max-w-7xl mx-auto hidden space-y-8">
+        
+        <!-- HEADER BAR -->
+        <header class="neu-card p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="neu-circle w-12 h-12 flex items-center justify-center text-blue-600 font-extrabold text-xl">
+                    P
+                </div>
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl font-extrabold text-slate-800">Analytics Studio</h1>
+                        <span class="neu-card-sm px-3 py-1 text-xs font-bold text-emerald-600 flex items-center gap-2">
+                            <span class="live-dot"></span> LIVE ENGINE
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">Real-Time User & Career Intelligence Dashboard</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                <span id="last-updated-tag" class="text-xs text-slate-400 font-medium mr-2">Syncing...</span>
+                
+                <button onclick="fetchAdminStats()" title="Refresh Stats Now" class="neu-btn p-3 text-slate-700 hover:text-blue-600">
+                    <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </button>
+
+                <a href="/praxis" class="neu-btn px-4 py-2 text-xs font-bold text-slate-700 flex items-center gap-2">
+                    <span>Main Website</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+
+                <button onclick="handleLogout()" class="neu-btn px-4 py-2 text-xs font-bold text-rose-500">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- STAT CARDS GRID -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- CARD 1: LIVE ACTIVE USERS -->
+            <div class="neu-card p-6 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Active</span>
+                    <div class="neu-circle p-2 text-emerald-500">
+                        <span class="live-dot"></span>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-active-users" class="text-4xl font-black text-slate-800">0</span>
+                    <span class="text-xs font-semibold text-emerald-600">online right now</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Active heartbeats in past 45s</p>
+            </div>
+
+            <!-- CARD 2: TOTAL VISITORS -->
+            <div class="neu-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Visitors</span>
+                    <div class="neu-circle p-2 text-blue-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-total-visitors" class="text-4xl font-black text-slate-800">0</span>
+                    <span class="text-xs font-semibold text-blue-600">unique page views</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Persistent site sessions</p>
+            </div>
+
+            <!-- CARD 3: QUIZZES COMPLETED -->
+            <div class="neu-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Quizzes Finished</span>
+                    <div class="neu-circle p-2 text-purple-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-quizzes-completed" class="text-4xl font-black text-slate-800">0</span>
+                    <span class="text-xs font-semibold text-purple-600">roadmaps generated</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Successful assessment completions</p>
+            </div>
+
+            <!-- CARD 4: CONVERSION RATE -->
+            <div class="neu-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Conversion Rate</span>
+                    <div class="neu-circle p-2 text-amber-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="stat-conversion-rate" class="text-4xl font-black text-slate-800">0.0%</span>
+                    <span class="text-xs font-semibold text-amber-600">visitor to quiz ratio</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Completions per total visitor</p>
+            </div>
+        </div>
+
+        <!-- BREAKDOWN SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- POPULAR CAREER DOMAINS -->
+            <div class="neu-card p-6 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Popular Career Domains</h2>
+                        <p class="text-xs text-slate-500">Breakdown of user interest choices</p>
+                    </div>
+                    <span class="neu-card-sm px-3 py-1 text-xs font-bold text-blue-600">Domains</span>
+                </div>
+
+                <div id="domain-stats-container" class="space-y-4">
+                    <!-- Dynamic Progress Bars Will Be Rendered Here -->
+                    <div class="text-sm text-slate-400 text-center py-6">No domain activity recorded yet.</div>
+                </div>
+            </div>
+
+            <!-- TOP MATCHED CAREERS LEADERBOARD -->
+            <div class="neu-card p-6 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Top Matched Careers</h2>
+                        <p class="text-xs text-slate-500">Most frequent #1 recommendation results</p>
+                    </div>
+                    <span class="neu-card-sm px-3 py-1 text-xs font-bold text-purple-600">Leaderboard</span>
+                </div>
+
+                <div id="career-stats-container" class="space-y-3">
+                    <!-- Dynamic Career Leaderboard Items Will Be Rendered Here -->
+                    <div class="text-sm text-slate-400 text-center py-6">No quiz matches recorded yet.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FOOTER INFO -->
+        <footer class="text-center text-xs text-slate-400 py-4">
+            <p>PRAXiS Real-Time Analytics Engine &bull; Auto-syncing every 5s</p>
+        </footer>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        let adminPassword = sessionStorage.getItem('praxis_admin_pwd') || '';
+        let statsInterval = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (adminPassword) {
+                verifyAndShowDashboard();
+            }
+        });
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const passwordInput = document.getElementById('admin-password-input');
+            const errorEl = document.getElementById('login-error');
+            const pwd = passwordInput.value.trim();
+
+            if (!pwd) return;
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pwd })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    adminPassword = pwd;
+                    sessionStorage.setItem('praxis_admin_pwd', pwd);
+                    errorEl.classList.add('hidden');
+                    verifyAndShowDashboard();
+                } else {
+                    errorEl.innerText = data.message || "Invalid Password";
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorEl.innerText = "Connection error. Ensure server is running.";
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function verifyAndShowDashboard() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.remove('hidden');
+            
+            // Immediate fetch
+            fetchAdminStats();
+
+            // Set auto refresh interval every 5s
+            if (!statsInterval) {
+                statsInterval = setInterval(fetchAdminStats, 5000);
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('praxis_admin_pwd');
+            adminPassword = '';
+            if (statsInterval) {
+                clearInterval(statsInterval);
+                statsInterval = null;
+            }
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        async function fetchAdminStats() {
+            if (!adminPassword) return;
+
+            const refreshIcon = document.getElementById('refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('spinning');
+
+            try {
+                const res = await fetch('/api/admin/stats', {
+                    headers: { 'x-admin-password': adminPassword }
+                });
+
+                if (res.status === 401) {
+                    handleLogout();
+                    alert("Admin session expired or password invalid.");
+                    return;
+                }
+
+                const data = await res.json();
+                renderStats(data);
+
+                const now = new Date();
+                document.getElementById('last-updated-tag').innerText = `Synced ${now.toLocaleTimeString()}`;
+            } catch (err) {
+                console.warn("Failed to fetch admin stats:", err);
+                document.getElementById('last-updated-tag').innerText = "Sync Failed";
+            } finally {
+                if (refreshIcon) {
+                    setTimeout(() => refreshIcon.classList.remove('spinning'), 500);
+                }
+            }
+        }
+
+        function renderStats(data) {
+            // Stat Cards
+            document.getElementById('stat-active-users').innerText = data.activeUsers || 0;
+            document.getElementById('stat-total-visitors').innerText = data.totalVisitors || 0;
+            document.getElementById('stat-quizzes-completed').innerText = data.totalQuizzesCompleted || 0;
+            document.getElementById('stat-conversion-rate').innerText = data.conversionRate || "0.0%";
+
+            // Domain Stats
+            const domainContainer = document.getElementById('domain-stats-container');
+            const domainStats = data.domainStats || {};
+            const domainEntries = Object.entries(domainStats);
+            const totalDomainSubmissions = domainEntries.reduce((sum, [_, count]) => sum + count, 0);
+
+            if (domainEntries.length === 0) {
+                domainContainer.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">No domain activity recorded yet. Take a quiz to generate data!</div>`;
+            } else {
+                domainEntries.sort((a, b) => b[1] - a[1]);
+                
+                const domainNames = {
+                    "TechAI": "Tech & Artificial Intelligence",
+                    "Design": "Creative & Design",
+                    "Business": "Business & Entrepreneurship",
+                    "Healthcare": "Healthcare & Medicine",
+                    "Engineering": "Engineering & Physics",
+                    "Law": "Law & Legal Studies"
+                };
+
+                const domainColors = [
+                    "from-blue-500 to-indigo-600",
+                    "from-purple-500 to-pink-600",
+                    "from-emerald-500 to-teal-600",
+                    "from-amber-500 to-orange-600",
+                    "from-sky-500 to-cyan-600",
+                    "from-rose-500 to-red-600"
+                ];
+
+                domainContainer.innerHTML = domainEntries.map(([domainKey, count], idx) => {
+                    const percentage = totalDomainSubmissions > 0 ? Math.round((count / totalDomainSubmissions) * 100) : 0;
+                    const label = domainNames[domainKey] || domainKey;
+                    const gradient = domainColors[idx % domainColors.length];
+
+                    return `
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-xs font-semibold">
+                                <span class="text-slate-700">${label}</span>
+                                <span class="text-slate-500">${count} quizzes (${percentage}%)</span>
+                            </div>
+                            <div class="neu-trench h-3 w-full p-0.5 overflow-hidden">
+                                <div class="bg-gradient-to-r ${gradient} h-full rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Career Leaderboard Stats
+            const careerContainer = document.getElementById('career-stats-container');
+            const careerStats = data.careerStats || {};
+            const careerEntries = Object.entries(careerStats);
+
+            if (careerEntries.length === 0) {
+                careerContainer.innerHTML = `<div class="text-sm text-slate-400 text-center py-6">No career matches recorded yet.</div>`;
+            } else {
+                careerEntries.sort((a, b) => b[1] - a[1]);
+                const topCareers = careerEntries.slice(0, 6);
+
+                careerContainer.innerHTML = topCareers.map(([title, count], idx) => {
+                    const medalColors = ['bg-amber-400 text-amber-900', 'bg-slate-300 text-slate-800', 'bg-amber-600 text-white', 'bg-blue-100 text-blue-700'];
+                    const medalClass = medalColors[idx] || medalColors[3];
+
+                    return `
+                        <div class="neu-card-sm p-3 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-full ${medalClass} flex items-center justify-center font-bold text-xs">
+                                    #${idx + 1}
+                                </span>
+                                <span class="font-bold text-slate-800 text-sm">${title}</span>
+                            </div>
+                            <div class="neu-trench px-3 py-1 text-xs font-extrabold text-blue-600">
+                                ${count} ${count === 1 ? 'match' : 'matches'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    </script>
+</body>
+
+</html>

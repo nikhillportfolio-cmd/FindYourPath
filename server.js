@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +10,56 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// =====================================================================
+// REAL-TIME ANALYTICS & ACTIVE USER TRACKING ENGINE
+// =====================================================================
+const ANALYTICS_FILE = path.join(__dirname, 'analytics.json');
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const activeSessions = new Map(); // clientId -> lastPingTimestamp
+const PING_TIMEOUT_MS = 45000; // 45 seconds (ping sent every 30s)
+
+let analyticsData = {
+    totalVisitors: 0,
+    totalQuizzesCompleted: 0,
+    domainStats: {},
+    careerStats: {}
+};
+
+// Load existing analytics from JSON file on server startup
+try {
+    if (fs.existsSync(ANALYTICS_FILE)) {
+        const fileData = fs.readFileSync(ANALYTICS_FILE, 'utf8');
+        analyticsData = { ...analyticsData, ...JSON.parse(fileData) };
+        console.log("📊 Loaded existing analytics data:", analyticsData);
+    } else {
+        fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(analyticsData, null, 2), 'utf8');
+        console.log("📊 Initialized new analytics.json file");
+    }
+} catch (err) {
+    console.error("⚠️ Failed to load/initialize analytics.json:", err.message);
+}
+
+function saveAnalytics() {
+    try {
+        fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(analyticsData, null, 2), 'utf8');
+    } catch (err) {
+        console.error("⚠️ Failed to write to analytics.json:", err.message);
+    }
+}
+
+function getActiveUserCount() {
+    const now = Date.now();
+    let count = 0;
+    for (const [clientId, timestamp] of activeSessions.entries()) {
+        if (now - timestamp <= PING_TIMEOUT_MS) {
+            count++;
+        } else {
+            activeSessions.delete(clientId);
+        }
+    }
+    return count;
+}
 
 // =====================================================================
 // 1. MASSIVE STATIC QUESTION POOL (150 Questions - 25 Per Category)
@@ -688,6 +739,17 @@ app.post('/api/calculate-result', (req, res) => {
         // Pick top 4 best matches and strip out the backend scoring data before sending to frontend
         const topMatches = scoredCareers.slice(0, 4).map(({ finalScore, targetTraits, ...rest }) => rest);
 
+        // Update Analytics: Increment completed quizzes, domain stats, and top career stats
+        analyticsData.totalQuizzesCompleted = (analyticsData.totalQuizzesCompleted || 0) + 1;
+        if (interest) {
+            analyticsData.domainStats[interest] = (analyticsData.domainStats[interest] || 0) + 1;
+        }
+        if (topMatches && topMatches.length > 0 && topMatches[0].title) {
+            const topCareerTitle = topMatches[0].title;
+            analyticsData.careerStats[topCareerTitle] = (analyticsData.careerStats[topCareerTitle] || 0) + 1;
+        }
+        saveAnalytics();
+
         // Instant return
         res.json(topMatches);
 
@@ -695,6 +757,70 @@ app.post('/api/calculate-result', (req, res) => {
         console.error("Matching Error:", error);
         res.status(500).json({ error: "Failed to generate roadmap recommendations." });
     }
+});
+
+// =====================================================================
+// 5. REAL-TIME TRACKING & ADMIN ENDPOINTS
+// =====================================================================
+
+// Ping route for live active user tracking & page visit counts
+app.post('/api/ping', (req, res) => {
+    const { clientId, isNewVisit } = req.body || {};
+    if (!clientId) {
+        return res.status(400).json({ error: "clientId is required" });
+    }
+
+    activeSessions.set(clientId, Date.now());
+
+    if (isNewVisit) {
+        analyticsData.totalVisitors = (analyticsData.totalVisitors || 0) + 1;
+        saveAnalytics();
+    }
+
+    res.json({
+        success: true,
+        activeUsers: getActiveUserCount(),
+        totalVisitors: analyticsData.totalVisitors
+    });
+});
+
+// Admin login verification route
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body || {};
+    if (password === ADMIN_PASSWORD) {
+        return res.json({ success: true, message: "Authentication successful" });
+    }
+    return res.status(401).json({ success: false, message: "Invalid admin password" });
+});
+
+// Protected Admin Stats API
+app.get('/api/admin/stats', (req, res) => {
+    const providedPass = req.headers['x-admin-password'] || req.query.password;
+    if (providedPass !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
+    }
+
+    const totalVisitors = analyticsData.totalVisitors || 0;
+    const totalQuizzes = analyticsData.totalQuizzesCompleted || 0;
+    const conversionRate = totalVisitors > 0 ? ((totalQuizzes / totalVisitors) * 100).toFixed(1) : "0.0";
+
+    res.json({
+        activeUsers: getActiveUserCount(),
+        totalVisitors: totalVisitors,
+        totalQuizzesCompleted: totalQuizzes,
+        conversionRate: `${conversionRate}%`,
+        domainStats: analyticsData.domainStats || {},
+        careerStats: analyticsData.careerStats || {},
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Serve Admin UI
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // Serve PRAXiS main entry point

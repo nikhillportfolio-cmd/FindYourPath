@@ -1396,3 +1396,49 @@ function closeBookDetailModal() {
         modal.classList.add("hidden");
     }, 300);
 }
+
+// -------------------------------------------------------------
+// REAL-TIME ANALYTICS PING ENGINE
+// -------------------------------------------------------------
+function getOrCreateClientId() {
+    let clientId = localStorage.getItem("praxis_client_id");
+    if (!clientId) {
+        clientId = "client_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now();
+        localStorage.setItem("praxis_client_id", clientId);
+    }
+    return clientId;
+}
+
+function initPingEngine() {
+    const clientId = getOrCreateClientId();
+    const hasVisited = sessionStorage.getItem("praxis_session_active");
+    const isNewVisit = !hasVisited;
+
+    if (isNewVisit) {
+        sessionStorage.setItem("praxis_session_active", "true");
+    }
+
+    const sendPing = async (isNew = false) => {
+        try {
+            await fetch("/api/ping", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ clientId, isNewVisit: isNew })
+            });
+        } catch (err) {
+            // silent catch for background ping
+        }
+    };
+
+    // Immediate initial ping
+    sendPing(isNewVisit);
+
+    // Heartbeat every 30 seconds
+    setInterval(() => sendPing(false), 30000);
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initPingEngine);
+} else {
+    initPingEngine();
+}
