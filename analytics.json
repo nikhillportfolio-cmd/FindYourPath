@@ -1,11 +1,12 @@
 {
   "totalVisitors": 2,
-  "totalQuizzesCompleted": 1,
+  "totalQuizzesCompleted": 2,
   "domainStats": {
-    "TechAI": 1
+    "TechAI": 2
   },
   "careerStats": {
-    "Cybersecurity & Ethical Hacker": 1
+    "Cybersecurity & Ethical Hacker": 1,
+    "AI / Machine Learning Engineer": 1
   },
   "libraryStats": {
     "totalViews": 1,
