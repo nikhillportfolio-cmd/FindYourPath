@@ -471,24 +471,24 @@
     </a>
 
     <!-- TOP NAVIGATION BAR -->
-    <header class="w-full max-w-5xl px-3 sm:px-6 py-4 sm:py-6 flex items-center justify-between z-20 gap-2">
-        <div class="flex items-center gap-2 sm:gap-4 pl-9 sm:pl-28 md:pl-32">
-            <div class="flex items-center gap-2 sm:gap-3">
-                <div class="w-9 h-9 sm:w-10 sm:h-10 neu-circle flex items-center justify-center text-amber-500 shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-nav)" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
-                        <defs>
-                            <linearGradient id="star-grad-nav" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#fbbf24"/>
-                                <stop offset="1" stop-color="#d97706"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-                <span class="font-outfit font-extrabold text-xl sm:text-2xl text-slate-800 tracking-tight">PRAXiS</span>
+    <header class="relative w-full max-w-5xl px-3 sm:px-6 py-4 sm:py-6 flex items-center justify-between z-20 gap-2 min-h-[64px]">
+        <!-- CENTERED PRAXiS LOGO -->
+        <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 pointer-events-auto">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 neu-circle flex items-center justify-center text-amber-500 shrink-0">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-nav)" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="star-grad-nav" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#fbbf24"/>
+                            <stop offset="1" stop-color="#d97706"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
             </div>
+            <span class="font-outfit font-extrabold text-xl sm:text-2xl text-slate-800 tracking-tight">PRAXiS</span>
         </div>
-        <div class="neu-badge px-2.5 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-bold text-slate-600 flex items-center gap-1.5 sm:gap-2 shrink-0">
+
+        <div class="ml-auto neu-badge px-2.5 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-bold text-slate-600 flex items-center gap-1.5 sm:gap-2 shrink-0">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Compass Active</span>
         </div>
