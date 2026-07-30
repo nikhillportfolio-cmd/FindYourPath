@@ -1704,7 +1704,7 @@ function renderLibraryGrid() {
                     <span class="text-[10px] font-bold text-slate-400">${book.year}</span>
                     <div class="flex items-center gap-1.5">
                         <button onclick="event.stopPropagation(); openEBookReader('${escapeHtml(book.title)}', '${escapeHtml(book.author)}')" class="px-2.5 py-1 text-[10px] font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors flex items-center gap-1">
-                            📖 Read
+                            📖 MORE
                         </button>
                         <span class="text-xs font-black text-indigo-600 group-hover:translate-x-0.5 transition-transform">
                             Inspect &rarr;
