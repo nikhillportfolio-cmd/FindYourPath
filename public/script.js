@@ -531,7 +531,7 @@ function getHandwrittenMarkHTML(val, dayIndex) {
         const rot = ((dayIndex % 5) - 2) * 2; // -4deg to 4deg
         return `
             <div class="w-full h-full flex items-center justify-center pointer-events-none">
-                <svg viewBox="0 0 32 32" class="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg viewBox="0 0 32 32" class="w-5 h-5 sm:w-7 sm:h-7 text-emerald-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 17.5 C 9 20, 11 23.5, 12.5 25.5 C 15 18, 20 10.5, 27 5.5" 
                         stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
@@ -542,7 +542,7 @@ function getHandwrittenMarkHTML(val, dayIndex) {
         const rot = ((dayIndex % 3) - 1) * 3; // -3deg to 3deg
         return `
             <div class="w-full h-full flex items-center justify-center pointer-events-none">
-                <svg viewBox="0 0 32 32" class="w-6 h-6 sm:w-7 sm:h-7 text-rose-500 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg viewBox="0 0 32 32" class="w-5 h-5 sm:w-7 sm:h-7 text-rose-500 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7.5 7.5 C 13 13, 19 19, 24.5 24.5 M24 7.8 C 18.5 13.5, 13 19, 7.8 24.2" 
                         stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
@@ -552,7 +552,7 @@ function getHandwrittenMarkHTML(val, dayIndex) {
     return "";
 }
 
-// RENDER TIME-OF-DAY CATEGORIZED SPREADSHEET TRACKER GRID
+// RENDER TIME-OF-DAY CATEGORIZED SPREADSHEET TRACKER GRID (MOBILE COMPATIBLE)
 function renderHabitsList() {
     const container = document.getElementById("habits-list-container");
     const blankSlate = document.getElementById("blank-slate");
@@ -578,33 +578,36 @@ function renderHabitsList() {
         : categories.filter(c => c.key === currentCategoryFilter);
 
     let tableHTML = `
-        <div class="neu-card p-3 sm:p-5 bg-[#e0e5ec] shadow-xl border border-white/70 overflow-hidden">
-            <!-- Header Legend Bar -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 mb-3 border-b border-slate-300/70">
-                <div class="flex items-center gap-2">
+        <div class="neu-card p-2 sm:p-5 bg-[#e0e5ec] shadow-xl border border-white/70 overflow-hidden">
+            <!-- Header Legend Bar with Mobile Scroll Hint -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-300/70">
+                <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-base sm:text-lg">📊</span>
                     <div>
-                        <h4 class="text-sm sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
-                        <p class="text-[11px] text-slate-500 font-semibold">Click any day cell to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
+                        <div class="flex items-center gap-1.5">
+                            <h4 class="text-xs sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
+                            <span class="inline-flex sm:hidden neu-badge text-[9px] font-extrabold text-blue-600 px-1.5 py-0.5 leading-none">Swipe &rarr;</span>
+                        </div>
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Click cell: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-3 text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-3 py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0">
-                    <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-xs border border-slate-400/50 bg-[#e0e5ec]"></span> Blank</span>
-                    <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 flex items-center justify-center text-[10px] font-black">✓</span> Done</span>
-                    <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-xs bg-rose-500/20 border border-rose-500/50 text-rose-500 flex items-center justify-center text-[10px] font-black">✕</span> Missed</span>
+                <div class="flex items-center gap-1.5 sm:gap-3 text-[10px] sm:text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-xs border border-slate-400/50 bg-[#e0e5ec]"></span> Blank</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 flex items-center justify-center text-[9px] sm:text-[10px] font-black">✓</span> Done</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-xs bg-rose-500/20 border border-rose-500/50 text-rose-500 flex items-center justify-center text-[9px] sm:text-[10px] font-black">✕</span> Missed</span>
                 </div>
             </div>
 
             <!-- Spreadsheet Grid Table Wrapper (Sticky Headers & Sticky Left Habit Column) -->
-            <div class="overflow-x-auto max-h-[580px] overflow-y-auto custom-scrollbar rounded-xl border-2 border-slate-300/80 bg-[#e0e5ec] shadow-inner relative">
+            <div class="overflow-x-auto max-h-[60vh] sm:max-h-[580px] overflow-y-auto custom-scrollbar rounded-xl border-2 border-slate-300/80 bg-[#e0e5ec] shadow-inner relative touch-pan-x touch-pan-y overscroll-x-contain">
                 <table class="w-full border-separate border-spacing-0 select-none text-left min-w-max">
                     <thead>
                         <tr>
                             <!-- Top-Left Corner Header (Fixed on Top & Left) -->
-                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-3 text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.12)] min-w-[210px] sm:min-w-[270px]">
+                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-1.5 sm:p-3 text-[11px] sm:text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] min-w-[125px] w-[125px] sm:min-w-[270px] sm:w-auto">
                                 <div class="flex items-center justify-between">
-                                    <span>Habits & Routines</span>
-                                    <span class="text-[10px] font-extrabold text-slate-500 uppercase">30-Day Grid</span>
+                                    <span>Habit</span>
+                                    <span class="text-[9px] sm:text-[10px] font-extrabold text-slate-500 uppercase">30 Days</span>
                                 </div>
                             </th>
                             <!-- Days 1 to 30 Headers (Fixed on Top) -->
@@ -612,7 +615,7 @@ function renderHabitsList() {
 
     for (let day = 1; day <= 30; day++) {
         tableHTML += `
-            <th class="sticky top-0 z-20 bg-[#d5deeb] p-2 text-center text-[11px] sm:text-xs font-bold font-outfit text-slate-700 border-r border-b-2 border-slate-300 min-w-[40px] sm:min-w-[46px] w-[40px] sm:w-[46px]">
+            <th class="sticky top-0 z-20 bg-[#d5deeb] p-1.5 sm:p-2 text-center text-[10px] sm:text-xs font-bold font-outfit text-slate-700 border-r border-b-2 border-slate-300 min-w-[36px] sm:min-w-[46px] w-[36px] sm:w-[46px] select-none">
                 ${day}
             </th>
         `;
@@ -632,7 +635,7 @@ function renderHabitsList() {
         if (catHabits.length === 0 && currentCategoryFilter !== "all") {
             tableHTML += `
                 <tr>
-                    <td colspan="31" class="p-6 text-center text-xs font-bold text-slate-500 bg-slate-100/50 border border-slate-300/60">
+                    <td colspan="31" class="p-4 sm:p-6 text-center text-xs font-bold text-slate-500 bg-slate-100/50 border border-slate-300/60">
                         ${cat.icon} No habits defined under <strong>${cat.title}</strong> yet. Use "Define Your Target Habit" above to add one!
                     </td>
                 </tr>
@@ -642,14 +645,14 @@ function renderHabitsList() {
 
         if (catHabits.length === 0) return; // Skip empty category in 'all' view
 
-        // Bold Category Header Row
+        // Bold Category Header Row (Sticky Left Title)
         tableHTML += `
             <tr class="bg-gradient-to-r from-slate-300/90 via-slate-200 to-slate-300/70 text-slate-800">
-                <td colspan="31" class="p-2.5 px-4 font-black font-outfit text-xs sm:text-sm tracking-wide border-t-2 border-b-2 border-r border-slate-300/90 bg-[#d1d9e6] shadow-xs">
+                <td colspan="31" class="sticky left-0 z-20 p-2 px-3 sm:p-2.5 sm:px-4 font-black font-outfit text-xs sm:text-sm tracking-wide border-t-2 border-b-2 border-r border-slate-300/90 bg-[#d1d9e6] shadow-xs">
                     <div class="flex items-center gap-2">
-                        <span class="text-base">${cat.icon}</span>
+                        <span class="text-sm sm:text-base">${cat.icon}</span>
                         <span>${cat.title}</span>
-                        <span class="neu-badge px-2.5 py-0.5 text-[10px] font-black ${cat.badgeBg}">
+                        <span class="neu-badge px-2 py-0.5 text-[9px] sm:text-[10px] font-black ${cat.badgeBg}">
                             ${catHabits.length} ${catHabits.length === 1 ? 'Habit' : 'Habits'}
                         </span>
                     </div>
@@ -667,18 +670,18 @@ function renderHabitsList() {
             tableHTML += `
                 <tr class="hover:bg-slate-200/40 transition-colors">
                     <!-- Sticky Habit Cell (Fixed on Left) -->
-                    <td class="sticky left-0 z-20 bg-[#e0e5ec] p-2.5 px-3 border-r-2 border-b border-slate-300/80 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)]">
-                        <div class="flex items-center justify-between gap-2 min-w-0">
-                            <div class="flex flex-col min-w-0 pr-1">
-                                <span class="font-black text-xs sm:text-sm text-slate-800 font-outfit truncate max-w-[140px] sm:max-w-[195px]" title="${escapeHtml(habit.name)}">
+                    <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2.5 sm:px-3 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[125px] sm:min-w-[270px] sm:max-w-none">
+                        <div class="flex items-center justify-between gap-1 sm:gap-2 min-w-0">
+                            <div class="flex flex-col min-w-0 pr-0.5">
+                                <span class="font-black text-[11px] sm:text-sm text-slate-800 font-outfit truncate max-w-[82px] sm:max-w-[195px]" title="${escapeHtml(habit.name)}">
                                     ${escapeHtml(habit.name)}
                                 </span>
-                                <div class="flex items-center gap-2 mt-0.5 text-[10px] font-semibold text-slate-500">
-                                    <span class="text-blue-600 font-bold">${checkedCount}/30 (${habitPercentage}%)</span>
-                                    ${streak > 0 ? `<span class="text-amber-600 font-bold flex items-center gap-0.5">🔥 ${streak}d</span>` : ''}
+                                <div class="flex items-center gap-1 sm:gap-2 mt-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-500 flex-wrap">
+                                    <span class="text-blue-600 font-bold">${checkedCount}/30</span>
+                                    ${streak > 0 ? `<span class="text-amber-600 font-bold flex items-center gap-0.5">🔥${streak}d</span>` : ''}
                                 </div>
                             </div>
-                            <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" class="neu-badge p-1.5 text-slate-400 hover:text-red-600 transition-colors text-xs shrink-0 hover:scale-110">
+                            <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-red-600 transition-colors text-[10px] sm:text-xs shrink-0 hover:scale-110">
                                 🗑️
                             </button>
                         </div>
@@ -698,7 +701,7 @@ function renderHabitsList() {
                 tableHTML += `
                     <td onclick="toggleHabitDay(${habitIndex}, ${day})"
                         title="${titleText}"
-                        class="border-r border-b border-slate-300/70 p-0 text-center align-middle cursor-pointer transition-colors duration-150 h-10 sm:h-11 w-[40px] sm:w-[46px] min-w-[40px] sm:min-w-[46px] ${cellBgClass}">
+                        class="border-r border-b border-slate-300/70 p-0 text-center align-middle cursor-pointer transition-colors duration-150 h-9 sm:h-11 w-[36px] sm:w-[46px] min-w-[36px] sm:min-w-[46px] touch-manipulation active:scale-95 ${cellBgClass}">
                         ${markHTML}
                     </td>
                 `;
