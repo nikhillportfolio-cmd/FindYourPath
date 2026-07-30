@@ -966,19 +966,34 @@
 
                 <!-- HABIT CREATION INPUT SECTION -->
                 <div class="neu-card p-4 sm:p-6">
-                    <h3 class="text-sm sm:text-base font-bold text-slate-800 font-outfit mb-3 flex items-center gap-2">
-                        <span class="text-blue-600">✨</span> Define Your Target Habit & Time of Day
-                    </h3>
-                    <form id="add-habit-form" onsubmit="handleAddHabit(event)" class="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <h3 class="text-sm sm:text-base font-bold text-slate-800 font-outfit flex items-center gap-2">
+                            <span class="text-blue-600">✨</span> Define Your Target Habit & Time of Day
+                        </h3>
+                        <button type="button" onclick="requestNotificationPermission()" id="notif-permission-btn" title="Enable phone/browser reminders for scheduled habits"
+                            class="neu-badge px-2.5 py-1 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer">
+                            <span class="text-xs">🔔</span> Enable Phone Reminders
+                        </button>
+                    </div>
+                    <form id="add-habit-form" onsubmit="handleAddHabit(event)" class="flex flex-col md:flex-row gap-2.5 sm:gap-3">
                         <input id="habit-name-input" type="text" placeholder="e.g. Learn React, Workout 30 mins, Drink 3L Water..." 
                             class="neu-input flex-1 px-4 py-3 sm:px-5 sm:py-3.5 rounded-xl text-slate-700 text-xs sm:text-sm font-medium focus:outline-none placeholder-slate-400 bg-[#e0e5ec]" 
                             required />
+                        
                         <select id="habit-time-select" 
                             class="neu-input px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-xl text-slate-700 text-xs sm:text-sm font-bold focus:outline-none bg-[#e0e5ec] cursor-pointer shrink-0">
                             <option value="Morning Routine">🌅 Morning Routine</option>
                             <option value="Afternoon Focus">☀️ Afternoon Focus</option>
                             <option value="Evening Wind-down">🌙 Evening Wind-down</option>
                         </select>
+
+                        <!-- Optional Specific Habit Target Time for Reminders -->
+                        <div class="flex items-center gap-1.5 shrink-0 bg-[#e0e5ec] neu-trench px-3 py-1.5 rounded-xl border border-slate-300/50" title="Optional: Set exact time for 10-min phone reminder & missed habit alerts">
+                            <span class="text-xs text-slate-500 font-bold">⏰ Time (Opt):</span>
+                            <input id="habit-clock-input" type="time" 
+                                class="bg-transparent text-slate-700 text-xs sm:text-sm font-bold focus:outline-none cursor-pointer" />
+                        </div>
+
                         <button type="submit" class="neu-btn px-5 py-3 sm:px-6 sm:py-3.5 font-extrabold text-xs sm:text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1.5 shrink-0">
                             <span class="text-base sm:text-lg leading-none">+</span> Add Habit
                         </button>

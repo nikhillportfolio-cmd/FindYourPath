@@ -561,6 +561,154 @@ function getHandwrittenMarkHTML(val, dayIndex) {
     return "";
 }
 
+// WEB NOTIFICATIONS & SCHEDULED TIME REMINDER ENGINE
+function formatAMPM(timeStr) {
+    if (!timeStr) return "";
+    const parts = timeStr.split(":");
+    if (parts.length < 2) return timeStr;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return timeStr;
+    const ampm = h >= 12 ? "PM" : "AM";
+    const displayH = h % 12 || 12;
+    const displayM = m < 10 ? "0" + m : m;
+    return `${displayH}:${displayM} ${ampm}`;
+}
+
+function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        alert("Web Notifications are not supported in this browser.");
+        return;
+    }
+    Notification.requestPermission().then(permission => {
+        updateNotificationBtnState();
+        if (permission === "granted") {
+            try {
+                new Notification("🔔 PRAXiS Reminders Activated", {
+                    body: "You'll receive 10-minute reminders before your scheduled habits & alerts if missed!",
+                    tag: 'praxis-welcome'
+                });
+            } catch (e) {
+                console.log("Welcome notification error:", e);
+            }
+        }
+    });
+}
+
+function updateNotificationBtnState() {
+    const btn = document.getElementById("notif-permission-btn");
+    if (!btn) return;
+    if (!("Notification" in window)) {
+        btn.innerHTML = `<span class="text-slate-400">🔕 Notifications Unsupported</span>`;
+        return;
+    }
+    if (Notification.permission === "granted") {
+        btn.innerHTML = `<span class="text-emerald-700 font-bold">🔔 Phone Reminders Active</span>`;
+        btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-emerald-700 bg-emerald-500/15 flex items-center gap-1.5 shrink-0";
+    } else if (Notification.permission === "denied") {
+        btn.innerHTML = `<span class="text-rose-700 font-bold">🔕 Notifications Blocked</span>`;
+        btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-rose-700 bg-rose-500/15 flex items-center gap-1.5 shrink-0";
+    }
+}
+
+function checkHabitNotifications() {
+    if (!("Notification" in window) || Notification.permission !== "granted" || habits.length === 0) return;
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    const currentTotalMins = currentHour * 60 + currentMin;
+
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayIndex = (now.getDate() - 1) % 30; // 0-indexed day index 0..29
+
+    habits.forEach(habit => {
+        if (!habit.scheduledTime) return;
+
+        const parts = habit.scheduledTime.split(":");
+        if (parts.length < 2) return;
+        const targetH = parseInt(parts[0], 10);
+        const targetM = parseInt(parts[1], 10);
+        if (isNaN(targetH) || isNaN(targetM)) return;
+
+        const scheduledTotalMins = targetH * 60 + targetM;
+        const isTodayDone = habit.days && isDayDone(habit.days[todayIndex]);
+
+        if (!habit.remindedDates) habit.remindedDates = {};
+        if (!habit.missedNotifiedDates) habit.missedNotifiedDates = {};
+
+        // 1. 10-Minute Prior Pre-Habit Reminder Notification
+        const reminderTimeMins = scheduledTotalMins - 10;
+        if (currentTotalMins >= reminderTimeMins && currentTotalMins < scheduledTotalMins) {
+            if (!isTodayDone && !habit.remindedDates[todayStr]) {
+                habit.remindedDates[todayStr] = true;
+                saveHabitsToStorage();
+                
+                try {
+                    new Notification(`⏰ Habit in 10 mins: ${habit.name}`, {
+                        body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)}. Get ready to build discipline! 💪`,
+                        tag: `praxis-remind-${habit.id}-${todayStr}`,
+                        renotify: true
+                    });
+                } catch (e) {
+                    console.log("Notification trigger error:", e);
+                }
+            }
+        }
+
+        // 2. Disappointed Missed Habit Alert Notification (15 mins past target time)
+        if (currentTotalMins >= scheduledTotalMins + 15) {
+            if (!isTodayDone && !habit.missedNotifiedDates[todayStr]) {
+                habit.missedNotifiedDates[todayStr] = true;
+
+                // Auto-mark day cell as missed if still empty
+                if (!habit.days[todayIndex] || habit.days[todayIndex] === false) {
+                    habit.days[todayIndex] = "missed";
+                    renderHabitsList();
+                    updateGrowthCharts();
+                }
+
+                saveHabitsToStorage();
+
+                try {
+                    const quotes = [
+                        `😔 You missed "${habit.name}" scheduled for ${formatAMPM(habit.scheduledTime)}. Discipline is built through daily action, not excuses!`,
+                        `💔 Habit missed: "${habit.name}". Skipping habits today steals momentum from your future self. Get back on track!`,
+                        `⚠️ Missed target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Reset your focus and don't miss twice!`
+                    ];
+                    const msg = quotes[Math.floor(Math.random() * quotes.length)];
+
+                    new Notification(`😔 Habit Missed: ${habit.name}`, {
+                        body: msg,
+                        tag: `praxis-missed-${habit.id}-${todayStr}`,
+                        renotify: true
+                    });
+                } catch (e) {
+                    console.log("Missed notification error:", e);
+                }
+            }
+        }
+    });
+}
+
+// Start notification checker loop every 20 seconds
+setInterval(checkHabitNotifications, 20000);
+
+function editHabitTime(habitIndex) {
+    const habit = habits[habitIndex];
+    if (!habit) return;
+    const currentTime = habit.scheduledTime || "";
+    const newTime = prompt(`Set/Update target time for "${habit.name}"\n(Enter 24-hour time e.g. 07:30 or 18:45, or leave blank to clear):`, currentTime);
+    if (newTime !== null) {
+        habit.scheduledTime = newTime.trim();
+        saveHabitsToStorage();
+        renderHabitsList();
+        if (habit.scheduledTime && "Notification" in window && Notification.permission !== "granted") {
+            requestNotificationPermission();
+        }
+    }
+}
+
 // RENDER TIME-OF-DAY CATEGORIZED SPREADSHEET TRACKER GRID (MOBILE COMPATIBLE)
 function renderHabitsList() {
     const container = document.getElementById("habits-list-container");
@@ -575,6 +723,7 @@ function renderHabitsList() {
     }
 
     blankSlate.classList.add("hidden");
+    updateNotificationBtnState();
 
     const categories = [
         { key: "Morning Routine", title: "Morning Routine", icon: "🌅", badgeBg: "bg-amber-500/15 text-amber-700" },
@@ -682,17 +831,25 @@ function renderHabitsList() {
                     <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2.5 sm:px-3 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[125px] sm:min-w-[270px] sm:max-w-none">
                         <div class="flex items-center justify-between gap-1 sm:gap-2 min-w-0">
                             <div class="flex flex-col min-w-0 pr-0.5">
-                                <span class="font-black text-[11px] sm:text-sm text-slate-800 font-outfit truncate max-w-[82px] sm:max-w-[195px]" title="${escapeHtml(habit.name)}">
-                                    ${escapeHtml(habit.name)}
-                                </span>
+                                <div class="flex items-center gap-1 flex-wrap">
+                                    <span class="font-black text-[11px] sm:text-sm text-slate-800 font-outfit truncate max-w-[82px] sm:max-w-[195px]" title="${escapeHtml(habit.name)}">
+                                        ${escapeHtml(habit.name)}
+                                    </span>
+                                    ${habit.scheduledTime ? `<span class="neu-badge px-1 py-0.5 text-[8px] sm:text-[9px] font-extrabold text-indigo-600 bg-indigo-500/10 flex items-center gap-0.5" title="Scheduled target time: ${formatAMPM(habit.scheduledTime)}">⏰ ${formatAMPM(habit.scheduledTime)}</span>` : ''}
+                                </div>
                                 <div class="flex items-center gap-1 sm:gap-2 mt-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-500 flex-wrap">
                                     <span class="text-blue-600 font-bold">${checkedCount}/30</span>
                                     ${streak > 0 ? `<span class="text-amber-600 font-bold flex items-center gap-0.5">🔥${streak}d</span>` : ''}
                                 </div>
                             </div>
-                            <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-red-600 transition-colors text-[10px] sm:text-xs shrink-0 hover:scale-110">
-                                🗑️
-                            </button>
+                            <div class="flex items-center gap-0.5 shrink-0">
+                                <button onclick="editHabitTime(${habitIndex})" title="Set or edit target time for reminders" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-indigo-600 transition-colors text-[10px] sm:text-xs hover:scale-110">
+                                    ⏰
+                                </button>
+                                <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-red-600 transition-colors text-[10px] sm:text-xs hover:scale-110">
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
                     </td>
             `;
@@ -751,17 +908,26 @@ function handleAddHabit(event) {
     event.preventDefault();
     const input = document.getElementById("habit-name-input");
     const timeSelect = document.getElementById("habit-time-select");
+    const clockInput = document.getElementById("habit-clock-input");
     if (!input) return;
 
     const name = input.value.trim();
     if (!name) return;
 
     const timeOfDay = timeSelect ? timeSelect.value : "Morning Routine";
+    const scheduledTime = clockInput ? clockInput.value : "";
+
+    if (scheduledTime && "Notification" in window && Notification.permission !== "granted") {
+        requestNotificationPermission();
+    }
 
     const newHabit = {
         id: "habit_" + Date.now(),
         name: name,
         timeOfDay: timeOfDay,
+        scheduledTime: scheduledTime,
+        remindedDates: {},
+        missedNotifiedDates: {},
         days: new Array(30).fill(false),
         createdAt: Date.now()
     };
@@ -769,6 +935,7 @@ function handleAddHabit(event) {
     habits.unshift(newHabit);
     saveHabitsToStorage();
     input.value = "";
+    if (clockInput) clockInput.value = "";
     
     renderHabitsList();
     updateGrowthCharts();
