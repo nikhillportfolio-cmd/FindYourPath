@@ -457,19 +457,28 @@ function updateGrowthCharts() {
     const statStreakVal = document.getElementById("stat-streak-val");
 
     const totalHabitsCount = habits.length;
-    let totalCheckedDays = 0;
+    let totalCheckedHabitCells = 0;
     let highestStreakAcrossAll = 0;
 
     habits.forEach(h => {
         const checkedCount = h.days.filter(isDayDone).length;
-        totalCheckedDays += checkedCount;
+        totalCheckedHabitCells += checkedCount;
         const streak = calculateHabitStreak(h.days);
         if (streak > highestStreakAcrossAll) highestStreakAcrossAll = streak;
     });
 
+    // Calculate unique calendar days (out of 30) where at least one habit was completed
+    let uniqueDaysDoneCount = 0;
+    if (totalHabitsCount > 0) {
+        for (let day = 0; day < 30; day++) {
+            const isDayCompleted = habits.some(h => h.days && isDayDone(h.days[day]));
+            if (isDayCompleted) uniqueDaysDoneCount++;
+        }
+    }
+
     const totalPossibleChecks = totalHabitsCount * 30;
     const overallPercentage = totalPossibleChecks > 0 
-        ? Math.round((totalCheckedDays / totalPossibleChecks) * 100) 
+        ? Math.round((totalCheckedHabitCells / totalPossibleChecks) * 100) 
         : 0;
 
     // SVG Circle calculation (r = 40, circumference = ~251.327)
@@ -481,7 +490,7 @@ function updateGrowthCharts() {
 
     if (overallPercentText) overallPercentText.innerText = `${overallPercentage}%`;
     if (statHabits) statHabits.innerText = totalHabitsCount;
-    if (statChecks) statChecks.innerText = totalCheckedDays;
+    if (statChecks) statChecks.innerText = uniqueDaysDoneCount;
     if (statStreakVal) statStreakVal.innerText = highestStreakAcrossAll;
 
     if (overallStatusText) {
