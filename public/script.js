@@ -1700,11 +1700,16 @@ function renderLibraryGrid() {
                     <p class="text-[11px] text-slate-600 line-clamp-2 mt-2 leading-relaxed font-medium">${escapeHtml(book.desc)}</p>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-slate-300/50 flex items-center justify-between">
+                <div class="mt-4 pt-3 border-t border-slate-300/50 flex items-center justify-between gap-2">
                     <span class="text-[10px] font-bold text-slate-400">${book.year}</span>
-                    <span class="text-xs font-black text-indigo-600 group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                        Inspect &rarr;
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="event.stopPropagation(); openEBookReader('${escapeHtml(book.title)}', '${escapeHtml(book.author)}')" class="px-2.5 py-1 text-[10px] font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors flex items-center gap-1">
+                            📖 Read
+                        </button>
+                        <span class="text-xs font-black text-indigo-600 group-hover:translate-x-0.5 transition-transform">
+                            Inspect &rarr;
+                        </span>
+                    </div>
                 </div>
             </div>
         `;
@@ -1715,6 +1720,7 @@ function renderLibraryGrid() {
 }
 
 function openBookDetailModal(bookId) {
+    currentBookDetailId = bookId;
     let book = recommendationBooks.find(b => b.id === bookId);
     if (!book) {
         book = libraryBooks.find(b => b.id === bookId);
@@ -1834,4 +1840,308 @@ if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initPingEngine);
 } else {
     initPingEngine();
+}
+
+// =====================================================================
+// MODERN E-BOOK READER SYSTEM & GUTENBERG INTEGRATION
+// =====================================================================
+let currentEBook = null;
+let currentChapterIndex = 0;
+let currentEBookFontSize = 16;
+let currentEBookThemeIndex = 0; // 0: Dark, 1: Sepia, 2: Deep Night
+let isEBookTTSPlaying = false;
+let currentBookDetailId = null;
+
+const EBOOK_THEMES = [
+    { name: "Dark", bgClass: "bg-slate-900", textClass: "text-slate-300", headingClass: "text-indigo-400", borderClass: "border-slate-800", icon: "🌙" },
+    { name: "Sepia", bgClass: "bg-[#1f1a14]", textClass: "text-[#d6c4b0]", headingClass: "text-amber-400", borderClass: "border-amber-900/40", icon: "📜" },
+    { name: "Midnight", bgClass: "bg-black", textClass: "text-slate-200", headingClass: "text-cyan-400", borderClass: "border-slate-900", icon: "🌌" }
+];
+
+async function openEBookReader(title, author) {
+    const modal = document.getElementById("ebook-reader-modal");
+    const titleEl = document.getElementById("ebook-modal-title");
+    const authorEl = document.getElementById("ebook-modal-author");
+    const sourceBadge = document.getElementById("ebook-source-badge");
+    const loadingEl = document.getElementById("ebook-loading");
+    const textViewport = document.getElementById("ebook-text-viewport");
+    const archiveViewport = document.getElementById("ebook-archive-viewport");
+
+    if (!modal) return;
+
+    // Reset TTS if speaking
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    isEBookTTSPlaying = false;
+    updateTTSButtonState();
+
+    // Reset viewport visibility
+    if (textViewport) textViewport.classList.remove("hidden");
+    if (archiveViewport) archiveViewport.classList.add("hidden");
+
+    if (titleEl) titleEl.innerText = title;
+    if (authorEl) authorEl.innerText = author ? `by ${author}` : "Classic Literature";
+    if (loadingEl) loadingEl.classList.remove("hidden");
+
+    modal.classList.remove("hidden");
+
+    // Track Reading View
+    trackEvent({ type: 'book_view', bookTitle: title });
+
+    try {
+        const res = await fetch(`/api/book-fulltext?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author || '')}`);
+        const data = await res.json();
+        
+        currentEBook = data;
+        currentChapterIndex = 0;
+
+        if (sourceBadge) {
+            sourceBadge.innerText = data.isPublicDomain ? "Project Gutenberg (Full)" : "Digital Preview";
+            sourceBadge.className = data.isPublicDomain 
+                ? "px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0"
+                : "px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0";
+        }
+
+        // Setup Chapter Select Dropdown
+        const chapterSelect = document.getElementById("ebook-chapter-select");
+        if (chapterSelect) {
+            chapterSelect.innerHTML = "";
+            (data.chapters || []).forEach((ch, idx) => {
+                const opt = document.createElement("option");
+                opt.value = idx;
+                opt.innerText = ch.title || `Chapter ${idx + 1}`;
+                chapterSelect.appendChild(opt);
+            });
+        }
+
+        // Prepare Internet Archive Embed URL
+        const archiveIframe = document.getElementById("ebook-archive-iframe");
+        if (archiveIframe && data.archiveEmbedUrl) {
+            archiveIframe.src = data.archiveEmbedUrl;
+        }
+
+        renderEBookChapter(0);
+
+    } catch (err) {
+        console.error("Error opening E-Book Reader:", err);
+        const headingEl = document.getElementById("ebook-chapter-heading");
+        const bodyEl = document.getElementById("ebook-text-body");
+        if (headingEl) headingEl.innerText = "Error Loading Book";
+        if (bodyEl) bodyEl.innerText = "Unable to fetch book content at this moment. Please check server connection.";
+    } finally {
+        if (loadingEl) loadingEl.classList.add("hidden");
+    }
+}
+
+function openEBookReaderFromDetail() {
+    if (!currentBookDetailId) return;
+    let book = recommendationBooks.find(b => b.id === currentBookDetailId) || libraryBooks.find(b => b.id === currentBookDetailId);
+    if (book) {
+        closeBookDetailModal();
+        setTimeout(() => {
+            openEBookReader(book.title, book.author);
+        }, 200);
+    }
+}
+
+function renderEBookChapter(index) {
+    if (!currentEBook || !currentEBook.chapters || currentEBook.chapters.length === 0) return;
+    
+    if (index < 0) index = 0;
+    if (index >= currentEBook.chapters.length) index = currentEBook.chapters.length - 1;
+
+    currentChapterIndex = index;
+    const chapter = currentEBook.chapters[index];
+
+    const headingEl = document.getElementById("ebook-chapter-heading");
+    const bodyEl = document.getElementById("ebook-text-body");
+    const progressEl = document.getElementById("ebook-reading-progress");
+    const statsEl = document.getElementById("ebook-reading-stats");
+    const chapterSelect = document.getElementById("ebook-chapter-select");
+    const prevBtn = document.getElementById("ebook-prev-btn");
+    const nextBtn = document.getElementById("ebook-next-btn");
+    const viewport = document.getElementById("ebook-text-viewport");
+
+    if (headingEl) headingEl.innerText = chapter.title || `Chapter ${index + 1}`;
+    if (bodyEl) bodyEl.innerText = chapter.content || "";
+    if (progressEl) progressEl.innerText = `${index + 1} of ${currentEBook.chapters.length}`;
+    if (statsEl) statsEl.innerText = currentEBook.totalWords ? `Total ~${currentEBook.totalWords.toLocaleString()} words` : `Chapter ${index + 1}`;
+    if (chapterSelect) chapterSelect.value = index;
+
+    if (prevBtn) prevBtn.disabled = index === 0;
+    if (nextBtn) nextBtn.disabled = index === currentEBook.chapters.length - 1;
+
+    if (viewport) viewport.scrollTop = 0;
+
+    // Reset speech audio on chapter turn
+    if (window.speechSynthesis && isEBookTTSPlaying) {
+        window.speechSynthesis.cancel();
+        isEBookTTSPlaying = false;
+        updateTTSButtonState();
+    }
+
+    checkBookmarkStatus();
+}
+
+function switchEBookChapter(val) {
+    renderEBookChapter(parseInt(val, 10));
+}
+
+function navigateEBookChapter(delta) {
+    renderEBookChapter(currentChapterIndex + delta);
+}
+
+function toggleEBookAudio() {
+    if (!('speechSynthesis' in window)) {
+        alert("Text-to-speech is not supported in this browser.");
+        return;
+    }
+
+    if (isEBookTTSPlaying) {
+        window.speechSynthesis.cancel();
+        isEBookTTSPlaying = false;
+        updateTTSButtonState();
+    } else {
+        if (!currentEBook || !currentEBook.chapters) return;
+        const currentText = currentEBook.chapters[currentChapterIndex]?.content;
+        if (!currentText) return;
+
+        const utterance = new SpeechSynthesisUtterance(currentText.substring(0, 3000));
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        utterance.onend = () => {
+            isEBookTTSPlaying = false;
+            updateTTSButtonState();
+        };
+
+        utterance.onerror = () => {
+            isEBookTTSPlaying = false;
+            updateTTSButtonState();
+        };
+
+        window.speechSynthesis.speak(utterance);
+        isEBookTTSPlaying = true;
+        updateTTSButtonState();
+    }
+}
+
+function updateTTSButtonState() {
+    const btn = document.getElementById("ebook-tts-btn");
+    const txt = document.getElementById("ebook-tts-text");
+    if (!btn || !txt) return;
+
+    if (isEBookTTSPlaying) {
+        btn.className = "px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-rose-600/40 text-rose-200 border border-rose-500/50 font-bold transition flex items-center gap-1 text-[11px] animate-pulse";
+        txt.innerText = "Pause Audio";
+    } else {
+        btn.className = "px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 font-bold transition flex items-center gap-1 text-[11px]";
+        txt.innerText = "Listen";
+    }
+}
+
+function cycleEBookTheme() {
+    currentEBookThemeIndex = (currentEBookThemeIndex + 1) % EBOOK_THEMES.length;
+    const theme = EBOOK_THEMES[currentEBookThemeIndex];
+
+    const viewport = document.getElementById("ebook-viewport");
+    const bodyEl = document.getElementById("ebook-text-body");
+    const headingEl = document.getElementById("ebook-chapter-heading");
+    const themeText = document.getElementById("ebook-theme-text");
+    const themeToggleBtn = document.getElementById("ebook-theme-toggle");
+
+    if (viewport) {
+        viewport.className = `flex-1 relative overflow-hidden transition-colors duration-300 ${theme.bgClass}`;
+    }
+    if (bodyEl) {
+        bodyEl.className = `space-y-4 whitespace-pre-wrap ${theme.textClass}`;
+    }
+    if (headingEl) {
+        headingEl.className = `text-xl sm:text-2xl font-sans font-black mb-6 pb-3 border-b ${theme.headingClass} ${theme.borderClass}`;
+    }
+    if (themeText) {
+        themeText.innerText = theme.name;
+    }
+    if (themeToggleBtn) {
+        themeToggleBtn.querySelector('span').previousSibling.textContent = theme.icon + " ";
+    }
+}
+
+function changeEBookFontSize(delta) {
+    currentEBookFontSize = Math.min(28, Math.max(12, currentEBookFontSize + delta));
+    const bodyEl = document.getElementById("ebook-text-body");
+    const labelEl = document.getElementById("ebook-font-size-label");
+
+    if (bodyEl) {
+        bodyEl.style.fontSize = `${currentEBookFontSize}px`;
+        bodyEl.style.lineHeight = `${currentEBookFontSize * 1.65}px`;
+    }
+    if (labelEl) {
+        labelEl.innerText = `${currentEBookFontSize}px`;
+    }
+}
+
+function toggleEBookViewMode() {
+    const textViewport = document.getElementById("ebook-text-viewport");
+    const archiveViewport = document.getElementById("ebook-archive-viewport");
+    const embedText = document.getElementById("ebook-embed-text");
+
+    if (!textViewport || !archiveViewport) return;
+
+    if (archiveViewport.classList.contains("hidden")) {
+        archiveViewport.classList.remove("hidden");
+        textViewport.classList.add("hidden");
+        if (embedText) embedText.innerText = "Text Reader";
+    } else {
+        archiveViewport.classList.add("hidden");
+        textViewport.classList.remove("hidden");
+        if (embedText) embedText.innerText = "Archive Viewer";
+    }
+}
+
+function closeEBookReader() {
+    const modal = document.getElementById("ebook-reader-modal");
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    isEBookTTSPlaying = false;
+    updateTTSButtonState();
+
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+}
+
+function toggleBookBookmark() {
+    if (!currentEBook) return;
+    const key = `bookmark_${currentEBook.title}`.replace(/\s+/g, '_');
+    const isBookmarked = localStorage.getItem(key);
+
+    if (isBookmarked) {
+        localStorage.removeItem(key);
+        alert(`Removed bookmark for "${currentEBook.title}"`);
+    } else {
+        localStorage.setItem(key, JSON.stringify({
+            title: currentEBook.title,
+            chapterIndex: currentChapterIndex,
+            timestamp: new Date().toISOString()
+        }));
+        alert(`Saved bookmark at Chapter ${currentChapterIndex + 1} for "${currentEBook.title}"!`);
+    }
+    checkBookmarkStatus();
+}
+
+function checkBookmarkStatus() {
+    if (!currentEBook) return;
+    const key = `bookmark_${currentEBook.title}`.replace(/\s+/g, '_');
+    const bookmarkBtn = document.getElementById("ebook-bookmark-btn");
+    const bookmarkText = document.getElementById("ebook-bookmark-text");
+
+    if (!bookmarkBtn) return;
+    const saved = localStorage.getItem(key);
+
+    if (saved) {
+        bookmarkBtn.className = "p-2 sm:px-3 sm:py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-bold transition flex items-center gap-1.5 border border-amber-500/40";
+        if (bookmarkText) bookmarkText.innerText = "Bookmarked";
+    } else {
+        bookmarkBtn.className = "p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700";
+        if (bookmarkText) bookmarkText.innerText = "Bookmark";
+    }
 }

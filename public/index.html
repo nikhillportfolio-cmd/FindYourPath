@@ -1144,12 +1144,126 @@
                     <p id="detail-book-author" class="text-xs sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4"></p>
                     <p id="detail-book-description" class="text-xs text-slate-600 leading-relaxed font-medium mb-4"></p>
                 </div>
-                <div class="pt-3 sm:pt-4 border-t border-slate-300/60 flex items-center justify-between gap-3 flex-wrap">
+                <div class="pt-3 sm:pt-4 border-t border-slate-300/60 flex items-center justify-between gap-2 flex-wrap">
                     <span id="detail-book-rating" class="text-xs font-bold text-amber-600 flex items-center gap-1"></span>
-                    <a id="detail-book-link" href="#" target="_blank" class="neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-extrabold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
-                        📖 OpenLibrary Record &rarr;
-                    </a>
+                    <div class="flex items-center gap-2">
+                        <button id="detail-read-full-btn" onclick="openEBookReaderFromDetail()" class="neu-btn px-4 py-2 text-xs font-black text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 rounded-xl shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105">
+                            📖 Read Full Book
+                        </button>
+                        <a id="detail-book-link" href="#" target="_blank" class="neu-btn px-3 py-2 text-[11px] font-extrabold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                            🌐 OpenLibrary &rarr;
+                        </a>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- INTERACTIVE FULL-SCREEN E-BOOK READER MODAL -->
+    <!-- ===================================================================== -->
+    <div id="ebook-reader-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-2 sm:p-4 md:p-6 transition-all duration-300">
+        <div class="relative w-full max-w-5xl h-[94vh] sm:h-[90vh] bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-200" id="ebook-reader-window">
+            
+            <!-- Reader Header Bar -->
+            <div class="px-4 py-3 sm:px-6 sm:py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="text-2xl sm:text-3xl shrink-0">📚</span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <h2 id="ebook-modal-title" class="text-sm sm:text-lg font-black text-white truncate">Book Title</h2>
+                            <span id="ebook-source-badge" class="px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">Public Domain</span>
+                        </div>
+                        <p id="ebook-modal-author" class="text-xs text-slate-400 font-medium truncate">Author Name</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button id="ebook-bookmark-btn" onclick="toggleBookBookmark()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700" title="Save Bookmark">
+                        🔖 <span class="hidden sm:inline" id="ebook-bookmark-text">Bookmark</span>
+                    </button>
+                    <button onclick="closeEBookReader()" class="p-2 sm:p-2.5 rounded-xl bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-400 text-sm font-black transition border border-slate-700" title="Close Reader">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reader Controls Bar -->
+            <div class="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between gap-2 sm:gap-4 overflow-x-auto text-xs shrink-0">
+                <!-- Chapter Dropdown -->
+                <div class="flex items-center gap-2 shrink-0 min-w-[140px]">
+                    <span class="text-slate-400 font-bold text-[11px] hidden sm:inline">Chapter:</span>
+                    <select id="ebook-chapter-select" onchange="switchEBookChapter(this.value)" class="bg-slate-800 text-slate-200 border border-slate-700 text-xs rounded-xl px-2.5 py-1.5 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[180px] sm:max-w-[240px] truncate">
+                        <option value="0">Loading chapters...</option>
+                    </select>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <!-- Text to Speech -->
+                    <button id="ebook-tts-btn" onclick="toggleEBookAudio()" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 font-bold transition flex items-center gap-1 text-[11px]">
+                        🔊 <span id="ebook-tts-text">Listen</span>
+                    </button>
+
+                    <!-- Theme Switcher -->
+                    <button id="ebook-theme-toggle" onclick="cycleEBookTheme()" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold transition flex items-center gap-1 text-[11px]">
+                        🌙 <span id="ebook-theme-text" class="hidden sm:inline">Dark</span>
+                    </button>
+
+                    <!-- Font Size Buttons -->
+                    <div class="flex items-center bg-slate-800 rounded-xl border border-slate-700 p-0.5">
+                        <button onclick="changeEBookFontSize(-2)" class="px-2 py-1 hover:bg-slate-700 rounded-lg text-slate-300 font-black text-xs" title="Decrease Font">A-</button>
+                        <span id="ebook-font-size-label" class="px-1.5 text-[10px] text-slate-400 font-bold">16px</span>
+                        <button onclick="changeEBookFontSize(2)" class="px-2 py-1 hover:bg-slate-700 rounded-lg text-slate-300 font-black text-xs" title="Increase Font">A+</button>
+                    </div>
+
+                    <!-- Alternate Embed Mode -->
+                    <button id="ebook-embed-toggle-btn" onclick="toggleEBookViewMode()" class="px-2.5 py-1.5 rounded-xl bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 border border-purple-500/30 font-bold transition flex items-center gap-1 text-[11px]" title="Switch to Internet Archive Reader Embed">
+                        🏛️ <span class="hidden md:inline" id="ebook-embed-text">Archive Viewer</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reader Main Content Container -->
+            <div class="flex-1 relative overflow-hidden bg-slate-900 transition-colors duration-300" id="ebook-viewport">
+                
+                <!-- Loading State -->
+                <div id="ebook-loading" class="absolute inset-0 z-20 bg-slate-900/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 gap-3">
+                    <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-sm font-bold text-slate-300 animate-pulse">Downloading & Formatting Book Content...</p>
+                    <p class="text-xs text-slate-500">Fetching text from Project Gutenberg Public Domain Repository</p>
+                </div>
+
+                <!-- Raw Text Reader Box -->
+                <div id="ebook-text-viewport" class="h-full overflow-y-auto px-6 py-8 sm:px-12 sm:py-10 md:px-20 max-w-4xl mx-auto font-serif leading-relaxed select-text transition-all duration-200">
+                    <div id="ebook-chapter-heading" class="text-xl sm:text-2xl font-sans font-black text-indigo-400 mb-6 pb-3 border-b border-slate-800"></div>
+                    <div id="ebook-text-body" class="space-y-4 text-slate-300 whitespace-pre-wrap"></div>
+                </div>
+
+                <!-- Internet Archive Embed Iframe Container -->
+                <div id="ebook-archive-viewport" class="absolute inset-0 z-10 hidden bg-slate-950 flex flex-col">
+                    <div class="p-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs px-4">
+                        <span class="text-slate-400 font-bold">🏛️ Internet Archive / OpenLibrary Book Viewer</span>
+                        <span class="text-[11px] text-slate-500">Includes scan views & original editions</span>
+                    </div>
+                    <iframe id="ebook-archive-iframe" class="w-full flex-1 border-0" src="about:blank" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <!-- Reader Footer Bar -->
+            <div class="px-4 py-3 sm:px-6 sm:py-3.5 bg-slate-900/95 border-t border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                <button id="ebook-prev-btn" onclick="navigateEBookChapter(-1)" class="px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700">
+                    &larr; <span class="hidden sm:inline">Previous Chapter</span>
+                </button>
+
+                <div class="flex flex-col items-center text-center">
+                    <span id="ebook-reading-progress" class="text-xs font-black text-indigo-400">Chapter 1 of 1</span>
+                    <span id="ebook-reading-stats" class="text-[10px] text-slate-500 font-medium">Public Domain Reader</span>
+                </div>
+
+                <button id="ebook-next-btn" onclick="navigateEBookChapter(1)" class="px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shadow-md">
+                    <span class="hidden sm:inline">Next Chapter</span> &rarr;
+                </button>
             </div>
         </div>
     </div>
