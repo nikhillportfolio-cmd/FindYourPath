@@ -340,13 +340,21 @@ function updateFloatingBadge() {
 
 // STREAK CALCULATION ENGINE
 // Detects consecutive checked days across the 30-day grid
+function isDayDone(val) {
+    return val === true || val === "done";
+}
+
+function isDayMissed(val) {
+    return val === "missed";
+}
+
 function calculateHabitStreak(days) {
     let maxStreak = 0;
     let currentStreak = 0;
     let temp = 0;
 
     for (let i = 0; i < days.length; i++) {
-        if (days[i]) {
+        if (isDayDone(days[i])) {
             temp++;
             if (temp > maxStreak) maxStreak = temp;
         } else {
@@ -357,14 +365,14 @@ function calculateHabitStreak(days) {
     // Active streak up to last checked day
     let lastCheckedIndex = -1;
     for (let i = days.length - 1; i >= 0; i--) {
-        if (days[i]) {
+        if (isDayDone(days[i])) {
             lastCheckedIndex = i;
             break;
         }
     }
     if (lastCheckedIndex !== -1) {
         for (let i = lastCheckedIndex; i >= 0; i--) {
-            if (days[i]) {
+            if (isDayDone(days[i])) {
                 currentStreak++;
             } else {
                 break;
@@ -386,7 +394,7 @@ function renderHeatmap() {
     for (let day = 0; day < 30; day++) {
         let completedCount = 0;
         habits.forEach(h => {
-            if (h.days && h.days[day]) completedCount++;
+            if (h.days && isDayDone(h.days[day])) completedCount++;
         });
 
         const pct = totalHabits > 0 ? Math.round((completedCount / totalHabits) * 100) : 0;
@@ -453,7 +461,7 @@ function updateGrowthCharts() {
     let highestStreakAcrossAll = 0;
 
     habits.forEach(h => {
-        const checkedCount = h.days.filter(Boolean).length;
+        const checkedCount = h.days.filter(isDayDone).length;
         totalCheckedDays += checkedCount;
         const streak = calculateHabitStreak(h.days);
         if (streak > highestStreakAcrossAll) highestStreakAcrossAll = streak;
@@ -517,7 +525,34 @@ function setCategoryFilter(category) {
     renderHabitsList();
 }
 
-// RENDER TIME-OF-DAY CATEGORIZED HABITS LIST & 30-DAY GRID
+// LOOSE HANDWRITTEN MARKS GENERATOR
+function getHandwrittenMarkHTML(val, dayIndex) {
+    if (isDayDone(val)) {
+        const rot = ((dayIndex % 5) - 2) * 2; // -4deg to 4deg
+        return `
+            <div class="w-full h-full flex items-center justify-center pointer-events-none">
+                <svg viewBox="0 0 32 32" class="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 17.5 C 9 20, 11 23.5, 12.5 25.5 C 15 18, 20 10.5, 27 5.5" 
+                        stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+        `;
+    }
+    if (isDayMissed(val)) {
+        const rot = ((dayIndex % 3) - 1) * 3; // -3deg to 3deg
+        return `
+            <div class="w-full h-full flex items-center justify-center pointer-events-none">
+                <svg viewBox="0 0 32 32" class="w-6 h-6 sm:w-7 sm:h-7 text-rose-500 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 7.5 C 13 13, 19 19, 24.5 24.5 M24 7.8 C 18.5 13.5, 13 19, 7.8 24.2" 
+                        stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+        `;
+    }
+    return "";
+}
+
+// RENDER TIME-OF-DAY CATEGORIZED SPREADSHEET TRACKER GRID
 function renderHabitsList() {
     const container = document.getElementById("habits-list-container");
     const blankSlate = document.getElementById("blank-slate");
@@ -531,146 +566,160 @@ function renderHabitsList() {
     }
 
     blankSlate.classList.add("hidden");
-    container.innerHTML = "";
 
-    // Categories definition
     const categories = [
-        { key: "Morning Routine", title: "Morning Routine", icon: "🌅", colorClass: "text-amber-600 bg-amber-500/10" },
-        { key: "Afternoon Focus", title: "Afternoon Focus", icon: "☀️", colorClass: "text-blue-600 bg-blue-500/10" },
-        { key: "Evening Wind-down", title: "Evening Wind-down", icon: "🌙", colorClass: "text-indigo-600 bg-indigo-500/10" }
+        { key: "Morning Routine", title: "Morning Routine", icon: "🌅", badgeBg: "bg-amber-500/15 text-amber-700" },
+        { key: "Afternoon Focus", title: "Afternoon Focus", icon: "☀️", badgeBg: "bg-blue-500/15 text-blue-700" },
+        { key: "Evening Wind-down", title: "Evening Wind-down", icon: "🌙", badgeBg: "bg-indigo-500/15 text-indigo-700" }
     ];
 
     const activeCategories = currentCategoryFilter === "all" 
         ? categories 
         : categories.filter(c => c.key === currentCategoryFilter);
 
-    let renderedAnyHabits = false;
+    let tableHTML = `
+        <div class="neu-card p-3 sm:p-5 bg-[#e0e5ec] shadow-xl border border-white/70 overflow-hidden">
+            <!-- Header Legend Bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 mb-3 border-b border-slate-300/70">
+                <div class="flex items-center gap-2">
+                    <span class="text-base sm:text-lg">📊</span>
+                    <div>
+                        <h4 class="text-sm sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
+                        <p class="text-[11px] text-slate-500 font-semibold">Click any day cell to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3 text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-3 py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0">
+                    <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-xs border border-slate-400/50 bg-[#e0e5ec]"></span> Blank</span>
+                    <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 flex items-center justify-center text-[10px] font-black">✓</span> Done</span>
+                    <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-xs bg-rose-500/20 border border-rose-500/50 text-rose-500 flex items-center justify-center text-[10px] font-black">✕</span> Missed</span>
+                </div>
+            </div>
+
+            <!-- Spreadsheet Grid Table Wrapper (Sticky Headers & Sticky Left Habit Column) -->
+            <div class="overflow-x-auto max-h-[580px] overflow-y-auto custom-scrollbar rounded-xl border-2 border-slate-300/80 bg-[#e0e5ec] shadow-inner relative">
+                <table class="w-full border-separate border-spacing-0 select-none text-left min-w-max">
+                    <thead>
+                        <tr>
+                            <!-- Top-Left Corner Header (Fixed on Top & Left) -->
+                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-3 text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.12)] min-w-[210px] sm:min-w-[270px]">
+                                <div class="flex items-center justify-between">
+                                    <span>Habits & Routines</span>
+                                    <span class="text-[10px] font-extrabold text-slate-500 uppercase">30-Day Grid</span>
+                                </div>
+                            </th>
+                            <!-- Days 1 to 30 Headers (Fixed on Top) -->
+    `;
+
+    for (let day = 1; day <= 30; day++) {
+        tableHTML += `
+            <th class="sticky top-0 z-20 bg-[#d5deeb] p-2 text-center text-[11px] sm:text-xs font-bold font-outfit text-slate-700 border-r border-b-2 border-slate-300 min-w-[40px] sm:min-w-[46px] w-[40px] sm:w-[46px]">
+                ${day}
+            </th>
+        `;
+    }
+
+    tableHTML += `
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+
+    let totalHabitsRendered = 0;
 
     activeCategories.forEach(cat => {
         const catHabits = habits.filter(h => (h.timeOfDay || "Morning Routine") === cat.key);
 
         if (catHabits.length === 0 && currentCategoryFilter !== "all") {
-            // Show category empty notice when specific tab selected
-            const emptyCat = document.createElement("div");
-            emptyCat.className = "neu-card p-6 text-center text-xs font-bold text-slate-500";
-            emptyCat.innerHTML = `${cat.icon} No habits currently defined under <strong>${cat.title}</strong>. Add one above!`;
-            container.appendChild(emptyCat);
+            tableHTML += `
+                <tr>
+                    <td colspan="31" class="p-6 text-center text-xs font-bold text-slate-500 bg-slate-100/50 border border-slate-300/60">
+                        ${cat.icon} No habits defined under <strong>${cat.title}</strong> yet. Use "Define Your Target Habit" above to add one!
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        if (catHabits.length === 0) return; // Skip empty category in "all" view
+        if (catHabits.length === 0) return; // Skip empty category in 'all' view
 
-        renderedAnyHabits = true;
-
-        // Category Header Section
-        const section = document.createElement("div");
-        section.className = "space-y-4";
-        section.innerHTML = `
-            <div class="flex items-center justify-between pb-2 border-b border-slate-300/40">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg">${cat.icon}</span>
-                    <h4 class="text-base font-black text-slate-800 font-outfit">${cat.title}</h4>
-                    <span class="neu-badge px-2.5 py-0.5 text-[10px] font-extrabold ${cat.colorClass}">
-                        ${catHabits.length} ${catHabits.length === 1 ? 'Habit' : 'Habits'}
-                    </span>
-                </div>
-            </div>
-            <div id="cat-group-${cat.key.replace(/\s+/g, '-').toLowerCase()}" class="space-y-4"></div>
+        // Bold Category Header Row
+        tableHTML += `
+            <tr class="bg-gradient-to-r from-slate-300/90 via-slate-200 to-slate-300/70 text-slate-800">
+                <td colspan="31" class="p-2.5 px-4 font-black font-outfit text-xs sm:text-sm tracking-wide border-t-2 border-b-2 border-r border-slate-300/90 bg-[#d1d9e6] shadow-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">${cat.icon}</span>
+                        <span>${cat.title}</span>
+                        <span class="neu-badge px-2.5 py-0.5 text-[10px] font-black ${cat.badgeBg}">
+                            ${catHabits.length} ${catHabits.length === 1 ? 'Habit' : 'Habits'}
+                        </span>
+                    </div>
+                </td>
+            </tr>
         `;
 
-        container.appendChild(section);
-        const groupContainer = section.querySelector(`#cat-group-${cat.key.replace(/\s+/g, '-').toLowerCase()}`);
-
         catHabits.forEach(habit => {
+            totalHabitsRendered++;
             const habitIndex = habits.indexOf(habit);
-            const checkedCount = habit.days.filter(Boolean).length;
+            const checkedCount = habit.days.filter(isDayDone).length;
             const habitPercentage = Math.round((checkedCount / 30) * 100);
             const streak = calculateHabitStreak(habit.days);
 
-            const card = document.createElement("div");
-            card.className = "neu-card p-4 sm:p-6 relative group transition-all duration-300";
-
-            // Streak Engine Badge HTML
-            let streakBadgeHTML = "";
-            if (streak >= 3) {
-                streakBadgeHTML = `
-                    <div class="neu-badge px-2.5 py-1 bg-amber-500/10 text-amber-600 font-extrabold text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 flame-badge">
-                        <span class="text-xs sm:text-sm">🔥</span> ${streak} Day Streak!
-                    </div>
-                `;
-            } else if (streak > 0) {
-                streakBadgeHTML = `
-                    <div class="neu-badge px-2.5 py-1 text-slate-500 font-bold text-[10px] sm:text-xs flex items-center gap-1">
-                        <span>⚡</span> ${streak} Day Streak
-                    </div>
-                `;
-            }
-
-            // Category Badge HTML for card
-            const catBadgeHTML = `
-                <span class="neu-badge px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold text-slate-600 flex items-center gap-1">
-                    ${cat.icon} ${cat.title}
-                </span>
+            tableHTML += `
+                <tr class="hover:bg-slate-200/40 transition-colors">
+                    <!-- Sticky Habit Cell (Fixed on Left) -->
+                    <td class="sticky left-0 z-20 bg-[#e0e5ec] p-2.5 px-3 border-r-2 border-b border-slate-300/80 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)]">
+                        <div class="flex items-center justify-between gap-2 min-w-0">
+                            <div class="flex flex-col min-w-0 pr-1">
+                                <span class="font-black text-xs sm:text-sm text-slate-800 font-outfit truncate max-w-[140px] sm:max-w-[195px]" title="${escapeHtml(habit.name)}">
+                                    ${escapeHtml(habit.name)}
+                                </span>
+                                <div class="flex items-center gap-2 mt-0.5 text-[10px] font-semibold text-slate-500">
+                                    <span class="text-blue-600 font-bold">${checkedCount}/30 (${habitPercentage}%)</span>
+                                    ${streak > 0 ? `<span class="text-amber-600 font-bold flex items-center gap-0.5">🔥 ${streak}d</span>` : ''}
+                                </div>
+                            </div>
+                            <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" class="neu-badge p-1.5 text-slate-400 hover:text-red-600 transition-colors text-xs shrink-0 hover:scale-110">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
             `;
 
-            // 30-Day Grid Buttons
-            let gridHTML = `<div class="grid grid-cols-6 sm:grid-cols-10 gap-1.5 sm:gap-2 my-3 sm:my-4">`;
+            // 30 Day Grid Cells
             for (let day = 0; day < 30; day++) {
-                const isChecked = habit.days[day];
-                const checkedClass = isChecked ? "checked" : "";
-                gridHTML += `
-                    <button type="button" 
-                        onclick="toggleHabitDay(${habitIndex}, ${day})"
-                        title="Day ${day + 1}: ${isChecked ? 'Completed' : 'Pending'}"
-                        class="neu-day-btn ${checkedClass}">
-                        ${isChecked ? '✓' : day + 1}
-                    </button>
+                const val = habit.days[day];
+                let cellBgClass = "bg-[#e0e5ec] hover:bg-slate-200/90";
+                if (isDayDone(val)) cellBgClass = "bg-emerald-500/15 hover:bg-emerald-500/25";
+                if (isDayMissed(val)) cellBgClass = "bg-rose-500/15 hover:bg-rose-500/25";
+
+                const markHTML = getHandwrittenMarkHTML(val, day);
+                const titleText = isDayDone(val) ? `Day ${day + 1}: Completed ✓` : isDayMissed(val) ? `Day ${day + 1}: Missed ✕` : `Day ${day + 1}: Empty`;
+
+                tableHTML += `
+                    <td onclick="toggleHabitDay(${habitIndex}, ${day})"
+                        title="${titleText}"
+                        class="border-r border-b border-slate-300/70 p-0 text-center align-middle cursor-pointer transition-colors duration-150 h-10 sm:h-11 w-[40px] sm:w-[46px] min-w-[40px] sm:min-w-[46px] ${cellBgClass}">
+                        ${markHTML}
+                    </td>
                 `;
             }
-            gridHTML += `</div>`;
 
-            card.innerHTML = `
-                <!-- HEADER -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
-                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <div class="w-8 h-8 sm:w-9 sm:h-9 neu-circle flex items-center justify-center text-blue-600 font-black text-xs sm:text-sm shrink-0">
-                            📌
-                        </div>
-                        <div>
-                            <h4 class="text-base sm:text-lg font-black text-slate-800 font-outfit leading-snug">${escapeHtml(habit.name)}</h4>
-                        </div>
-                        ${catBadgeHTML}
-                        ${streakBadgeHTML}
-                    </div>
-                    <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" 
-                        class="text-[11px] sm:text-xs font-bold text-slate-400 hover:text-red-600 transition-colors neu-badge px-2.5 py-1 sm:px-3 sm:py-1.5 flex items-center gap-1 self-start sm:self-auto">
-                        🗑️ Delete
-                    </button>
-                </div>
-
-                <!-- 30-DAY GRID -->
-                ${gridHTML}
-
-                <!-- DAILY GROWTH PROGRESS BAR FOR THIS SPECIFIC HABIT -->
-                <div class="pt-2 border-t border-slate-300/60 flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 text-xs font-bold text-slate-600">
-                        <span class="uppercase tracking-wider text-[10px] text-slate-400 font-extrabold">Habit Growth:</span>
-                        <span>${checkedCount} / 30 Days</span>
-                    </div>
-                    <div class="flex-1 max-w-xs neu-trench h-3 overflow-hidden p-0.5">
-                        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-500 ease-out" 
-                            style="width: ${habitPercentage}%"></div>
-                    </div>
-                    <span class="text-xs font-black text-blue-600 font-outfit min-w-[36px] text-right">${habitPercentage}%</span>
-                </div>
-            `;
-
-            groupContainer.appendChild(card);
+            tableHTML += `</tr>`;
         });
     });
 
-    if (!renderedAnyHabits && currentCategoryFilter === "all") {
+    tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    if (totalHabitsRendered === 0 && currentCategoryFilter === "all") {
         blankSlate.classList.remove("hidden");
+        container.innerHTML = "";
+    } else {
+        container.innerHTML = tableHTML;
     }
 }
 
@@ -716,8 +765,17 @@ function handleAddHabit(event) {
 
 function toggleHabitDay(habitIndex, dayIndex) {
     if (habits[habitIndex] && habits[habitIndex].days) {
-        habits[habitIndex].days[dayIndex] = !habits[habitIndex].days[dayIndex];
-        const isNowChecked = habits[habitIndex].days[dayIndex];
+        const currentVal = habits[habitIndex].days[dayIndex];
+        let newVal;
+        if (!currentVal || currentVal === false) {
+            newVal = "done";
+        } else if (isDayDone(currentVal)) {
+            newVal = "missed";
+        } else {
+            newVal = false;
+        }
+        habits[habitIndex].days[dayIndex] = newVal;
+        const isNowChecked = isDayDone(newVal);
         saveHabitsToStorage();
         renderHabitsList();
         updateGrowthCharts();
