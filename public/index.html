@@ -970,10 +970,16 @@
                         <h3 class="text-sm sm:text-base font-bold text-slate-800 font-outfit flex items-center gap-2">
                             <span class="text-blue-600">✨</span> Define Your Target Habit & Time of Day
                         </h3>
-                        <button type="button" onclick="requestNotificationPermission()" id="notif-permission-btn" title="Enable phone/browser reminders for scheduled habits"
-                            class="neu-badge px-2.5 py-1 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer">
-                            <span class="text-xs">🔔</span> Enable Phone Reminders
-                        </button>
+                        <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                            <button type="button" onclick="requestNotificationPermission()" id="notif-permission-btn" title="Enable phone/browser reminders for scheduled habits"
+                                class="neu-badge px-2.5 py-1 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span class="text-xs">🔔</span> Enable Phone Reminders
+                            </button>
+                            <button type="button" onclick="testNotificationNow()" title="Send an immediate test notification & sound alert right now"
+                                class="neu-badge px-2.5 py-1 text-[11px] font-extrabold text-indigo-600 hover:text-indigo-700 bg-indigo-500/10 flex items-center gap-1.5 transition-all cursor-pointer">
+                                <span class="text-xs">🧪</span> Test Notification Now
+                            </button>
+                        </div>
                     </div>
                     <form id="add-habit-form" onsubmit="handleAddHabit(event)" class="flex flex-col md:flex-row gap-2.5 sm:gap-3">
                         <input id="habit-name-input" type="text" placeholder="e.g. Learn React, Workout 30 mins, Drink 3L Water..." 

@@ -561,7 +561,17 @@ function getHandwrittenMarkHTML(val, dayIndex) {
     return "";
 }
 
-// WEB NOTIFICATIONS & SCHEDULED TIME REMINDER ENGINE
+// SERVICE WORKER & DUAL NOTIFICATION ENGINE (SYSTEM + IN-APP TOAST + WEB AUDIO CHIME)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+            console.log('PRAXiS Service Worker registered:', reg.scope);
+        }).catch(err => {
+            console.log('PRAXiS Service Worker registration failed:', err);
+        });
+    });
+}
+
 function formatAMPM(timeStr) {
     if (!timeStr) return "";
     const parts = timeStr.split(":");
@@ -575,22 +585,131 @@ function formatAMPM(timeStr) {
     return `${displayH}:${displayM} ${ampm}`;
 }
 
+function playNotificationSound(isMissed) {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (isMissed) {
+            osc.frequency.setValueAtTime(280, now);
+            osc.frequency.exponentialRampToValueAtTime(170, now + 0.45);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        } else {
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        }
+    } catch (e) {
+        console.log("Audio play error:", e);
+    }
+}
+
+function showInAppToast(title, body, isMissed) {
+    let container = document.getElementById("praxis-toast-container");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "praxis-toast-container";
+        container.className = "fixed top-4 right-4 sm:top-6 sm:right-6 z-[200] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-3";
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `pointer-events-auto neu-card p-3.5 sm:p-4 shadow-2xl border flex items-start gap-3 transition-all duration-500 transform -translate-y-4 opacity-0 ${
+        isMissed 
+            ? 'border-rose-400/80 bg-rose-50/95 text-rose-950' 
+            : 'border-blue-500/80 bg-slate-900/95 text-white'
+    }`;
+
+    toast.innerHTML = `
+        <div class="text-xl sm:text-2xl shrink-0 mt-0.5">${isMissed ? '😔' : '⏰'}</div>
+        <div class="flex-1 min-w-0">
+            <h5 class="font-black text-xs sm:text-sm font-outfit leading-snug">${escapeHtml(title)}</h5>
+            <p class="text-[11px] font-semibold opacity-90 mt-0.5 leading-relaxed">${escapeHtml(body)}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-sm opacity-60 hover:opacity-100 font-black p-1 shrink-0">&times;</button>
+    `;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.remove("-translate-y-4", "opacity-0");
+        toast.classList.add("translate-y-0", "opacity-100");
+    });
+
+    setTimeout(() => {
+        toast.classList.add("opacity-0", "-translate-y-2");
+        setTimeout(() => toast.remove(), 500);
+    }, 7000);
+}
+
+function sendNotification(title, options) {
+    // 1. Play Web Audio chime
+    playNotificationSound(options.isMissed);
+
+    // 2. Display In-App Floating Toast
+    showInAppToast(title, options.body, options.isMissed);
+
+    // 3. Dispatch Native / Mobile Push Notification
+    if ("Notification" in window && Notification.permission === "granted") {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, {
+                    body: options.body,
+                    icon: options.icon || '/favicon.ico',
+                    badge: '/favicon.ico',
+                    tag: options.tag || 'praxis-notif',
+                    renotify: true
+                });
+            }).catch(() => {
+                fallbackNativeNotification(title, options);
+            });
+        } else {
+            fallbackNativeNotification(title, options);
+        }
+    }
+}
+
+function fallbackNativeNotification(title, options) {
+    try {
+        new Notification(title, {
+            body: options.body,
+            icon: options.icon || '/favicon.ico',
+            tag: options.tag || 'praxis-notif',
+            renotify: true
+        });
+    } catch (e) {
+        console.log("Native Notification fallback error:", e);
+    }
+}
+
 function requestNotificationPermission() {
     if (!("Notification" in window)) {
-        alert("Web Notifications are not supported in this browser.");
+        showInAppToast("🔕 Notifications Unsupported", "Web Notifications are not supported in this browser environment.", true);
         return;
     }
     Notification.requestPermission().then(permission => {
         updateNotificationBtnState();
         if (permission === "granted") {
-            try {
-                new Notification("🔔 PRAXiS Reminders Activated", {
-                    body: "You'll receive 10-minute reminders before your scheduled habits & alerts if missed!",
-                    tag: 'praxis-welcome'
-                });
-            } catch (e) {
-                console.log("Welcome notification error:", e);
-            }
+            sendNotification("🔔 PRAXiS Reminders Activated", {
+                body: "You'll receive 10-minute reminders before your scheduled habits & alerts if missed!",
+                tag: 'praxis-welcome',
+                isMissed: false
+            });
+        } else if (permission === "denied") {
+            alert("Notification permission was denied. Please allow notifications in your browser/device settings to receive reminders.");
         }
     });
 }
@@ -611,8 +730,33 @@ function updateNotificationBtnState() {
     }
 }
 
+function testNotificationNow() {
+    if (!("Notification" in window)) {
+        showInAppToast("🧪 Test Notification Active", "In-app toast & audio chime work! Note: Your browser doesn't support system notifications.", false);
+        playNotificationSound(false);
+        return;
+    }
+
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission().then(permission => {
+            updateNotificationBtnState();
+            triggerTestAlerts();
+        });
+    } else {
+        triggerTestAlerts();
+    }
+}
+
+function triggerTestAlerts() {
+    sendNotification("⏰ Test Habit Reminder (10 mins prior)", {
+        body: "Success! Your habit notifications, phone alerts & audio chime are active and working perfectly! 🎉",
+        tag: 'praxis-test-remind',
+        isMissed: false
+    });
+}
+
 function checkHabitNotifications() {
-    if (!("Notification" in window) || Notification.permission !== "granted" || habits.length === 0) return;
+    if (habits.length === 0) return;
 
     const now = new Date();
     const currentHour = now.getHours();
@@ -644,20 +788,16 @@ function checkHabitNotifications() {
                 habit.remindedDates[todayStr] = true;
                 saveHabitsToStorage();
                 
-                try {
-                    new Notification(`⏰ Habit in 10 mins: ${habit.name}`, {
-                        body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)}. Get ready to build discipline! 💪`,
-                        tag: `praxis-remind-${habit.id}-${todayStr}`,
-                        renotify: true
-                    });
-                } catch (e) {
-                    console.log("Notification trigger error:", e);
-                }
+                sendNotification(`⏰ Habit in 10 mins: ${habit.name}`, {
+                    body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)}. Get ready to build discipline! 💪`,
+                    tag: `praxis-remind-${habit.id}-${todayStr}`,
+                    isMissed: false
+                });
             }
         }
 
-        // 2. Disappointed Missed Habit Alert Notification (15 mins past target time)
-        if (currentTotalMins >= scheduledTotalMins + 15) {
+        // 2. Disappointed Missed Habit Alert Notification (10 mins past target time)
+        if (currentTotalMins >= scheduledTotalMins + 10) {
             if (!isTodayDone && !habit.missedNotifiedDates[todayStr]) {
                 habit.missedNotifiedDates[todayStr] = true;
 
@@ -670,29 +810,25 @@ function checkHabitNotifications() {
 
                 saveHabitsToStorage();
 
-                try {
-                    const quotes = [
-                        `😔 You missed "${habit.name}" scheduled for ${formatAMPM(habit.scheduledTime)}. Discipline is built through daily action, not excuses!`,
-                        `💔 Habit missed: "${habit.name}". Skipping habits today steals momentum from your future self. Get back on track!`,
-                        `⚠️ Missed target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Reset your focus and don't miss twice!`
-                    ];
-                    const msg = quotes[Math.floor(Math.random() * quotes.length)];
+                const quotes = [
+                    `😔 You missed "${habit.name}" scheduled for ${formatAMPM(habit.scheduledTime)}. Discipline is built through daily action, not excuses!`,
+                    `💔 Habit missed: "${habit.name}". Skipping habits today steals momentum from your future self. Get back on track!`,
+                    `⚠️ Missed target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Reset your focus and don't miss twice!`
+                ];
+                const msg = quotes[Math.floor(Math.random() * quotes.length)];
 
-                    new Notification(`😔 Habit Missed: ${habit.name}`, {
-                        body: msg,
-                        tag: `praxis-missed-${habit.id}-${todayStr}`,
-                        renotify: true
-                    });
-                } catch (e) {
-                    console.log("Missed notification error:", e);
-                }
+                sendNotification(`😔 Habit Missed: ${habit.name}`, {
+                    body: msg,
+                    tag: `praxis-missed-${habit.id}-${todayStr}`,
+                    isMissed: true
+                });
             }
         }
     });
 }
 
-// Start notification checker loop every 20 seconds
-setInterval(checkHabitNotifications, 20000);
+// Start notification checker loop every 15 seconds
+setInterval(checkHabitNotifications, 15000);
 
 function editHabitTime(habitIndex) {
     const habit = habits[habitIndex];
