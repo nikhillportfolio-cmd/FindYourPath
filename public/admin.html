@@ -283,35 +283,132 @@
             </div>
         </header>
 
-        <!-- MAIN HERO METRICS GRID (LIVE USERS & TOTAL VISITORS ONLY) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+        <!-- HERO METRICS GRID (4 CARDS) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             
             <!-- CARD 1: LIVE USERS -->
-            <div class="neo-card p-6 sm:p-8 flex items-center justify-between">
+            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
                 <div>
-                    <div class="flex items-center gap-2 mb-2">
+                    <div class="flex items-center gap-2 mb-1.5">
                         <span class="live-dot"></span>
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Users</span>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Live Active Users</span>
                     </div>
-                    <span id="stat-active-users" class="text-4xl sm:text-5xl font-extrabold text-slate-800">0</span>
-                    <p class="text-xs text-slate-400 font-medium mt-2">Currently active on site</p>
+                    <span id="stat-active-users" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Active site sessions</p>
                 </div>
-                <div class="w-14 h-14 neo-icon text-emerald-500 flex items-center justify-center font-bold text-2xl shrink-0">
+                <div class="w-12 h-12 neo-icon text-emerald-500 flex items-center justify-center font-bold text-xl shrink-0">
                     🟢
                 </div>
             </div>
 
             <!-- CARD 2: TOTAL VISITORS -->
-            <div class="neo-card p-6 sm:p-8 flex items-center justify-between">
+            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
                 <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Visitors</span>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Visitors</span>
                     </div>
-                    <span id="stat-total-visitors" class="text-4xl sm:text-5xl font-extrabold text-slate-800">0</span>
-                    <p class="text-xs text-slate-400 font-medium mt-2">Total tracked sessions</p>
+                    <span id="stat-total-visitors" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Total page hits</p>
                 </div>
-                <div class="w-14 h-14 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-2xl shrink-0">
+                <div class="w-12 h-12 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-xl shrink-0">
                     👁️
+                </div>
+            </div>
+
+            <!-- CARD 3: REGISTERED USERS -->
+            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registered Users</span>
+                    </div>
+                    <span id="stat-total-users" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Verified user accounts</p>
+                </div>
+                <div class="w-12 h-12 neo-icon text-softLavender-500 flex items-center justify-center font-bold text-xl shrink-0">
+                    👥
+                </div>
+            </div>
+
+            <!-- CARD 4: TOTAL LOGINS -->
+            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Logins</span>
+                    </div>
+                    <span id="stat-total-logins" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Auth audit events</p>
+                </div>
+                <div class="w-12 h-12 neo-icon text-amber-500 flex items-center justify-center font-bold text-xl shrink-0">
+                    🔑
+                </div>
+            </div>
+
+        </div>
+
+        <!-- USER MANAGEMENT & LOGIN TELEMETRY STUDIO SECTION -->
+        <div class="neo-card p-5 sm:p-7 space-y-6">
+            
+            <!-- SECTION HEADER & TABS -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-300/60 pb-4">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">Users & Auth Telemetry</h2>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Real-time database of registered user accounts and login activity logs</p>
+                </div>
+
+                <div class="flex items-center gap-2 bg-slate-200/60 p-1 rounded-xl shrink-0">
+                    <button onclick="switchAdminTab('users')" id="admin-tab-users-btn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">
+                        Registered Users (<span id="user-count-badge">0</span>)
+                    </button>
+                    <button onclick="switchAdminTab('logs')" id="admin-tab-logs-btn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900">
+                        Login Activity Logs (<span id="log-count-badge">0</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 1: REGISTERED USERS TABLE -->
+            <div id="admin-view-users" class="space-y-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
+                                <th class="py-3 px-3">User</th>
+                                <th class="py-3 px-3">Contact Email</th>
+                                <th class="py-3 px-3">Mobile Number</th>
+                                <th class="py-3 px-3">Status</th>
+                                <th class="py-3 px-3">Joined Date</th>
+                                <th class="py-3 px-3 text-center">Logins</th>
+                                <th class="py-3 px-3">Last Active & IP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="divide-y divide-slate-200 text-slate-700 font-medium">
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-slate-400 font-semibold">Loading registered users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: LOGIN ACTIVITY LOGS TABLE -->
+            <div id="admin-view-logs" class="space-y-4 hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
+                                <th class="py-3 px-3">Timestamp</th>
+                                <th class="py-3 px-3">User / Identifier</th>
+                                <th class="py-3 px-3">Email Address</th>
+                                <th class="py-3 px-3">IP Address</th>
+                                <th class="py-3 px-3">Device / User-Agent</th>
+                                <th class="py-3 px-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body" class="divide-y divide-slate-200 text-slate-700 font-medium">
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-slate-400 font-semibold">Loading login activity logs...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -410,6 +507,9 @@
                 const data = await res.json();
                 renderStats(data);
 
+                // Fetch registered users & login telemetry
+                fetchAdminUsersData();
+
                 const now = new Date();
                 document.getElementById('last-updated-tag').innerText = `Synced ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
             } catch (err) {
@@ -420,6 +520,125 @@
                     setTimeout(() => refreshIcon.classList.remove('spinning'), 400);
                 }
             }
+        }
+
+        async function fetchAdminUsersData() {
+            try {
+                const res = await fetch('/api/admin/users', {
+                    headers: { 'x-admin-password': adminPassword }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    renderUsersTable(data.users || []);
+                    renderLogsTable(data.loginLogs || []);
+                    
+                    const uBadge = document.getElementById('user-count-badge');
+                    const lBadge = document.getElementById('log-count-badge');
+                    if (uBadge) uBadge.innerText = (data.users || []).length;
+                    if (lBadge) lBadge.innerText = (data.loginLogs || []).length;
+
+                    const statUsers = document.getElementById('stat-total-users');
+                    const statLogins = document.getElementById('stat-total-logins');
+                    if (statUsers) statUsers.innerText = (data.users || []).length;
+                    if (statLogins) statLogins.innerText = (data.loginLogs || []).length;
+                }
+            } catch (err) {
+                console.warn("Failed to fetch admin users data:", err);
+            }
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('users-table-body');
+            if (!tbody) return;
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-semibold">No registered users yet. Sign up on the main website to see records here!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => `
+                <tr class="hover:bg-slate-100/60 transition-colors">
+                    <td class="py-3 px-3">
+                        <div class="flex items-center gap-2.5">
+                            <img src="${u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.username)}`}" class="w-8 h-8 rounded-full object-cover border border-slate-300 bg-slate-200">
+                            <div>
+                                <span class="font-extrabold text-slate-800 block">${escapeHtml(u.name || 'User')}</span>
+                                <span class="text-[11px] text-blue-600 font-bold">@${escapeHtml(u.username)}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-3 text-slate-700 font-mono text-[11px]">${escapeHtml(u.email)}</td>
+                    <td class="py-3 px-3 text-slate-600 font-medium">${escapeHtml(u.mobile || 'N/A')}</td>
+                    <td class="py-3 px-3">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            ✓ Verified
+                        </span>
+                    </td>
+                    <td class="py-3 px-3 text-slate-500 font-medium">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
+                    <td class="py-3 px-3 text-center">
+                        <span class="px-2 py-1 bg-slate-200/70 font-extrabold text-slate-800 rounded-md text-xs">${u.loginCount || 1}</span>
+                    </td>
+                    <td class="py-3 px-3">
+                        <span class="block text-slate-700 font-semibold">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'N/A'}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(u.lastLoginIp || '127.0.0.1')}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderLogsTable(logs) {
+            const tbody = document.getElementById('logs-table-body');
+            if (!tbody) return;
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-semibold">No login activity logs recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = logs.map(l => {
+                const isSuccess = l.status === 'SUCCESS';
+                const statusBadge = isSuccess
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-300">SUCCESS</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-300">${escapeHtml(l.status)}</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-100/60 transition-colors">
+                        <td class="py-3 px-3 text-slate-500 font-mono text-[11px]">${l.timestamp ? new Date(l.timestamp).toLocaleString() : 'N/A'}</td>
+                        <td class="py-3 px-3 font-bold text-slate-800">
+                            ${escapeHtml(l.name || l.username || 'Unknown')}
+                            ${l.username ? `<span class="block text-[10px] text-blue-600 font-semibold">@${escapeHtml(l.username)}</span>` : ''}
+                        </td>
+                        <td class="py-3 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.email || 'N/A')}</td>
+                        <td class="py-3 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.ip || '127.0.0.1')}</td>
+                        <td class="py-3 px-3 text-slate-500 text-[11px] max-w-[200px] truncate" title="${escapeHtml(l.userAgent || '')}">${escapeHtml(l.userAgent || 'Browser')}</td>
+                        <td class="py-3 px-3">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function switchAdminTab(tabName) {
+            const uView = document.getElementById('admin-view-users');
+            const lView = document.getElementById('admin-view-logs');
+            const uBtn = document.getElementById('admin-tab-users-btn');
+            const lBtn = document.getElementById('admin-tab-logs-btn');
+
+            if (tabName === 'users') {
+                if (uView) uView.classList.remove('hidden');
+                if (lView) lView.classList.add('hidden');
+                if (uBtn) uBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
+                if (lBtn) lBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900";
+            } else {
+                if (uView) uView.classList.add('hidden');
+                if (lView) lView.classList.remove('hidden');
+                if (uBtn) uBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900";
+                if (lBtn) lBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
         function renderStats(data) {

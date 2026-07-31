@@ -1,0 +1,17 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# User Uploads and DB persistence files
+uploads/
+
+# Operating System Files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,72 @@
+{
+  "users": [
+    {
+      "id": "usr_1785488375856_wzqyr",
+      "name": "Test Student Updated",
+      "email": "user_1785488375730@example.com",
+      "mobile": "+919876543210",
+      "username": "user_1785488375730",
+      "passwordHash": "$2b$10$28RxN/cHHiM5CXwseRcaLudGbXOvG8JhE0JL2dap9YTCV53IoZTRe",
+      "avatar": "/uploads/avatar_usr_1785488375856_wzqyr_1785488375949.png",
+      "isVerified": true,
+      "createdAt": "2026-07-31T08:59:35.856Z",
+      "loginCount": 2,
+      "lastLoginAt": "2026-07-31T08:59:35.932Z",
+      "lastLoginIp": "127.0.0.1"
+    }
+  ],
+  "loginLogs": [
+    {
+      "id": "log_1785488375932_fzv3",
+      "userId": "usr_1785488375856_wzqyr",
+      "name": "Test Student",
+      "username": "user_1785488375730",
+      "email": "user_1785488375730@example.com",
+      "timestamp": "2026-07-31T08:59:35.932Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "SUCCESS"
+    },
+    {
+      "id": "log_1785488375856_mtdq",
+      "userId": "usr_1785488375856_wzqyr",
+      "name": "Test Student",
+      "username": "user_1785488375730",
+      "email": "user_1785488375730@example.com",
+      "timestamp": "2026-07-31T08:59:35.856Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "SUCCESS"
+    },
+    {
+      "id": "log_1785488349950_xe4s",
+      "name": "Unknown",
+      "username": "user_1785488349867",
+      "email": "N/A",
+      "timestamp": "2026-07-31T08:59:09.950Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "FAILED (User Not Found)"
+    },
+    {
+      "id": "log_1785488329094_rwzw",
+      "name": "Unknown",
+      "username": "teststudent",
+      "email": "N/A",
+      "timestamp": "2026-07-31T08:58:49.094Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "FAILED (User Not Found)"
+    },
+    {
+      "id": "log_1785488275795_qwv5",
+      "name": "Unknown",
+      "username": "teststudent",
+      "email": "N/A",
+      "timestamp": "2026-07-31T08:57:55.795Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "FAILED (User Not Found)"
+    }
+  ]
+}

@@ -2145,3 +2145,551 @@ function checkBookmarkStatus() {
         if (bookmarkText) bookmarkText.innerText = "Bookmark";
     }
 }
+
+// =====================================================================
+// USER AUTHENTICATION & PROFILE SYSTEM (JWT, OTP, RESEND COOLDOWN)
+// =====================================================================
+let currentUser = null;
+let authToken = localStorage.getItem('praxis_auth_token') || null;
+let activeAuthEmail = '';
+let otpCooldownInterval = null;
+let otpExpiryInterval = null;
+
+// Initialize Auth status on DOM Content Loaded
+document.addEventListener('DOMContentLoaded', () => {
+    checkUserAuthSession();
+});
+
+async function checkUserAuthSession() {
+    if (!authToken) {
+        updateAuthUI(null);
+        return;
+    }
+    try {
+        const res = await fetch('/api/user/profile', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.user) {
+                currentUser = data.user;
+                updateAuthUI(currentUser);
+            } else {
+                logoutUser();
+            }
+        } else {
+            logoutUser();
+        }
+    } catch (err) {
+        console.warn("Failed to verify user auth session:", err);
+    }
+}
+
+function updateAuthUI(user) {
+    const loginBtn = document.getElementById('nav-login-btn');
+    const profileBtn = document.getElementById('nav-profile-btn');
+    const avatarImg = document.getElementById('nav-avatar-img');
+    const userNameEl = document.getElementById('nav-user-name');
+
+    if (user) {
+        if (loginBtn) loginBtn.classList.add('hidden');
+        if (profileBtn) profileBtn.classList.remove('hidden');
+        if (avatarImg) avatarImg.src = user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`;
+        if (userNameEl) userNameEl.innerText = user.name || user.username;
+    } else {
+        if (loginBtn) loginBtn.classList.remove('hidden');
+        if (profileBtn) profileBtn.classList.add('hidden');
+    }
+}
+
+// Modal open & switch views
+function openAuthModal(viewName = 'login') {
+    const modal = document.getElementById('auth-user-modal');
+    if (modal) modal.classList.remove('hidden');
+    switchAuthView(viewName);
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById('auth-user-modal');
+    if (modal) modal.classList.add('hidden');
+    clearAuthAlerts();
+}
+
+function switchAuthView(viewName) {
+    clearAuthAlerts();
+    const views = ['login', 'signup', 'otp', 'forgot', 'reset'];
+    views.forEach(v => {
+        const el = document.getElementById(`auth-view-${v}`);
+        if (el) el.classList.add('hidden');
+    });
+
+    const target = document.getElementById(`auth-view-${viewName}`);
+    if (target) target.classList.remove('hidden');
+
+    const titleEl = document.getElementById('auth-modal-title');
+    const subTitleEl = document.getElementById('auth-modal-subtitle');
+
+    if (viewName === 'login') {
+        if (titleEl) titleEl.innerText = "Welcome Back";
+        if (subTitleEl) subTitleEl.innerText = "Log in to your account to access your compass";
+    } else if (viewName === 'signup') {
+        if (titleEl) titleEl.innerText = "Create Your Account";
+        if (subTitleEl) subTitleEl.innerText = "Fill in your details for OTP verification";
+    } else if (viewName === 'otp') {
+        if (titleEl) titleEl.innerText = "Verify Email OTP";
+        if (subTitleEl) subTitleEl.innerText = "Enter the 6-digit code sent to your email";
+    } else if (viewName === 'forgot') {
+        if (titleEl) titleEl.innerText = "Forgot Password";
+        if (subTitleEl) subTitleEl.innerText = "Enter your username/email to receive a reset OTP";
+    } else if (viewName === 'reset') {
+        if (titleEl) titleEl.innerText = "Set New Password";
+        if (subTitleEl) subTitleEl.innerText = "Enter the OTP code and your new password";
+    }
+}
+
+function clearAuthAlerts() {
+    ['login', 'signup', 'otp', 'forgot', 'reset'].forEach(v => {
+        const alertEl = document.getElementById(`${v}-alert`);
+        if (alertEl) {
+            alertEl.innerText = '';
+            alertEl.classList.add('hidden');
+        }
+    });
+}
+
+function showAuthAlert(viewName, msg, isError = true) {
+    const alertEl = document.getElementById(`${viewName}-alert`);
+    if (!alertEl) return;
+    alertEl.innerText = msg;
+    alertEl.className = `text-xs font-medium p-2.5 rounded-xl border ${isError ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'}`;
+    alertEl.classList.remove('hidden');
+}
+
+// 1. Submit Login
+async function submitLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-submit-btn');
+
+    if (!username || !password) return;
+
+    btn.disabled = true;
+    btn.innerText = "Authenticating...";
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            authToken = data.token;
+            localStorage.setItem('praxis_auth_token', authToken);
+            currentUser = data.user;
+            updateAuthUI(currentUser);
+            closeAuthModal();
+        } else {
+            showAuthAlert('login', data.error || "Login failed");
+        }
+    } catch (err) {
+        showAuthAlert('login', "Server connection error. Please try again.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Log In";
+    }
+}
+
+// 2. Submit Sign-Up Request
+async function submitSignupRequest(e) {
+    e.preventDefault();
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const mobile = document.getElementById('signup-mobile').value.trim();
+    const username = document.getElementById('signup-username').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const btn = document.getElementById('signup-submit-btn');
+
+    btn.disabled = true;
+    btn.innerText = "Sending Verification OTP...";
+
+    try {
+        const res = await fetch('/api/auth/signup-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, mobile, username, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            activeAuthEmail = email.toLowerCase();
+            document.getElementById('otp-target-email').innerText = activeAuthEmail;
+
+            // Handle Demo / Console OTP Banner
+            const demoBanner = document.getElementById('demo-otp-banner');
+            const demoCodeEl = document.getElementById('demo-otp-code');
+            if (data.deliveredVia === 'console' || data.warning) {
+                if (demoBanner) demoBanner.classList.remove('hidden');
+                if (demoCodeEl) demoCodeEl.innerText = data.demoOtp || "(Check server console)";
+            } else {
+                if (demoBanner) demoBanner.classList.add('hidden');
+            }
+
+            switchAuthView('otp');
+            startOTPTimers(data.expiresAt, data.cooldownSeconds || 60);
+        } else {
+            showAuthAlert('signup', data.error || "Sign-up failed");
+        }
+    } catch (err) {
+        showAuthAlert('signup', "Server connection error. Please try again.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Send OTP via Email →";
+    }
+}
+
+// 3. Submit OTP for Sign-Up Verification
+async function submitSignupOTP(e) {
+    e.preventDefault();
+    const otp = document.getElementById('otp-input').value.trim();
+    const btn = document.getElementById('otp-submit-btn');
+
+    if (!otp || otp.length !== 6) {
+        showAuthAlert('otp', "Please enter a valid 6-digit OTP code.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Verifying Code...";
+
+    try {
+        const res = await fetch('/api/auth/verify-signup-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: activeAuthEmail, otp })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            authToken = data.token;
+            localStorage.setItem('praxis_auth_token', authToken);
+            currentUser = data.user;
+            updateAuthUI(currentUser);
+            closeAuthModal();
+            stopOTPTimers();
+            alert("🎉 Account created and verified successfully! Welcome to PRAXiS.");
+        } else {
+            showAuthAlert('otp', data.error || "OTP verification failed");
+        }
+    } catch (err) {
+        showAuthAlert('otp', "Server connection error.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Verify & Create Account";
+    }
+}
+
+// 4. Resend OTP with 60s cooldown
+async function resendOTP() {
+    const resendBtn = document.getElementById('resend-otp-btn');
+    if (resendBtn) resendBtn.disabled = true;
+
+    try {
+        const res = await fetch('/api/auth/resend-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: activeAuthEmail })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showAuthAlert('otp', "New OTP delivered to your email!", false);
+            
+            const demoBanner = document.getElementById('demo-otp-banner');
+            const demoCodeEl = document.getElementById('demo-otp-code');
+            if (data.deliveredVia === 'console' || data.warning) {
+                if (demoBanner) demoBanner.classList.remove('hidden');
+                if (demoCodeEl) demoCodeEl.innerText = data.demoOtp || "(Check server console)";
+            }
+
+            startOTPTimers(data.expiresAt, data.cooldownSeconds || 60);
+        } else {
+            showAuthAlert('otp', data.error || "Failed to resend OTP.");
+        }
+    } catch (err) {
+        showAuthAlert('otp', "Server connection error.");
+    }
+}
+
+function startOTPTimers(expiresAt, cooldownSec = 60) {
+    stopOTPTimers();
+
+    // 1. Resend Cooldown Ticker (60 seconds)
+    const resendBtn = document.getElementById('resend-otp-btn');
+    let cooldownRemaining = cooldownSec;
+
+    if (resendBtn) {
+        resendBtn.disabled = true;
+        resendBtn.innerText = `Resend OTP (${cooldownRemaining}s)`;
+    }
+
+    otpCooldownInterval = setInterval(() => {
+        cooldownRemaining--;
+        if (cooldownRemaining <= 0) {
+            clearInterval(otpCooldownInterval);
+            if (resendBtn) {
+                resendBtn.disabled = false;
+                resendBtn.innerText = "Resend OTP Code";
+            }
+        } else {
+            if (resendBtn) resendBtn.innerText = `Resend OTP (${cooldownRemaining}s)`;
+        }
+    }, 1000);
+
+    // 2. Expiry Timer (10 minutes)
+    const timerEl = document.getElementById('otp-expiry-timer');
+    otpExpiryInterval = setInterval(() => {
+        const remainingMs = expiresAt - Date.now();
+        if (remainingMs <= 0) {
+            clearInterval(otpExpiryInterval);
+            if (timerEl) timerEl.innerText = "OTP Expired";
+            showAuthAlert('otp', "This OTP code has expired. Please click Resend OTP.");
+        } else {
+            const mins = Math.floor(remainingMs / 60000);
+            const secs = Math.floor((remainingMs % 60000) / 1000);
+            if (timerEl) timerEl.innerText = `Expires in ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+    }, 1000);
+}
+
+function stopOTPTimers() {
+    if (otpCooldownInterval) clearInterval(otpCooldownInterval);
+    if (otpExpiryInterval) clearInterval(otpExpiryInterval);
+}
+
+// 5. Submit Forgot Password Request
+async function submitForgotPasswordRequest(e) {
+    e.preventDefault();
+    const identifier = document.getElementById('forgot-identifier').value.trim();
+    const btn = document.getElementById('forgot-submit-btn');
+
+    if (!identifier) return;
+
+    btn.disabled = true;
+    btn.innerText = "Sending Reset OTP...";
+
+    try {
+        const res = await fetch('/api/auth/forgot-password-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            activeAuthEmail = data.email;
+            
+            const demoBanner = document.getElementById('demo-reset-otp-banner');
+            const demoCodeEl = document.getElementById('demo-reset-otp-code');
+            if (data.deliveredVia === 'console' || data.warning) {
+                if (demoBanner) demoBanner.classList.remove('hidden');
+                if (demoCodeEl) demoCodeEl.innerText = data.demoOtp || "(Check server console)";
+            } else {
+                if (demoBanner) demoBanner.classList.add('hidden');
+            }
+
+            switchAuthView('reset');
+        } else {
+            showAuthAlert('forgot', data.error || "Failed to initiate reset.");
+        }
+    } catch (err) {
+        showAuthAlert('forgot', "Server connection error.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Send Reset OTP →";
+    }
+}
+
+// 6. Submit Reset Password (OTP + New Password)
+async function submitResetPassword(e) {
+    e.preventDefault();
+    const otp = document.getElementById('reset-otp-input').value.trim();
+    const newPassword = document.getElementById('reset-new-password').value;
+    const confirmPassword = document.getElementById('reset-confirm-password').value;
+    const btn = document.getElementById('reset-submit-btn');
+
+    if (newPassword !== confirmPassword) {
+        showAuthAlert('reset', "New passwords do not match!");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Updating Password...";
+
+    try {
+        // Step A: Verify OTP first
+        const vRes = await fetch('/api/auth/verify-reset-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: activeAuthEmail, otp })
+        });
+        const vData = await vRes.json();
+
+        if (!vRes.ok || !vData.success) {
+            showAuthAlert('reset', vData.error || "Invalid OTP code.");
+            btn.disabled = false;
+            btn.innerText = "Update Password & Log In";
+            return;
+        }
+
+        // Step B: Set new password
+        const rRes = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: activeAuthEmail,
+                resetToken: vData.resetToken,
+                newPassword
+            })
+        });
+        const rData = await rRes.json();
+
+        if (rRes.ok && rData.success) {
+            alert("🔑 Password updated successfully! Please log in with your new password.");
+            switchAuthView('login');
+        } else {
+            showAuthAlert('reset', rData.error || "Failed to update password.");
+        }
+    } catch (err) {
+        showAuthAlert('reset', "Server connection error.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Update Password & Log In";
+    }
+}
+
+// =====================================================================
+// USER PROFILE MODAL & AVATAR PHOTO UPLOAD LOGIC
+// =====================================================================
+function openProfileModal() {
+    if (!currentUser) {
+        openAuthModal('login');
+        return;
+    }
+    const modal = document.getElementById('profile-user-modal');
+    if (modal) modal.classList.remove('hidden');
+
+    document.getElementById('profile-avatar-display').src = currentUser.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentUser.username)}`;
+    document.getElementById('profile-display-name').innerText = currentUser.name || "User";
+    document.getElementById('profile-display-username').innerText = `@${currentUser.username}`;
+    document.getElementById('profile-input-name').value = currentUser.name || '';
+    document.getElementById('profile-input-mobile').value = currentUser.mobile || '';
+    document.getElementById('profile-input-email').value = currentUser.email || '';
+    document.getElementById('profile-stat-logins').innerText = currentUser.loginCount || 1;
+    document.getElementById('profile-stat-joined').innerText = currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString() : "Recently";
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById('profile-user-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function saveProfileDetails(e) {
+    e.preventDefault();
+    const name = document.getElementById('profile-input-name').value.trim();
+    const mobile = document.getElementById('profile-input-mobile').value.trim();
+    const btn = document.getElementById('profile-save-btn');
+    const alertEl = document.getElementById('profile-alert');
+
+    btn.disabled = true;
+    btn.innerText = "Saving Changes...";
+
+    try {
+        const res = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ name, mobile })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            currentUser = data.user;
+            updateAuthUI(currentUser);
+            document.getElementById('profile-display-name').innerText = currentUser.name;
+            
+            if (alertEl) {
+                alertEl.innerText = "✅ Profile updated successfully!";
+                alertEl.classList.remove('hidden');
+                setTimeout(() => alertEl.classList.add('hidden'), 3000);
+            }
+        } else {
+            alert(data.error || "Failed to update profile.");
+        }
+    } catch (err) {
+        alert("Server connection error.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Save Profile Changes";
+    }
+}
+
+// Upload Profile Photo via File Picker (Converts to Base64 & Uploads to Server)
+function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert("Please select a valid image file (PNG, JPG, WEBP).");
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        alert("Image size should be less than 5MB.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        const base64Image = e.target.result;
+        
+        // Optimistically update preview
+        document.getElementById('profile-avatar-display').src = base64Image;
+
+        try {
+            const res = await fetch('/api/user/upload-photo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ imageBase64: base64Image })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                currentUser = data.user;
+                updateAuthUI(currentUser);
+                document.getElementById('profile-avatar-display').src = currentUser.avatar;
+            } else {
+                alert(data.error || "Failed to upload photo.");
+            }
+        } catch (err) {
+            console.error("Photo upload error:", err);
+            alert("Error uploading profile photo.");
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function logoutUser() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('praxis_auth_token');
+    updateAuthUI(null);
+    closeProfileModal();
+}
