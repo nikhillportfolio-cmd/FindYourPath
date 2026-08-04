@@ -526,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
   checkStoredLocalUser();
   initFirebase();
 
-  document.getElementById("btn-google-login")?.addEventListener("click", () => window.openAuthModal('login'));
+  document.getElementById("btn-google-login")?.addEventListener("click", loginWithGoogle);
   document.getElementById("gate-btn-google-login")?.addEventListener("click", loginWithGoogle);
   document.getElementById("modal-btn-google-login")?.addEventListener("click", loginWithGoogle);
   document.getElementById("btn-logout")?.addEventListener("click", logoutUser);
