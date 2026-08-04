@@ -318,9 +318,14 @@ let habits = [];
 let currentCategoryFilter = "all";
 
 function loadHabitsFromStorage() {
-    // Primary: If user is authenticated, load directly from Google Cloud
-    if (window.praxisAuth && window.praxisAuth.getUser()) {
-        window.praxisAuth.fetchData();
+    // Primary: Check if user is authenticated and bypass browser localStorage
+    const storedUser = localStorage.getItem("praxis_auth_user");
+    if (storedUser || (window.praxisAuth && window.praxisAuth.getUser())) {
+        console.log("[PRAXiS Data] Authenticated user session detected. Bypassing browser localStorage, syncing with Google Cloud...");
+        habits = [];
+        if (window.praxisAuth && typeof window.praxisAuth.fetchData === "function") {
+            window.praxisAuth.fetchData();
+        }
         return;
     }
     try {
@@ -2342,14 +2347,10 @@ window.renderSavedRoutineTracker = function(routineData) {
     if (!routineData) return;
     if (Array.isArray(routineData.habits)) {
         habits = routineData.habits;
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
-        } catch (e) {}
-        
         if (typeof renderHabits === "function") renderHabits();
         if (typeof updateStats === "function") updateStats();
         if (typeof updateFloatingBadge === "function") updateFloatingBadge();
-        console.log("[PRAXiS UI] Habit Routine Tracker synced from cloud across devices.");
+        console.log("[PRAXiS UI] Habit Routine Tracker loaded directly from Google Cloud.");
     }
 };
 
