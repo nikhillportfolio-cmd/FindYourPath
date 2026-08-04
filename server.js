@@ -20,6 +20,48 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 // =====================================================================
+// USER DATABASE & AUTHENTICATION ENGINE (users.json)
+// =====================================================================
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'praxis_jwt_secret_987654321_secure';
+const USERS_FILE = path.join(__dirname, 'users.json');
+
+let usersData = {
+    users: [],
+    loginLogs: []
+};
+
+function loadUsersData() {
+    try {
+        if (fs.existsSync(USERS_FILE)) {
+            const raw = fs.readFileSync(USERS_FILE, 'utf8');
+            const parsed = JSON.parse(raw);
+            usersData = {
+                users: Array.isArray(parsed.users) ? parsed.users : [],
+                loginLogs: Array.isArray(parsed.loginLogs) ? parsed.loginLogs : []
+            };
+            console.log(`👤 Loaded ${usersData.users.length} users and ${usersData.loginLogs.length} login logs from users.json`);
+        } else {
+            saveUsersData();
+            console.log("👤 Initialized new users.json file");
+        }
+    } catch (err) {
+        console.error("⚠️ Failed to load/initialize users.json:", err.message);
+    }
+}
+
+function saveUsersData() {
+    try {
+        fs.writeFileSync(USERS_FILE, JSON.stringify(usersData, null, 2), 'utf8');
+    } catch (err) {
+        console.error("⚠️ Failed to write to users.json:", err.message);
+    }
+}
+
+loadUsersData();
+
+// =====================================================================
 // REAL-TIME ANALYTICS & ACTIVE USER TRACKING ENGINE
 // =====================================================================
 const ANALYTICS_FILE = path.join(__dirname, 'analytics.json');
@@ -10033,6 +10075,261 @@ app.post('/api/track-event', (req, res) => {
     res.json({ success: true });
 });
 
+// =====================================================================
+// USER AUTHENTICATION & REGISTRATION ENDPOINTS
+// =====================================================================
+
+// User Registration
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { name, email, username, password } = req.body || {};
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: "Name, email, and password are required." });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const finalUsername = (username || normalizedEmail.split('@')[0]).trim().toLowerCase();
+
+        // Check uniqueness
+        const existingUser = usersData.users.find(
+            u => u.email.toLowerCase() === normalizedEmail || u.username.toLowerCase() === finalUsername
+        );
+
+        if (existingUser) {
+            return res.status(400).json({ error: "An account with this email or username already exists." });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        const userId = `usr_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        const timestamp = new Date().toISOString();
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+
+        const newUser = {
+            id: userId,
+            name: name.trim(),
+            email: normalizedEmail,
+            username: finalUsername,
+            passwordHash,
+            avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name.trim())}`,
+            isVerified: true,
+            createdAt: timestamp,
+            loginCount: 1,
+            lastLoginAt: timestamp,
+            lastLoginIp: clientIp
+        };
+
+        const newLog = {
+            id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            userId: userId,
+            name: newUser.name,
+            username: newUser.username,
+            email: newUser.email,
+            timestamp: timestamp,
+            ip: clientIp,
+            userAgent: req.headers['user-agent'] || 'Browser',
+            status: 'SUCCESS'
+        };
+
+        usersData.users.push(newUser);
+        usersData.loginLogs.unshift(newLog);
+        saveUsersData();
+
+        const token = jwt.sign(
+            { userId: newUser.id, email: newUser.email, username: newUser.username },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        const { passwordHash: _, ...userWithoutPassword } = newUser;
+        res.json({
+            success: true,
+            token,
+            user: userWithoutPassword
+        });
+    } catch (error) {
+        console.error("Register Error:", error);
+        res.status(500).json({ error: "Registration failed." });
+    }
+});
+
+// User Login
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { emailOrUsername, password } = req.body || {};
+
+        if (!emailOrUsername || !password) {
+            return res.status(400).json({ error: "Email/Username and password are required." });
+        }
+
+        const query = emailOrUsername.trim().toLowerCase();
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+        const timestamp = new Date().toISOString();
+
+        const user = usersData.users.find(
+            u => u.email.toLowerCase() === query || u.username.toLowerCase() === query
+        );
+
+        if (!user) {
+            usersData.loginLogs.unshift({
+                id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                name: "Unknown",
+                username: query,
+                email: query.includes('@') ? query : "N/A",
+                timestamp: timestamp,
+                ip: clientIp,
+                userAgent: req.headers['user-agent'] || 'Browser',
+                status: 'FAILED (User Not Found)'
+            });
+            saveUsersData();
+            return res.status(401).json({ error: "Invalid email/username or password." });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!isMatch) {
+            usersData.loginLogs.unshift({
+                id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                userId: user.id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                timestamp: timestamp,
+                ip: clientIp,
+                userAgent: req.headers['user-agent'] || 'Browser',
+                status: 'FAILED (Invalid Password)'
+            });
+            saveUsersData();
+            return res.status(401).json({ error: "Invalid email/username or password." });
+        }
+
+        user.loginCount = (user.loginCount || 0) + 1;
+        user.lastLoginAt = timestamp;
+        user.lastLoginIp = clientIp;
+
+        usersData.loginLogs.unshift({
+            id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            userId: user.id,
+            name: user.name,
+            username: user.username,
+            email: user.email,
+            timestamp: timestamp,
+            ip: clientIp,
+            userAgent: req.headers['user-agent'] || 'Browser',
+            status: 'SUCCESS'
+        });
+
+        saveUsersData();
+
+        const token = jwt.sign(
+            { userId: user.id, email: user.email, username: user.username },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        const { passwordHash: _, ...userWithoutPassword } = user;
+        res.json({
+            success: true,
+            token,
+            user: userWithoutPassword
+        });
+    } catch (error) {
+        console.error("Login Error:", error);
+        res.status(500).json({ error: "Login failed." });
+    }
+});
+
+// Google Auth Sync & Telemetry Endpoint
+app.post('/api/auth/google', async (req, res) => {
+    try {
+        const { email, name, photoURL, uid } = req.body || {};
+        if (!email) {
+            return res.status(400).json({ error: "Google email is required." });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+        const timestamp = new Date().toISOString();
+
+        let user = usersData.users.find(u => u.email.toLowerCase() === normalizedEmail);
+
+        if (!user) {
+            const userId = uid || `usr_g_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+            user = {
+                id: userId,
+                name: name || normalizedEmail.split('@')[0],
+                email: normalizedEmail,
+                username: normalizedEmail.split('@')[0],
+                passwordHash: '',
+                avatar: photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name || email)}`,
+                isVerified: true,
+                createdAt: timestamp,
+                loginCount: 1,
+                lastLoginAt: timestamp,
+                lastLoginIp: clientIp
+            };
+            usersData.users.push(user);
+        } else {
+            user.loginCount = (user.loginCount || 0) + 1;
+            user.lastLoginAt = timestamp;
+            user.lastLoginIp = clientIp;
+            if (photoURL) user.avatar = photoURL;
+            if (name) user.name = name;
+        }
+
+        usersData.loginLogs.unshift({
+            id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            userId: user.id,
+            name: user.name,
+            username: user.username,
+            email: user.email,
+            timestamp: timestamp,
+            ip: clientIp,
+            userAgent: req.headers['user-agent'] || 'Browser',
+            status: 'SUCCESS (Google Auth)'
+        });
+
+        saveUsersData();
+
+        const token = jwt.sign(
+            { userId: user.id, email: user.email, username: user.username },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        const { passwordHash: _, ...userWithoutPassword } = user;
+        res.json({
+            success: true,
+            token,
+            user: userWithoutPassword
+        });
+    } catch (error) {
+        console.error("Google Auth Error:", error);
+        res.status(500).json({ error: "Google auth logging failed." });
+    }
+});
+
+// Current User Profile Verification Endpoint
+app.get('/api/auth/me', (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = usersData.users.find(u => u.id === decoded.userId);
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const { passwordHash: _, ...userWithoutPassword } = user;
+        res.json({ success: true, user: userWithoutPassword });
+    } catch (err) {
+        res.status(401).json({ error: "Invalid token" });
+    }
+});
+
 // 11. Admin Registered Users API
 app.get('/api/admin/users', (req, res) => {
     const providedPass = req.headers['x-admin-password'] || req.query.password;
@@ -10042,9 +10339,9 @@ app.get('/api/admin/users', (req, res) => {
 
     res.json({
         success: true,
-        totalUsers: 0,
-        users: [],
-        loginLogs: []
+        totalUsers: usersData.users.length,
+        users: usersData.users.map(({ passwordHash, ...u }) => u),
+        loginLogs: usersData.loginLogs
     });
 });
 
@@ -10078,8 +10375,8 @@ app.get('/api/admin/stats', (req, res) => {
         totalVisitors: totalVisitors,
         totalQuizzesCompleted: totalQuizzes,
         conversionRate: `${conversionRate}%`,
-        totalRegisteredUsers: 0,
-        totalLoginsRecorded: 0,
+        totalRegisteredUsers: usersData.users.length,
+        totalLoginsRecorded: usersData.loginLogs.length,
         domainStats: analyticsData.domainStats || {},
         careerStats: analyticsData.careerStats || {},
         libraryStats: {

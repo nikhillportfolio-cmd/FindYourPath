@@ -1,6 +1,6 @@
 /**
  * PRAXiS - Firebase Authentication & Cloud Storage Integration Module
- * Handles Google Authentication & Firestore Cloud Data Persistence.
+ * Real-Time Cross-Device Synchronization & User Authentication.
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -15,15 +15,14 @@ import {
   getFirestore, 
   doc, 
   setDoc, 
-  getDoc 
+  getDoc,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // -------------------------------------------------------------------
 // 1. CONFIGURATION & INITIALIZATION
 // -------------------------------------------------------------------
 
-// Default hardcoded fallback configuration
-// (You can paste your Firebase Console keys directly here OR in your server's .env file)
 let firebaseConfig = {
   apiKey: "AIzaSyBDhP_2ZaRv4ncV7W-_p75qRoOAg8te0oU",
   authDomain: "praxis-app-e6e2a.firebaseapp.com",
@@ -36,6 +35,7 @@ let firebaseConfig = {
 let app, auth, db, googleProvider;
 let currentUser = null;
 let isInitialized = false;
+let userSyncUnsubscribe = null;
 
 /**
  * Fetch server-side environment variables or use client config to init Firebase
@@ -58,6 +58,7 @@ async function initFirebase() {
   const key = firebaseConfig.apiKey ? firebaseConfig.apiKey.trim() : "";
   if (!key || key.startsWith("YOUR_") || key === "your_firebase_api_key") {
     console.warn("[PRAXiS Auth] Missing or placeholder Firebase API Key.");
+    checkStoredLocalUser();
     return false;
   }
 
@@ -69,108 +70,315 @@ async function initFirebase() {
     isInitialized = true;
 
     // Attach Auth state listener once initialized
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      updateProfileUI(user);
-
+    onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log(`[PRAXiS Auth] Logged in as: ${user.email} (${user.uid})`);
-        await fetchUserDataOnLogin(user.uid);
+        currentUser = {
+          uid: user.uid,
+          id: user.uid,
+          displayName: user.displayName || "Google User",
+          name: user.displayName || "Google User",
+          email: user.email || "",
+          photoURL: user.photoURL,
+          avatar: user.photoURL
+        };
+
+        // Sync Google Sign-In with backend database & login telemetry
+        fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.displayName,
+            photoURL: user.photoURL,
+            uid: user.uid
+          })
+        }).catch(err => console.warn("[PRAXiS Auth] Telemetry sync warning:", err));
+
+        updateProfileUI(currentUser);
+
+        // Unsubscribe existing real-time listener if any
+        if (userSyncUnsubscribe) {
+          userSyncUnsubscribe();
+          userSyncUnsubscribe = null;
+        }
+
+        console.log(`[PRAXiS Auth] Firebase logged in as: ${user.email} (${user.uid})`);
+        
+        // 🔄 Real-time Firestore document listener across all active devices
+        const userDocRef = doc(db, "users", user.uid);
+        userSyncUnsubscribe = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.roadmap && typeof window.renderSavedRoadmap === "function") {
+              window.renderSavedRoadmap(data.roadmap);
+            }
+            if (data.routineTracker && typeof window.renderSavedRoutineTracker === "function") {
+              window.renderSavedRoutineTracker(data.routineTracker);
+            }
+          }
+        }, (error) => {
+          console.error("[PRAXiS Cloud Sync] Real-time sync error:", error);
+        });
+
       } else {
-        console.log("[PRAXiS Auth] User signed out.");
+        // Fallback to check stored local user (email/password session)
+        checkStoredLocalUser();
       }
     });
 
-    console.log("[PRAXiS Auth] Firebase successfully initialized.");
+    console.log("[PRAXiS Auth] Firebase successfully initialized with Real-Time Cross-Device Sync.");
     return true;
   } catch (initErr) {
     console.error("[PRAXiS Auth] Initialization Error:", initErr);
+    checkStoredLocalUser();
     return false;
   }
 }
 
 // -------------------------------------------------------------------
-// 2. GOOGLE LOGIN, LOGOUT & PROFILE UI TOGGLE
+// 2. USER AUTHENTICATION & PROFILE UI TOGGLE
 // -------------------------------------------------------------------
 
-/**
- * Trigger Google Sign-In Popup
- */
+function checkStoredLocalUser() {
+  try {
+    const storedUser = localStorage.getItem("praxis_auth_user");
+    if (storedUser) {
+      currentUser = JSON.parse(storedUser);
+      updateProfileUI(currentUser);
+      return true;
+    }
+  } catch (err) {
+    console.warn("[PRAXiS Auth] Failed reading stored local user:", err);
+  }
+  updateProfileUI(null);
+  return false;
+}
+
 export async function loginWithGoogle() {
   if (!isInitialized) {
     const success = await initFirebase();
     if (!success) {
-      alert(
-        "⚠️ Firebase API Key Missing!\n\n" +
-        "To enable Google Sign-In, please add your actual Firebase Web App API key.\n\n" +
-        "Option 1: Open 'public/app-firebase.js' and replace 'YOUR_FIREBASE_API_KEY' with your key from Firebase Console.\n\n" +
-        "Option 2: Add FIREBASE_API_KEY, FIREBASE_PROJECT_ID, etc. in your .env file or Render Environment Variables."
-      );
+      window.openAuthModal('login');
       return;
     }
   }
 
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    console.log("[PRAXiS Auth] Signed in successfully:", result.user.displayName);
+    console.log("[PRAXiS Auth] Signed in successfully via Google:", result.user.displayName);
+    const gUser = {
+      uid: result.user.uid,
+      id: result.user.uid,
+      displayName: result.user.displayName,
+      name: result.user.displayName,
+      email: result.user.email,
+      photoURL: result.user.photoURL,
+      avatar: result.user.photoURL
+    };
+    currentUser = gUser;
+    localStorage.setItem("praxis_auth_user", JSON.stringify(gUser));
+    updateProfileUI(gUser);
+    window.closeAuthModal();
     return result.user;
   } catch (error) {
     console.error("[PRAXiS Auth] Google Sign-In Error:", error.code, error.message);
-    if (error.code === "auth/api-key-not-valid") {
-      alert("❌ Invalid Firebase API Key! Please verify the API key copied from your Firebase Console.");
+    if (error.code === "auth/api-key-not-valid" || error.code === "auth/unauthorized-domain") {
+      window.openAuthModal('login');
     } else if (error.code !== "auth/popup-closed-by-user") {
       alert(`Google Sign-In failed: ${error.message}`);
     }
   }
 }
 
-/**
- * Handle User Logout
- */
 export async function logoutUser() {
-  if (!auth) return;
-  try {
-    await signOut(auth);
-    console.log("[PRAXiS Auth] User logged out.");
-  } catch (error) {
-    console.error("[PRAXiS Auth] Logout Error:", error.message);
+  if (userSyncUnsubscribe) {
+    userSyncUnsubscribe();
+    userSyncUnsubscribe = null;
   }
+  if (auth) {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn("[PRAXiS Auth] Firebase signout error:", err);
+    }
+  }
+
+  localStorage.removeItem("praxis_auth_user");
+  localStorage.removeItem("praxis_token");
+  currentUser = null;
+  updateProfileUI(null);
+  console.log("[PRAXiS Auth] User logged out.");
 }
 
-/**
- * Update UI for Auth State
- */
 function updateProfileUI(user) {
   const loginBtn = document.getElementById("btn-google-login");
   const profileSection = document.getElementById("profile-section");
   const userAvatar = document.getElementById("user-avatar");
   const userName = document.getElementById("user-name");
   const userEmail = document.getElementById("user-email");
+  const authGate = document.getElementById("auth-gate-landing");
+  const mainAppContent = document.getElementById("main-app-content");
+  const adminStudioBtn = document.getElementById("admin-studio-btn");
 
   if (user) {
+    // Logged In: Reveal full application, hide Auth Gate Landing
+    authGate?.classList.add("hidden");
+    mainAppContent?.classList.remove("hidden");
+    adminStudioBtn?.classList.remove("hidden");
+
     loginBtn?.classList.add("hidden");
     profileSection?.classList.remove("hidden");
-    if (userAvatar) userAvatar.src = user.photoURL || "https://lh3.googleusercontent.com/a/default-user";
-    if (userName) userName.textContent = user.displayName || "User";
+    if (userAvatar) userAvatar.src = user.photoURL || user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.name || user.displayName || "user")}`;
+    if (userName) userName.textContent = user.displayName || user.name || "Student";
     if (userEmail) userEmail.textContent = user.email || "";
+
+    window.closeAuthModal();
   } else {
+    // Logged Out: Lock application, show Auth Gate Landing
+    authGate?.classList.remove("hidden");
+    mainAppContent?.classList.add("hidden");
+    adminStudioBtn?.classList.add("hidden");
+
     loginBtn?.classList.remove("hidden");
     profileSection?.classList.add("hidden");
   }
 }
 
 // -------------------------------------------------------------------
-// 3. SAVING DATA TO CLOUD (FIRESTORE)
+// 3. AUTH MODAL & EMAIL/PASSWORD HANDLERS
 // -------------------------------------------------------------------
 
-/**
- * Save user's Career Compass generated roadmap into Firestore
- */
-export async function saveUserRoadmap(userId, roadmapData) {
-  if (!db || !userId) {
-    console.warn("[PRAXiS Storage] Save cancelled: Database or User ID not active.");
-    return;
+window.openAuthModal = function(tab = 'login') {
+  const modal = document.getElementById("auth-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+    window.switchAuthTab(tab);
   }
+};
+
+window.closeAuthModal = function() {
+  const modal = document.getElementById("auth-modal");
+  const alertEl = document.getElementById("auth-alert");
+  if (modal) modal.classList.add("hidden");
+  if (alertEl) alertEl.classList.add("hidden");
+};
+
+window.switchAuthTab = function(tab) {
+  const loginForm = document.getElementById("form-login");
+  const regForm = document.getElementById("form-register");
+  const tabLogin = document.getElementById("tab-login");
+  const tabReg = document.getElementById("tab-register");
+  const alertEl = document.getElementById("auth-alert");
+
+  if (alertEl) alertEl.classList.add("hidden");
+
+  if (tab === 'register') {
+    loginForm?.classList.add("hidden");
+    regForm?.classList.remove("hidden");
+    tabLogin?.classList.remove("bg-white", "text-indigo-600", "font-extrabold", "shadow-sm");
+    tabLogin?.classList.add("text-slate-500", "font-bold");
+    tabReg?.classList.add("bg-white", "text-indigo-600", "font-extrabold", "shadow-sm");
+    tabReg?.classList.remove("text-slate-500");
+  } else {
+    regForm?.classList.add("hidden");
+    loginForm?.classList.remove("hidden");
+    tabReg?.classList.remove("bg-white", "text-indigo-600", "font-extrabold", "shadow-sm");
+    tabReg?.classList.add("text-slate-500", "font-bold");
+    tabLogin?.classList.add("bg-white", "text-indigo-600", "font-extrabold", "shadow-sm");
+    tabLogin?.classList.remove("text-slate-500");
+  }
+};
+
+async function handleUserLogin(event) {
+  event.preventDefault();
+  const alertEl = document.getElementById("auth-alert");
+  const submitBtn = document.getElementById("btn-submit-login");
+
+  const emailOrUsername = document.getElementById("login-email")?.value.trim();
+  const password = document.getElementById("login-password")?.value;
+
+  if (!emailOrUsername || !password) return;
+
+  try {
+    if (submitBtn) submitBtn.innerText = "Signing in...";
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emailOrUsername, password })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      localStorage.setItem("praxis_token", data.token);
+      localStorage.setItem("praxis_auth_user", JSON.stringify(data.user));
+      currentUser = data.user;
+      updateProfileUI(currentUser);
+      if (alertEl) alertEl.classList.add("hidden");
+    } else {
+      if (alertEl) {
+        alertEl.innerText = "❌ " + (data.error || "Invalid login credentials.");
+        alertEl.className = "mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-rose-50 text-rose-600 border border-rose-200 block";
+      }
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.innerText = "❌ Server connection error. Ensure server is running.";
+      alertEl.className = "mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-rose-50 text-rose-600 border border-rose-200 block";
+    }
+  } finally {
+    if (submitBtn) submitBtn.innerText = "Sign In to PRAXiS";
+  }
+}
+
+async function handleUserRegister(event) {
+  event.preventDefault();
+  const alertEl = document.getElementById("auth-alert");
+  const submitBtn = document.getElementById("btn-submit-register");
+
+  const name = document.getElementById("reg-name")?.value.trim();
+  const email = document.getElementById("reg-email")?.value.trim();
+  const username = document.getElementById("reg-username")?.value.trim();
+  const password = document.getElementById("reg-password")?.value;
+
+  if (!name || !email || !password) return;
+
+  try {
+    if (submitBtn) submitBtn.innerText = "Creating Account...";
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, username, password })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      localStorage.setItem("praxis_token", data.token);
+      localStorage.setItem("praxis_auth_user", JSON.stringify(data.user));
+      currentUser = data.user;
+      updateProfileUI(currentUser);
+      if (alertEl) alertEl.classList.add("hidden");
+    } else {
+      if (alertEl) {
+        alertEl.innerText = "❌ " + (data.error || "Registration failed.");
+        alertEl.className = "mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-rose-50 text-rose-600 border border-rose-200 block";
+      }
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.innerText = "❌ Server connection error. Ensure server is running.";
+      alertEl.className = "mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-rose-50 text-rose-600 border border-rose-200 block";
+    }
+  } finally {
+    if (submitBtn) submitBtn.innerText = "Create Free Account";
+  }
+}
+
+// -------------------------------------------------------------------
+// 4. SAVING DATA TO CLOUD (FIRESTORE)
+// -------------------------------------------------------------------
+
+export async function saveUserRoadmap(userId, roadmapData) {
+  if (!db || !userId) return;
 
   try {
     const userDocRef = doc(db, "users", userId);
@@ -178,21 +386,14 @@ export async function saveUserRoadmap(userId, roadmapData) {
       roadmap: roadmapData,
       roadmapUpdatedAt: new Date().toISOString()
     }, { merge: true });
-
-    console.log("[PRAXiS Storage] Career Roadmap saved to Firestore successfully.");
+    console.log("[PRAXiS Storage] Roadmap synced to Cloud Firestore.");
   } catch (error) {
     console.error("[PRAXiS Storage] Error saving roadmap:", error);
   }
 }
 
-/**
- * Save and update user's 30-day Routine Tracker progress
- */
 export async function saveRoutineTracker(userId, routineData) {
-  if (!db || !userId) {
-    console.warn("[PRAXiS Storage] Save cancelled: Database or User ID not active.");
-    return;
-  }
+  if (!db || !userId) return;
 
   try {
     const userDocRef = doc(db, "users", userId);
@@ -200,20 +401,16 @@ export async function saveRoutineTracker(userId, routineData) {
       routineTracker: routineData,
       routineUpdatedAt: new Date().toISOString()
     }, { merge: true });
-
-    console.log("[PRAXiS Storage] Routine Tracker progress saved to Firestore successfully.");
+    console.log("[PRAXiS Storage] Routine Tracker synced to Cloud Firestore.");
   } catch (error) {
     console.error("[PRAXiS Storage] Error saving routine tracker:", error);
   }
 }
 
 // -------------------------------------------------------------------
-// 4. RETRIEVING DATA FROM CLOUD (FIRESTORE)
+// 5. RETRIEVING DATA FROM CLOUD (FIRESTORE)
 // -------------------------------------------------------------------
 
-/**
- * Fetch user data from database immediately after login
- */
 export async function fetchUserDataOnLogin(userId) {
   if (!db || !userId) return;
 
@@ -225,28 +422,30 @@ export async function fetchUserDataOnLogin(userId) {
       const data = docSnap.data();
 
       if (data.roadmap && typeof window.renderSavedRoadmap === "function") {
-        console.log("[PRAXiS Storage] Restoring saved Career Roadmap...");
         window.renderSavedRoadmap(data.roadmap);
       }
 
       if (data.routineTracker && typeof window.renderSavedRoutineTracker === "function") {
-        console.log("[PRAXiS Storage] Restoring saved Routine Tracker progress...");
         window.renderSavedRoutineTracker(data.routineTracker);
       }
-    } else {
-      console.log("[PRAXiS Storage] No cloud storage record found for this user yet.");
     }
   } catch (error) {
     console.error("[PRAXiS Storage] Error fetching user data:", error);
   }
 }
 
-// Auto-initialize on load
+// Auto-initialize on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
+  checkStoredLocalUser();
   initFirebase();
 
-  document.getElementById("btn-google-login")?.addEventListener("click", loginWithGoogle);
+  document.getElementById("btn-google-login")?.addEventListener("click", () => window.openAuthModal('login'));
+  document.getElementById("gate-btn-google-login")?.addEventListener("click", loginWithGoogle);
+  document.getElementById("modal-btn-google-login")?.addEventListener("click", loginWithGoogle);
   document.getElementById("btn-logout")?.addEventListener("click", logoutUser);
+
+  document.getElementById("form-login")?.addEventListener("submit", handleUserLogin);
+  document.getElementById("form-register")?.addEventListener("submit", handleUserRegister);
 });
 
 // Global bindings for legacy script.js access
@@ -254,7 +453,9 @@ window.praxisAuth = {
   getUser: () => currentUser,
   login: loginWithGoogle,
   logout: logoutUser,
-  saveRoadmap: (roadmapData) => currentUser && saveUserRoadmap(currentUser.uid, roadmapData),
-  saveRoutine: (routineData) => currentUser && saveRoutineTracker(currentUser.uid, routineData),
-  fetchData: () => currentUser && fetchUserDataOnLogin(currentUser.uid)
+  openModal: window.openAuthModal,
+  closeModal: window.closeAuthModal,
+  saveRoadmap: (roadmapData) => currentUser && saveUserRoadmap(currentUser.id || currentUser.uid, roadmapData),
+  saveRoutine: (routineData) => currentUser && saveRoutineTracker(currentUser.id || currentUser.uid, routineData),
+  fetchData: () => currentUser && fetchUserDataOnLogin(currentUser.id || currentUser.uid)
 };

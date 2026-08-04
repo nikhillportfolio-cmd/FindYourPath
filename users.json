@@ -13,9 +13,44 @@
       "loginCount": 2,
       "lastLoginAt": "2026-07-31T08:59:35.932Z",
       "lastLoginIp": "127.0.0.1"
+    },
+    {
+      "id": "usr_1785856512734_15zjq",
+      "name": "Nikhil Test",
+      "email": "nikhil@example.com",
+      "username": "nikhil123",
+      "passwordHash": "$2b$10$fGA5TnEYLza7K8whUCgCy.Z6GKYv0Ble3GGQkGxkkqTsXrfMhZBVi",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Nikhil%20Test",
+      "isVerified": true,
+      "createdAt": "2026-08-04T15:15:12.735Z",
+      "loginCount": 2,
+      "lastLoginAt": "2026-08-04T15:15:24.675Z",
+      "lastLoginIp": "127.0.0.1"
     }
   ],
   "loginLogs": [
+    {
+      "id": "log_1785856524763_0otn",
+      "userId": "usr_1785856512734_15zjq",
+      "name": "Nikhil Test",
+      "username": "nikhil123",
+      "email": "nikhil@example.com",
+      "timestamp": "2026-08-04T15:15:24.675Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "SUCCESS"
+    },
+    {
+      "id": "log_1785856512735_nc0m",
+      "userId": "usr_1785856512734_15zjq",
+      "name": "Nikhil Test",
+      "username": "nikhil123",
+      "email": "nikhil@example.com",
+      "timestamp": "2026-08-04T15:15:12.735Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "SUCCESS"
+    },
     {
       "id": "log_1785488375932_fzv3",
       "userId": "usr_1785488375856_wzqyr",

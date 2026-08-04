@@ -76,6 +76,12 @@ animateBookOnScroll();
 // 3. TRANSITION LOGIC
 // -------------------------------------------------------------
 function startQuiz(interest) {
+    if (window.praxisAuth && !window.praxisAuth.getUser()) {
+        if (typeof window.openAuthModal === "function") {
+            window.openAuthModal('login');
+        }
+        return;
+    }
     userInterest = interest; 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     landingIntro.classList.add("fade-out");
@@ -264,6 +270,17 @@ function showCareerDetails(index) {
         roadmapContainer.appendChild(phaseDiv);
     });
 
+    // Auto-sync selected Roadmap to Cloud Firestore for cross-device sync
+    if (window.praxisAuth && window.praxisAuth.getUser()) {
+        window.praxisAuth.saveRoadmap({
+            title: match.title,
+            icon: match.icon,
+            desc: match.desc,
+            phases: match.phases,
+            updatedAt: new Date().toISOString()
+        });
+    }
+
     const booksContainer = document.getElementById("detail-books");
     booksContainer.innerHTML = "";
 
@@ -324,6 +341,14 @@ function saveHabitsToStorage() {
         console.error("Failed to save habits to localStorage:", e);
     }
     updateFloatingBadge();
+
+    // Auto-sync to Cloud Firestore across all logged-in devices
+    if (window.praxisAuth && window.praxisAuth.getUser()) {
+        window.praxisAuth.saveRoutine({
+            habits: habits,
+            updatedAt: new Date().toISOString()
+        });
+    }
 }
 
 function updateFloatingBadge() {
@@ -2289,4 +2314,62 @@ function checkBookmarkStatus() {
         if (bookmarkText) bookmarkText.innerText = "Bookmark";
     }
 }
+
+// =====================================================================
+// REAL-TIME CROSS-DEVICE SYNCHRONIZATION HANDLERS
+// =====================================================================
+
+/**
+ * Render saved routine tracker from Cloud Firestore across all user devices
+ */
+window.renderSavedRoutineTracker = function(routineData) {
+    if (!routineData) return;
+    if (Array.isArray(routineData.habits)) {
+        habits = routineData.habits;
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+        } catch (e) {}
+        
+        if (typeof renderHabits === "function") renderHabits();
+        if (typeof updateStats === "function") updateStats();
+        if (typeof updateFloatingBadge === "function") updateFloatingBadge();
+        console.log("[PRAXiS UI] Habit Routine Tracker synced from cloud across devices.");
+    }
+};
+
+/**
+ * Render saved Career Compass roadmap from Cloud Firestore across all user devices
+ */
+window.renderSavedRoadmap = function(roadmapData) {
+    if (!roadmapData || !roadmapData.title) return;
+    
+    const detailTitle = document.getElementById("detail-title");
+    const detailDesc = document.getElementById("detail-desc");
+    const detailIcon = document.getElementById("detail-icon");
+    const roadmapContainer = document.getElementById("detail-roadmap");
+
+    if (detailTitle) detailTitle.innerText = roadmapData.title;
+    if (detailDesc) detailDesc.innerText = roadmapData.desc || "";
+    if (detailIcon) detailIcon.innerText = roadmapData.icon || "🧭";
+
+    if (roadmapContainer && Array.isArray(roadmapData.phases)) {
+        roadmapContainer.innerHTML = "";
+        roadmapData.phases.forEach((phase, i) => {
+            const phaseDiv = document.createElement("div");
+            phaseDiv.className = "relative group fade-in";
+            phaseDiv.style.animationDelay = `${i * 100}ms`;
+            phaseDiv.innerHTML = `
+                <div class="absolute -left-[25px] sm:-left-[33px] top-4 w-4 h-4 neu-circle-pressed flex items-center justify-center">
+                    <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+                </div>
+                <div class="neu-card-sm p-4 sm:p-6">
+                    <h4 class="font-black text-blue-600 text-sm sm:text-base mb-1.5 sm:mb-2 font-outfit tracking-wide">${phase.title}</h4>
+                    <p class="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">${phase.steps}</p>
+                </div>
+            `;
+            roadmapContainer.appendChild(phaseDiv);
+        });
+        console.log("[PRAXiS UI] Career Compass Roadmap synced from cloud across devices.");
+    }
+};
 
