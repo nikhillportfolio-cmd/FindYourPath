@@ -1,6 +1,6 @@
 /**
  * PRAXiS - Firebase Authentication & Cloud Storage Integration Module
- * Built for Vanilla JavaScript using Firebase v10+ ES Modules via CDN.
+ * Handles Google Authentication & Firestore Cloud Data Persistence.
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -19,11 +19,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // -------------------------------------------------------------------
-// 1. INITIALIZATION & SETUP
+// 1. CONFIGURATION & INITIALIZATION
 // -------------------------------------------------------------------
 
-// Replace these values with your actual config from Firebase Console -> Project Settings -> Web App
-const firebaseConfig = {
+// Default hardcoded fallback configuration
+// (You can paste your Firebase Console keys directly here OR in your server's .env file)
+let firebaseConfig = {
   apiKey: "YOUR_FIREBASE_API_KEY",
   authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
   projectId: "YOUR_PROJECT_ID",
@@ -32,14 +33,61 @@ const firebaseConfig = {
   appId: "YOUR_APP_ID"
 };
 
-// Initialize Firebase App & Services
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
-
-// Active User Reference
+let app, auth, db, googleProvider;
 let currentUser = null;
+let isInitialized = false;
+
+/**
+ * Fetch server-side environment variables or use client config to init Firebase
+ */
+async function initFirebase() {
+  try {
+    const res = await fetch("/api/firebase-config");
+    if (res.ok) {
+      const serverConfig = await res.json();
+      if (serverConfig && serverConfig.apiKey && serverConfig.apiKey.trim() !== "") {
+        firebaseConfig = serverConfig;
+        console.log("[PRAXiS Auth] Loaded Firebase configuration from server environment.");
+      }
+    }
+  } catch (err) {
+    console.warn("[PRAXiS Auth] Using local client configuration.");
+  }
+
+  // Validate API key
+  const key = firebaseConfig.apiKey ? firebaseConfig.apiKey.trim() : "";
+  if (!key || key.startsWith("YOUR_") || key === "your_firebase_api_key") {
+    console.warn("[PRAXiS Auth] Missing or placeholder Firebase API Key.");
+    return false;
+  }
+
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    googleProvider = new GoogleAuthProvider();
+    isInitialized = true;
+
+    // Attach Auth state listener once initialized
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      updateProfileUI(user);
+
+      if (user) {
+        console.log(`[PRAXiS Auth] Logged in as: ${user.email} (${user.uid})`);
+        await fetchUserDataOnLogin(user.uid);
+      } else {
+        console.log("[PRAXiS Auth] User signed out.");
+      }
+    });
+
+    console.log("[PRAXiS Auth] Firebase successfully initialized.");
+    return true;
+  } catch (initErr) {
+    console.error("[PRAXiS Auth] Initialization Error:", initErr);
+    return false;
+  }
+}
 
 // -------------------------------------------------------------------
 // 2. GOOGLE LOGIN, LOGOUT & PROFILE UI TOGGLE
@@ -49,13 +97,28 @@ let currentUser = null;
  * Trigger Google Sign-In Popup
  */
 export async function loginWithGoogle() {
+  if (!isInitialized) {
+    const success = await initFirebase();
+    if (!success) {
+      alert(
+        "⚠️ Firebase API Key Missing!\n\n" +
+        "To enable Google Sign-In, please add your actual Firebase Web App API key.\n\n" +
+        "Option 1: Open 'public/app-firebase.js' and replace 'YOUR_FIREBASE_API_KEY' with your key from Firebase Console.\n\n" +
+        "Option 2: Add FIREBASE_API_KEY, FIREBASE_PROJECT_ID, etc. in your .env file or Render Environment Variables."
+      );
+      return;
+    }
+  }
+
   try {
     const result = await signInWithPopup(auth, googleProvider);
     console.log("[PRAXiS Auth] Signed in successfully:", result.user.displayName);
     return result.user;
   } catch (error) {
     console.error("[PRAXiS Auth] Google Sign-In Error:", error.code, error.message);
-    if (error.code !== "auth/popup-closed-by-user") {
+    if (error.code === "auth/api-key-not-valid") {
+      alert("❌ Invalid Firebase API Key! Please verify the API key copied from your Firebase Console.");
+    } else if (error.code !== "auth/popup-closed-by-user") {
       alert(`Google Sign-In failed: ${error.message}`);
     }
   }
@@ -65,6 +128,7 @@ export async function loginWithGoogle() {
  * Handle User Logout
  */
 export async function logoutUser() {
+  if (!auth) return;
   try {
     await signOut(auth);
     console.log("[PRAXiS Auth] User logged out.");
@@ -74,7 +138,7 @@ export async function logoutUser() {
 }
 
 /**
- * Update UI for Auth State (Toggles Profile Card vs Sign-In Button)
+ * Update UI for Auth State
  */
 function updateProfileUI(user) {
   const loginBtn = document.getElementById("btn-google-login");
@@ -95,34 +159,16 @@ function updateProfileUI(user) {
   }
 }
 
-/**
- * Auth State Observer - Maintains auth state across browser refreshes
- */
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-  updateProfileUI(user);
-
-  if (user) {
-    console.log(`[PRAXiS Auth] Authenticated as: ${user.email} (${user.uid})`);
-    // Immediately fetch saved user data from Firestore
-    await fetchUserDataOnLogin(user.uid);
-  } else {
-    console.log("[PRAXiS Auth] No user is logged in.");
-  }
-});
-
 // -------------------------------------------------------------------
 // 3. SAVING DATA TO CLOUD (FIRESTORE)
 // -------------------------------------------------------------------
 
 /**
  * Save user's Career Compass generated roadmap into Firestore
- * @param {string} userId - User UID
- * @param {Object} roadmapData - Roadmap details object
  */
 export async function saveUserRoadmap(userId, roadmapData) {
-  if (!userId) {
-    console.warn("[PRAXiS Storage] Save cancelled: User is not logged in.");
+  if (!db || !userId) {
+    console.warn("[PRAXiS Storage] Save cancelled: Database or User ID not active.");
     return;
   }
 
@@ -140,13 +186,11 @@ export async function saveUserRoadmap(userId, roadmapData) {
 }
 
 /**
- * Save and update user's 30-day Routine Tracker heatmap progress
- * @param {string} userId - User UID
- * @param {Object} routineData - Routine Tracker habits & heatmap data
+ * Save and update user's 30-day Routine Tracker progress
  */
 export async function saveRoutineTracker(userId, routineData) {
-  if (!userId) {
-    console.warn("[PRAXiS Storage] Save cancelled: User is not logged in.");
+  if (!db || !userId) {
+    console.warn("[PRAXiS Storage] Save cancelled: Database or User ID not active.");
     return;
   }
 
@@ -168,11 +212,10 @@ export async function saveRoutineTracker(userId, routineData) {
 // -------------------------------------------------------------------
 
 /**
- * Fetch Roadmap and Routine Tracker data from database immediately after login
- * @param {string} userId - User UID
+ * Fetch user data from database immediately after login
  */
 export async function fetchUserDataOnLogin(userId) {
-  if (!userId) return;
+  if (!db || !userId) return;
 
   try {
     const userDocRef = doc(db, "users", userId);
@@ -181,13 +224,11 @@ export async function fetchUserDataOnLogin(userId) {
     if (docSnap.exists()) {
       const data = docSnap.data();
 
-      // 1. Update Roadmap UI if saved roadmap exists
       if (data.roadmap && typeof window.renderSavedRoadmap === "function") {
         console.log("[PRAXiS Storage] Restoring saved Career Roadmap...");
         window.renderSavedRoadmap(data.roadmap);
       }
 
-      // 2. Update Routine Tracker UI if saved routine data exists
       if (data.routineTracker && typeof window.renderSavedRoutineTracker === "function") {
         console.log("[PRAXiS Storage] Restoring saved Routine Tracker progress...");
         window.renderSavedRoutineTracker(data.routineTracker);
@@ -200,15 +241,17 @@ export async function fetchUserDataOnLogin(userId) {
   }
 }
 
-// Bind DOM event listeners
+// Auto-initialize on load
 document.addEventListener("DOMContentLoaded", () => {
+  initFirebase();
+
   document.getElementById("btn-google-login")?.addEventListener("click", loginWithGoogle);
   document.getElementById("btn-logout")?.addEventListener("click", logoutUser);
 });
 
-// Expose helper functions globally for site interaction
+// Global bindings for legacy script.js access
 window.praxisAuth = {
-  getCurrentUser: () => currentUser,
+  getUser: () => currentUser,
   login: loginWithGoogle,
   logout: logoutUser,
   saveRoadmap: (roadmapData) => currentUser && saveUserRoadmap(currentUser.uid, roadmapData),
