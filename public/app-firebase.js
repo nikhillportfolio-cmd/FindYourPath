@@ -203,11 +203,19 @@ export async function logoutUser() {
     }
   }
 
+  // Purge browser local storage so data is stored in Google Cloud, not retained locally
   localStorage.removeItem("praxis_auth_user");
   localStorage.removeItem("praxis_token");
+  localStorage.removeItem("findyourpath_habits");
+  localStorage.removeItem("praxis_saved_roadmap");
+
+  if (typeof window.clearUserUIState === "function") {
+    window.clearUserUIState();
+  }
+
   currentUser = null;
   updateProfileUI(null);
-  console.log("[PRAXiS Auth] User logged out.");
+  console.log("[PRAXiS Auth] User logged out and browser memory cleared.");
 }
 
 function updateProfileUI(user) {
@@ -233,6 +241,9 @@ function updateProfileUI(user) {
     if (userEmail) userEmail.textContent = user.email || "";
 
     window.closeAuthModal();
+
+    // Fetch and sync user data across devices on login
+    fetchUserDataOnLogin(user.id || user.uid);
   } else {
     // Logged Out: Lock application, show Auth Gate Landing
     authGate?.classList.remove("hidden");
@@ -374,63 +385,139 @@ async function handleUserRegister(event) {
 }
 
 // -------------------------------------------------------------------
-// 4. SAVING DATA TO CLOUD (FIRESTORE)
+// 4. SAVING DATA TO CLOUD & SERVER BACKEND
 // -------------------------------------------------------------------
 
 export async function saveUserRoadmap(userId, roadmapData) {
-  if (!db || !userId) return;
+  if (!userId) return;
 
+  const token = localStorage.getItem("praxis_token");
+  const user = currentUser;
+
+  // 1. Save to server backend database (users.json)
   try {
-    const userDocRef = doc(db, "users", userId);
-    await setDoc(userDocRef, {
-      roadmap: roadmapData,
-      roadmapUpdatedAt: new Date().toISOString()
-    }, { merge: true });
-    console.log("[PRAXiS Storage] Roadmap synced to Cloud Firestore.");
-  } catch (error) {
-    console.error("[PRAXiS Storage] Error saving roadmap:", error);
+    await fetch("/api/user/sync", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        userId: userId,
+        email: user?.email,
+        roadmap: roadmapData
+      })
+    });
+    console.log("[PRAXiS Sync] Roadmap synced to server database.");
+  } catch (err) {
+    console.warn("[PRAXiS Sync] Backend roadmap sync warning:", err);
+  }
+
+  // 2. Save to Cloud Firestore (if available)
+  if (db) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      await setDoc(userDocRef, {
+        roadmap: roadmapData,
+        roadmapUpdatedAt: new Date().toISOString()
+      }, { merge: true });
+      console.log("[PRAXiS Storage] Roadmap synced to Cloud Firestore.");
+    } catch (error) {
+      console.error("[PRAXiS Storage] Firestore error saving roadmap:", error);
+    }
   }
 }
 
 export async function saveRoutineTracker(userId, routineData) {
-  if (!db || !userId) return;
+  if (!userId) return;
 
+  const token = localStorage.getItem("praxis_token");
+  const user = currentUser;
+
+  // 1. Save to server backend database (users.json)
   try {
-    const userDocRef = doc(db, "users", userId);
-    await setDoc(userDocRef, {
-      routineTracker: routineData,
-      routineUpdatedAt: new Date().toISOString()
-    }, { merge: true });
-    console.log("[PRAXiS Storage] Routine Tracker synced to Cloud Firestore.");
-  } catch (error) {
-    console.error("[PRAXiS Storage] Error saving routine tracker:", error);
+    await fetch("/api/user/sync", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        userId: userId,
+        email: user?.email,
+        routineTracker: routineData
+      })
+    });
+    console.log("[PRAXiS Sync] Routine Tracker synced to server database.");
+  } catch (err) {
+    console.warn("[PRAXiS Sync] Backend routine sync warning:", err);
+  }
+
+  // 2. Save to Cloud Firestore (if available)
+  if (db) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      await setDoc(userDocRef, {
+        routineTracker: routineData,
+        routineUpdatedAt: new Date().toISOString()
+      }, { merge: true });
+      console.log("[PRAXiS Storage] Routine Tracker synced to Cloud Firestore.");
+    } catch (error) {
+      console.error("[PRAXiS Storage] Firestore error saving routine tracker:", error);
+    }
   }
 }
 
 // -------------------------------------------------------------------
-// 5. RETRIEVING DATA FROM CLOUD (FIRESTORE)
+// 5. RETRIEVING DATA FROM CLOUD & SERVER BACKEND
 // -------------------------------------------------------------------
 
 export async function fetchUserDataOnLogin(userId) {
-  if (!db || !userId) return;
+  if (!userId) return;
+  const user = currentUser;
+  const token = localStorage.getItem("praxis_token");
 
+  // 1. Fetch from server backend database (users.json)
   try {
-    const userDocRef = doc(db, "users", userId);
-    const docSnap = await getDoc(userDocRef);
-
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-
+    const email = user?.email || "";
+    const res = await fetch(`/api/user/sync?userId=${encodeURIComponent(userId)}&email=${encodeURIComponent(email)}`, {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+    if (res.ok) {
+      const data = await res.json();
       if (data.roadmap && typeof window.renderSavedRoadmap === "function") {
         window.renderSavedRoadmap(data.roadmap);
       }
-
       if (data.routineTracker && typeof window.renderSavedRoutineTracker === "function") {
         window.renderSavedRoutineTracker(data.routineTracker);
       }
+      console.log("[PRAXiS Sync] Synced user data loaded from server database.");
     }
-  } catch (error) {
-    console.error("[PRAXiS Storage] Error fetching user data:", error);
+  } catch (err) {
+    console.warn("[PRAXiS Sync] Backend data fetch error:", err);
+  }
+
+  // 2. Fetch from Cloud Firestore (if available)
+  if (db) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const docSnap = await getDoc(userDocRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+
+        if (data.roadmap && typeof window.renderSavedRoadmap === "function") {
+          window.renderSavedRoadmap(data.roadmap);
+        }
+
+        if (data.routineTracker && typeof window.renderSavedRoutineTracker === "function") {
+          window.renderSavedRoutineTracker(data.routineTracker);
+        }
+        console.log("[PRAXiS Cloud Sync] Synced user data loaded from Cloud Firestore.");
+      }
+    } catch (error) {
+      console.error("[PRAXiS Storage] Firestore fetch error:", error);
+    }
   }
 }
 

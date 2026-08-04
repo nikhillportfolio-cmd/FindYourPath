@@ -318,10 +318,14 @@ let habits = [];
 let currentCategoryFilter = "all";
 
 function loadHabitsFromStorage() {
+    // Primary: If user is authenticated, load directly from Google Cloud
+    if (window.praxisAuth && window.praxisAuth.getUser()) {
+        window.praxisAuth.fetchData();
+        return;
+    }
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         habits = saved ? JSON.parse(saved) : [];
-        // Ensure backwards compatibility for timeOfDay
         habits.forEach(h => {
             if (!h.timeOfDay) {
                 h.timeOfDay = "Morning Routine";
@@ -335,21 +339,33 @@ function loadHabitsFromStorage() {
 }
 
 function saveHabitsToStorage() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
-    } catch (e) {
-        console.error("Failed to save habits to localStorage:", e);
-    }
     updateFloatingBadge();
 
-    // Auto-sync to Cloud Firestore across all logged-in devices
+    // Primary: Push directly to Google Cloud Firestore across all devices
     if (window.praxisAuth && window.praxisAuth.getUser()) {
         window.praxisAuth.saveRoutine({
             habits: habits,
             updatedAt: new Date().toISOString()
         });
+    } else {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+        } catch (e) {
+            console.error("Failed to save habits to localStorage:", e);
+        }
     }
 }
+
+window.clearUserUIState = function() {
+    habits = [];
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem("praxis_saved_roadmap");
+    } catch (e) {}
+    if (typeof renderHabits === "function") renderHabits();
+    if (typeof updateStats === "function") updateStats();
+    if (typeof updateFloatingBadge === "function") updateFloatingBadge();
+};
 
 function updateFloatingBadge() {
     const badge = document.getElementById("tracker-badge-count");

@@ -25,7 +25,25 @@
       "createdAt": "2026-08-04T15:15:12.735Z",
       "loginCount": 2,
       "lastLoginAt": "2026-08-04T15:15:24.675Z",
-      "lastLoginIp": "127.0.0.1"
+      "lastLoginIp": "127.0.0.1",
+      "roadmap": {
+        "title": "AI / Machine Learning Engineer",
+        "icon": "🤖"
+      },
+      "routineTracker": {
+        "habits": [
+          {
+            "id": 1,
+            "title": "Learn Python",
+            "days": [
+              1,
+              1,
+              0
+            ]
+          }
+        ]
+      },
+      "dataUpdatedAt": "2026-08-04T15:21:37.637Z"
     }
   ],
   "loginLogs": [

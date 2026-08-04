@@ -10330,6 +10330,88 @@ app.get('/api/auth/me', (req, res) => {
     }
 });
 
+// Cross-Device Data Synchronization Endpoint (Save Roadmap & Routine per User/Gmail)
+app.post('/api/user/sync', (req, res) => {
+    try {
+        const { userId, email, roadmap, routineTracker } = req.body || {};
+        const authHeader = req.headers.authorization;
+        let authUserId = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const decoded = jwt.verify(token, JWT_SECRET);
+                authUserId = decoded.userId;
+            } catch (err) {}
+        }
+
+        const queryId = authUserId || userId;
+        const queryEmail = email ? email.trim().toLowerCase() : '';
+
+        const user = usersData.users.find(u => 
+            (queryId && u.id === queryId) || 
+            (queryEmail && u.email.toLowerCase() === queryEmail)
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: "User profile not found for data sync." });
+        }
+
+        if (roadmap) user.roadmap = roadmap;
+        if (routineTracker) user.routineTracker = routineTracker;
+        user.dataUpdatedAt = new Date().toISOString();
+
+        saveUsersData();
+
+        res.json({
+            success: true,
+            roadmap: user.roadmap || null,
+            routineTracker: user.routineTracker || null
+        });
+    } catch (err) {
+        console.error("User Sync Save Error:", err);
+        res.status(500).json({ error: "Failed to sync user data." });
+    }
+});
+
+// Fetch Cross-Device Synced User Data
+app.get('/api/user/sync', (req, res) => {
+    try {
+        const { userId, email } = req.query || {};
+        const authHeader = req.headers.authorization;
+        let authUserId = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const decoded = jwt.verify(token, JWT_SECRET);
+                authUserId = decoded.userId;
+            } catch (err) {}
+        }
+
+        const queryId = authUserId || userId;
+        const queryEmail = email ? email.trim().toLowerCase() : '';
+
+        const user = usersData.users.find(u => 
+            (queryId && u.id === queryId) || 
+            (queryEmail && u.email.toLowerCase() === queryEmail)
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: "User data not found." });
+        }
+
+        res.json({
+            success: true,
+            roadmap: user.roadmap || null,
+            routineTracker: user.routineTracker || null
+        });
+    } catch (err) {
+        console.error("User Sync Fetch Error:", err);
+        res.status(500).json({ error: "Failed to fetch user data." });
+    }
+});
+
 // 11. Admin Registered Users API
 app.get('/api/admin/users', (req, res) => {
     const providedPass = req.headers['x-admin-password'] || req.query.password;
