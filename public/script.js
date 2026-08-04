@@ -561,7 +561,29 @@ function getHandwrittenMarkHTML(val, dayIndex) {
     return "";
 }
 
-// SERVICE WORKER & DUAL NOTIFICATION ENGINE (SYSTEM + IN-APP TOAST + WEB AUDIO CHIME)
+// SERVICE WORKER & HIGH-EFFICIENCY DUAL NOTIFICATION ENGINE
+let sharedAudioCtx = null;
+
+function getSharedAudioContext() {
+    if (!sharedAudioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            sharedAudioCtx = new AudioCtx();
+        }
+    }
+    if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+        sharedAudioCtx.resume().catch(() => {});
+    }
+    return sharedAudioCtx;
+}
+
+// Global user gesture unlock listener for Web Audio Context
+['click', 'keydown', 'touchstart'].forEach(eventType => {
+    window.addEventListener(eventType, () => {
+        getSharedAudioContext();
+    }, { once: true, passive: true });
+});
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(reg => {
@@ -569,6 +591,17 @@ if ('serviceWorker' in navigator) {
         }).catch(err => {
             console.log('PRAXiS Service Worker registration failed:', err);
         });
+    });
+
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        const { type, action, habitId } = event.data || {};
+        if (type === 'NOTIFICATION_ACTION' && habitId) {
+            if (action === 'complete') {
+                markHabitCompletedDirectly(habitId);
+            } else if (action === 'snooze') {
+                snoozeHabitReminder(habitId, 10);
+            }
+        }
     });
 }
 
@@ -585,11 +618,10 @@ function formatAMPM(timeStr) {
     return `${displayH}:${displayM} ${ampm}`;
 }
 
-function playNotificationSound(isMissed) {
+function playNotificationSound(soundType) {
     try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
+        const ctx = getSharedAudioContext();
+        if (!ctx) return;
         const now = ctx.currentTime;
 
         const osc = ctx.createOscillator();
@@ -597,27 +629,72 @@ function playNotificationSound(isMissed) {
         osc.connect(gain);
         gain.connect(ctx.destination);
 
-        if (isMissed) {
+        if (soundType === 'missed' || soundType === true) {
             osc.frequency.setValueAtTime(280, now);
             osc.frequency.exponentialRampToValueAtTime(170, now + 0.45);
             gain.gain.setValueAtTime(0.3, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
             osc.start(now);
             osc.stop(now + 0.45);
-        } else {
-            osc.frequency.setValueAtTime(523.25, now); // C5
-            osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+        } else if (soundType === 'complete') {
+            osc.frequency.setValueAtTime(587.33, now); // D5
+            osc.frequency.setValueAtTime(880, now + 0.15); // A5
             gain.gain.setValueAtTime(0.25, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.start(now);
-            osc.stop(now + 0.45);
+            osc.stop(now + 0.4);
+        } else {
+            // Upbeat 3-note chime (C5 -> E5 -> G5)
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.12);
+            osc.frequency.setValueAtTime(783.99, now + 0.24);
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
         }
+
+        setTimeout(() => {
+            try {
+                osc.disconnect();
+                gain.disconnect();
+            } catch (e) {}
+        }, 600);
     } catch (e) {
         console.log("Audio play error:", e);
     }
 }
 
-function showInAppToast(title, body, isMissed) {
+function markHabitCompletedDirectly(habitId) {
+    const habitIndex = habits.findIndex(h => h.id === habitId || String(h.id) === String(habitId));
+    if (habitIndex === -1) return;
+
+    const now = new Date();
+    const todayIndex = (now.getDate() - 1) % 30;
+    const habit = habits[habitIndex];
+
+    if (!habit.days) habit.days = Array(30).fill(false);
+    habit.days[todayIndex] = "done";
+    saveHabitsToStorage();
+    renderHabitsList();
+    updateGrowthCharts();
+
+    playNotificationSound('complete');
+    showInAppToast("✅ Habit Completed!", `Awesome work! "${habit.name}" has been marked as done for today.`, false);
+    trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: true });
+}
+
+function snoozeHabitReminder(habitId, minutes = 10) {
+    const habit = habits.find(h => h.id === habitId || String(h.id) === String(habitId));
+    if (!habit) return;
+
+    habit.snoozedUntil = Date.now() + minutes * 60 * 1000;
+    saveHabitsToStorage();
+
+    showInAppToast("⏰ Reminder Snoozed", `Reminder for "${habit.name}" snoozed for ${minutes} minutes.`, false);
+}
+
+function showInAppToast(title, body, isMissed, habitId = null) {
     let container = document.getElementById("praxis-toast-container");
     if (!container) {
         container = document.createElement("div");
@@ -626,20 +703,44 @@ function showInAppToast(title, body, isMissed) {
         document.body.appendChild(container);
     }
 
+    // Limit visible toasts to 3 maximum
+    while (container.children.length >= 3) {
+        container.firstElementChild.remove();
+    }
+
     const toast = document.createElement("div");
-    toast.className = `pointer-events-auto neu-card p-3.5 sm:p-4 shadow-2xl border flex items-start gap-3 transition-all duration-500 transform -translate-y-4 opacity-0 ${
+    toast.className = `pointer-events-auto neu-card p-3.5 sm:p-4 shadow-2xl border flex flex-col gap-2.5 transition-all duration-500 transform -translate-y-4 opacity-0 ${
         isMissed 
             ? 'border-rose-400/80 bg-rose-50/95 text-rose-950' 
             : 'border-blue-500/80 bg-slate-900/95 text-white'
     }`;
 
+    let actionButtonsHTML = '';
+    if (habitId) {
+        actionButtonsHTML = `
+            <div class="flex items-center gap-2 mt-1 pt-2 border-t border-current/15">
+                <button onclick="markHabitCompletedDirectly('${escapeHtml(habitId)}'); this.closest('.neu-card').remove();" 
+                    class="px-2.5 py-1 text-[11px] font-black rounded-lg ${isMissed ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'} transition-all cursor-pointer shadow-sm">
+                    ✅ Mark Done
+                </button>
+                <button onclick="snoozeHabitReminder('${escapeHtml(habitId)}', 10); this.closest('.neu-card').remove();" 
+                    class="px-2.5 py-1 text-[11px] font-bold rounded-lg ${isMissed ? 'bg-rose-200/80 text-rose-900 hover:bg-rose-300' : 'bg-slate-700/80 text-slate-200 hover:bg-slate-700'} transition-all cursor-pointer">
+                    ⏰ Snooze 10m
+                </button>
+            </div>
+        `;
+    }
+
     toast.innerHTML = `
-        <div class="text-xl sm:text-2xl shrink-0 mt-0.5">${isMissed ? '😔' : '⏰'}</div>
-        <div class="flex-1 min-w-0">
-            <h5 class="font-black text-xs sm:text-sm font-outfit leading-snug">${escapeHtml(title)}</h5>
-            <p class="text-[11px] font-semibold opacity-90 mt-0.5 leading-relaxed">${escapeHtml(body)}</p>
+        <div class="flex items-start gap-3">
+            <div class="text-xl sm:text-2xl shrink-0 mt-0.5">${isMissed ? '😔' : '⏰'}</div>
+            <div class="flex-1 min-w-0">
+                <h5 class="font-black text-xs sm:text-sm font-outfit leading-snug">${escapeHtml(title)}</h5>
+                <p class="text-[11px] font-semibold opacity-90 mt-0.5 leading-relaxed">${escapeHtml(body)}</p>
+            </div>
+            <button onclick="this.closest('.neu-card').remove()" class="text-sm opacity-60 hover:opacity-100 font-black p-1 shrink-0 cursor-pointer">&times;</button>
         </div>
-        <button onclick="this.parentElement.remove()" class="text-sm opacity-60 hover:opacity-100 font-black p-1 shrink-0">&times;</button>
+        ${actionButtonsHTML}
     `;
 
     container.appendChild(toast);
@@ -650,34 +751,50 @@ function showInAppToast(title, body, isMissed) {
     });
 
     setTimeout(() => {
-        toast.classList.add("opacity-0", "-translate-y-2");
-        setTimeout(() => toast.remove(), 500);
-    }, 7000);
+        if (toast.parentElement) {
+            toast.classList.add("opacity-0", "-translate-y-2");
+            setTimeout(() => toast.remove(), 500);
+        }
+    }, 8500);
 }
 
 function sendNotification(title, options) {
+    const isMissed = options.isMissed || false;
+    const soundType = isMissed ? 'missed' : 'reminder';
+
     // 1. Play Web Audio chime
-    playNotificationSound(options.isMissed);
+    playNotificationSound(soundType);
 
-    // 2. Display In-App Floating Toast
-    showInAppToast(title, options.body, options.isMissed);
+    // 2. Display In-App Floating Toast with quick action buttons
+    showInAppToast(title, options.body, isMissed, options.habitId);
 
-    // 3. Dispatch Native / Mobile Push Notification
+    // 3. Dispatch Native / Mobile Push Notification with OS Action Buttons
     if ("Notification" in window && Notification.permission === "granted") {
+        const notifPayload = {
+            body: options.body,
+            icon: options.icon || '/favicon.ico',
+            badge: '/favicon.ico',
+            tag: options.tag || 'praxis-notif',
+            renotify: true,
+            vibrate: [100, 50, 100],
+            data: { habitId: options.habitId || '' }
+        };
+
+        if (options.habitId) {
+            notifPayload.actions = [
+                { action: 'complete', title: '✅ Mark Done' },
+                { action: 'snooze', title: '⏰ Snooze 10m' }
+            ];
+        }
+
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification(title, {
-                    body: options.body,
-                    icon: options.icon || '/favicon.ico',
-                    badge: '/favicon.ico',
-                    tag: options.tag || 'praxis-notif',
-                    renotify: true
-                });
+                reg.showNotification(title, notifPayload);
             }).catch(() => {
-                fallbackNativeNotification(title, options);
+                fallbackNativeNotification(title, notifPayload);
             });
         } else {
-            fallbackNativeNotification(title, options);
+            fallbackNativeNotification(title, notifPayload);
         }
     }
 }
@@ -733,7 +850,7 @@ function updateNotificationBtnState() {
 function testNotificationNow() {
     if (!("Notification" in window)) {
         showInAppToast("🧪 Test Notification Active", "In-app toast & audio chime work! Note: Your browser doesn't support system notifications.", false);
-        playNotificationSound(false);
+        playNotificationSound('reminder');
         return;
     }
 
@@ -748,26 +865,39 @@ function testNotificationNow() {
 }
 
 function triggerTestAlerts() {
+    const sampleHabit = habits[0];
     sendNotification("⏰ Test Habit Reminder (10 mins prior)", {
         body: "Success! Your habit notifications, phone alerts & audio chime are active and working perfectly! 🎉",
         tag: 'praxis-test-remind',
+        habitId: sampleHabit ? sampleHabit.id : null,
         isMissed: false
     });
 }
+
+let lastNotificationCheckTime = 0;
 
 function checkHabitNotifications() {
     if (habits.length === 0) return;
 
     const now = new Date();
+    const nowMs = now.getTime();
+    
+    // Throttle check execution to at most once per 10 seconds to prevent unnecessary processing
+    if (nowMs - lastNotificationCheckTime < 9500) return;
+    lastNotificationCheckTime = nowMs;
+
     const currentHour = now.getHours();
     const currentMin = now.getMinutes();
     const currentTotalMins = currentHour * 60 + currentMin;
 
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const todayIndex = (now.getDate() - 1) % 30; // 0-indexed day index 0..29
+    const todayIndex = (now.getDate() - 1) % 30;
 
     habits.forEach(habit => {
         if (!habit.scheduledTime) return;
+
+        // Skip check if reminder is currently snoozed
+        if (habit.snoozedUntil && nowMs < habit.snoozedUntil) return;
 
         const parts = habit.scheduledTime.split(":");
         if (parts.length < 2) return;
@@ -791,12 +921,13 @@ function checkHabitNotifications() {
                 sendNotification(`⏰ Habit in 10 mins: ${habit.name}`, {
                     body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)}. Get ready to build discipline! 💪`,
                     tag: `praxis-remind-${habit.id}-${todayStr}`,
+                    habitId: habit.id,
                     isMissed: false
                 });
             }
         }
 
-        // 2. Disappointed Missed Habit Alert Notification (10 mins past target time)
+        // 2. Missed Habit Alert Notification (10 mins past target time)
         if (currentTotalMins >= scheduledTotalMins + 10) {
             if (!isTodayDone && !habit.missedNotifiedDates[todayStr]) {
                 habit.missedNotifiedDates[todayStr] = true;
@@ -811,15 +942,16 @@ function checkHabitNotifications() {
                 saveHabitsToStorage();
 
                 const quotes = [
-                    `😔 You missed "${habit.name}" scheduled for ${formatAMPM(habit.scheduledTime)}. Discipline is built through daily action, not excuses!`,
-                    `💔 Habit missed: "${habit.name}". Skipping habits today steals momentum from your future self. Get back on track!`,
-                    `⚠️ Missed target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Reset your focus and don't miss twice!`
+                    `😔 You missed "${habit.name}" scheduled for ${formatAMPM(habit.scheduledTime)}. Discipline is built through daily action!`,
+                    `💔 Habit missed: "${habit.name}". Skipping habits today steals momentum from your future self!`,
+                    `⚠️ Missed target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Reset your focus and stay consistent!`
                 ];
                 const msg = quotes[Math.floor(Math.random() * quotes.length)];
 
                 sendNotification(`😔 Habit Missed: ${habit.name}`, {
                     body: msg,
                     tag: `praxis-missed-${habit.id}-${todayStr}`,
+                    habitId: habit.id,
                     isMissed: true
                 });
             }
@@ -827,7 +959,14 @@ function checkHabitNotifications() {
     });
 }
 
-// Start notification checker loop every 15 seconds
+// Optimized notification scheduler: Runs immediately, on visibility change, and on smart 15s interval
+checkHabitNotifications();
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        lastNotificationCheckTime = 0; // Force immediate check when tab becomes active
+        checkHabitNotifications();
+    }
+});
 setInterval(checkHabitNotifications, 15000);
 
 function editHabitTime(habitIndex) {
@@ -837,8 +976,13 @@ function editHabitTime(habitIndex) {
     const newTime = prompt(`Set/Update target time for "${habit.name}"\n(Enter 24-hour time e.g. 07:30 or 18:45, or leave blank to clear):`, currentTime);
     if (newTime !== null) {
         habit.scheduledTime = newTime.trim();
+        habit.remindedDates = {};
+        habit.missedNotifiedDates = {};
+        habit.snoozedUntil = 0;
         saveHabitsToStorage();
         renderHabitsList();
+        lastNotificationCheckTime = 0;
+        checkHabitNotifications();
         if (habit.scheduledTime && "Notification" in window && Notification.permission !== "granted") {
             requestNotificationPermission();
         }
