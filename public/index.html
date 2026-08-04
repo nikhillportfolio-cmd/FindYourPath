@@ -252,6 +252,76 @@
         /* -------------------------------------------------------------
            ANIMATIONS & TRANSITIONS
         ------------------------------------------------------------- */
+        @keyframes welcomeEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(28px) scale(0.92);
+                filter: blur(10px);
+            }
+            65% {
+                opacity: 1;
+                transform: translateY(-4px) scale(1.03);
+                filter: blur(0px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0px);
+            }
+        }
+
+        @keyframes textShimmerFlow {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes floatBadge {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.85;
+                transform: scale(1.12);
+            }
+        }
+
+        .welcome-anim-box {
+            animation: welcomeEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .praxis-shimmer-text {
+            background: linear-gradient(135deg, #4f46e5 0%, #2563eb 25%, #0284c7 50%, #3b82f6 75%, #6366f1 100%);
+            background-size: 250% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textShimmerFlow 4s ease infinite;
+        }
+
+        .auth-badge-float {
+            animation: floatBadge 3.2s ease-in-out infinite;
+        }
+
+        .brand-glow-pulse {
+            animation: pulseGlow 4s ease-in-out infinite;
+        }
+
         .fade-in {
             animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -526,11 +596,11 @@
     <div id="auth-gate-landing" class="w-full max-w-4xl px-4 py-12 sm:py-16 flex flex-col items-center justify-center text-center relative z-20 min-h-[75vh]">
         <div class="neu-card p-6 sm:p-12 md:p-14 w-full max-w-2xl flex flex-col items-center text-center shadow-2xl relative overflow-hidden border border-indigo-100/50">
             <!-- GLOW ACCENT -->
-            <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none brand-glow-pulse"></div>
+            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none brand-glow-pulse"></div>
 
             <!-- PRAXiS BRAND BADGE -->
-            <div class="w-16 h-16 sm:w-20 sm:h-20 neu-circle flex items-center justify-center text-amber-500 mb-6 shrink-0 shadow-inner">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 neu-circle flex items-center justify-center text-amber-500 mb-6 shrink-0 shadow-inner auth-badge-float">
                 <svg class="w-10 h-10 sm:w-12 sm:h-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-gate)" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
                     <defs>
@@ -542,13 +612,16 @@
                 </svg>
             </div>
 
-            <div class="neu-badge text-indigo-600 font-bold px-4 py-1.5 text-xs uppercase tracking-widest mb-4 inline-flex items-center gap-2">
+            <div class="neu-badge auth-badge-float text-indigo-600 font-bold px-4 py-1.5 text-xs uppercase tracking-widest mb-4 inline-flex items-center gap-2 shadow-sm">
                 🔒 Authentication Required
             </div>
 
-            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 mb-4 font-outfit leading-tight tracking-tight">
-                Unlock <span class="text-gradient">PRAXiS</span>
-            </h1>
+            <!-- BEAUTIFUL ANIMATED WELCOME HEADING -->
+            <div class="welcome-anim-box mb-4">
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 font-outfit leading-tight tracking-tight">
+                    Welcome to <span class="praxis-shimmer-text">PRAXiS</span>
+                </h1>
+            </div>
 
             <p class="text-slate-600 text-sm sm:text-base mb-8 max-w-lg leading-relaxed font-medium">
                 Sign in with your Google account to operate the website, generate your personalized Career Roadmap, and keep your progress synced across all your devices.
