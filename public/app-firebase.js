@@ -25,12 +25,12 @@ import {
 // Default hardcoded fallback configuration
 // (You can paste your Firebase Console keys directly here OR in your server's .env file)
 let firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBDhP_2ZaRv4ncV7W-_p75qRoOAg8te0oU",
+  authDomain: "praxis-app-e6e2a.firebaseapp.com",
+  projectId: "praxis-app-e6e2a",
+  storageBucket: "praxis-app-e6e2a.firebasestorage.app",
+  messagingSenderId: "22274527937",
+  appId: "1:22274527937:web:8e69fc61bf10224b71fa40",
 };
 
 let app, auth, db, googleProvider;
