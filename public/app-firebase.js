@@ -203,15 +203,9 @@ export async function logoutUser() {
     }
   }
 
-  // Purge browser local storage so data is stored in Google Cloud, not retained locally
+  // Purge auth session tokens, preserve user habits & roadmap in local storage
   localStorage.removeItem("praxis_auth_user");
   localStorage.removeItem("praxis_token");
-  localStorage.removeItem("findyourpath_habits");
-  localStorage.removeItem("praxis_saved_roadmap");
-
-  if (typeof window.clearUserUIState === "function") {
-    window.clearUserUIState();
-  }
 
   currentUser = null;
   updateProfileUI(null);

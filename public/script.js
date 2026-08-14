@@ -318,46 +318,49 @@ let habits = [];
 let currentCategoryFilter = "all";
 
 function loadHabitsFromStorage() {
-    // Primary: Check if user is authenticated and bypass browser localStorage
+    // 1. Always load from localStorage first so habits render instantly without being wiped
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                habits = parsed;
+                habits.forEach(h => {
+                    if (!h.timeOfDay) h.timeOfDay = "Morning Routine";
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Failed to parse habits from localStorage:", e);
+    }
+
+    updateFloatingBadge();
+
+    // 2. Fetch latest synced habits from Cloud / Server in background if authenticated
     const storedUser = localStorage.getItem("praxis_auth_user");
     if (storedUser || (window.praxisAuth && window.praxisAuth.getUser())) {
-        console.log("[PRAXiS Data] Authenticated user session detected. Bypassing browser localStorage, syncing with Google Cloud...");
-        habits = [];
         if (window.praxisAuth && typeof window.praxisAuth.fetchData === "function") {
             window.praxisAuth.fetchData();
         }
-        return;
     }
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        habits = saved ? JSON.parse(saved) : [];
-        habits.forEach(h => {
-            if (!h.timeOfDay) {
-                h.timeOfDay = "Morning Routine";
-            }
-        });
-    } catch (e) {
-        console.error("Failed to parse habits from localStorage:", e);
-        habits = [];
-    }
-    updateFloatingBadge();
 }
 
 function saveHabitsToStorage() {
     updateFloatingBadge();
 
-    // Primary: Push directly to Google Cloud Firestore across all devices
+    // 1. ALWAYS persist to browser localStorage as instant local fallback
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    } catch (e) {
+        console.error("Failed to save habits to localStorage:", e);
+    }
+
+    // 2. ALSO push to Google Cloud & Server Database if user is signed in
     if (window.praxisAuth && window.praxisAuth.getUser()) {
         window.praxisAuth.saveRoutine({
             habits: habits,
             updatedAt: new Date().toISOString()
         });
-    } else {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
-        } catch (e) {
-            console.error("Failed to save habits to localStorage:", e);
-        }
     }
 }
 
@@ -2344,14 +2347,60 @@ function checkBookmarkStatus() {
  * Render saved routine tracker from Cloud Firestore across all user devices
  */
 window.renderSavedRoutineTracker = function(routineData) {
-    if (!routineData) return;
-    if (Array.isArray(routineData.habits)) {
-        habits = routineData.habits;
-        if (typeof renderHabits === "function") renderHabits();
-        if (typeof updateStats === "function") updateStats();
-        if (typeof updateFloatingBadge === "function") updateFloatingBadge();
-        console.log("[PRAXiS UI] Habit Routine Tracker loaded directly from Google Cloud.");
+    if (!routineData || !Array.isArray(routineData.habits)) return;
+    
+    const cloudHabits = routineData.habits;
+
+    // If Cloud is empty but local memory has habits, upload local habits to Cloud!
+    if (cloudHabits.length === 0 && habits.length > 0) {
+        if (window.praxisAuth && window.praxisAuth.getUser()) {
+            window.praxisAuth.saveRoutine({
+                habits: habits,
+                updatedAt: new Date().toISOString()
+            });
+        }
+        return;
     }
+
+    // Merge local habits with cloud habits by ID or name
+    const habitMap = new Map();
+    // 1. Add current local habits first
+    habits.forEach(h => {
+        if (h && (h.id || h.name)) habitMap.set(String(h.id || h.name), h);
+    });
+    // 2. Merge cloud habits into habitMap
+    cloudHabits.forEach(ch => {
+        if (!ch) return;
+        const key = String(ch.id || ch.name);
+        if (!habitMap.has(key)) {
+            habitMap.set(key, ch);
+        } else {
+            const localHabit = habitMap.get(key);
+            // Merge days array so completed days aren't lost
+            const mergedDays = (localHabit.days || []).map((val, idx) => {
+                const cloudVal = (ch.days || [])[idx];
+                if (val === "done" || val === true || cloudVal === "done" || cloudVal === true) return "done";
+                if (val === "missed" || cloudVal === "missed") return "missed";
+                return val || cloudVal || false;
+            });
+            habitMap.set(key, { ...ch, ...localHabit, days: mergedDays });
+        }
+    });
+
+    habits = Array.from(habitMap.values());
+    habits.forEach(h => {
+        if (!h.timeOfDay) h.timeOfDay = "Morning Routine";
+    });
+
+    // Save merged result back to localStorage
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    } catch (e) {}
+
+    if (typeof renderHabits === "function") renderHabits();
+    if (typeof updateStats === "function") updateStats();
+    if (typeof updateFloatingBadge === "function") updateFloatingBadge();
+    console.log("[PRAXiS UI] Routine Tracker safely merged and synced with Cloud.");
 };
 
 /**
