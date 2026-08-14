@@ -1196,8 +1196,9 @@ function renderHabitsList() {
                     <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2.5 sm:px-3 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[125px] sm:min-w-[270px] sm:max-w-none">
                         <div class="flex items-center justify-between gap-1 sm:gap-2 min-w-0">
                             <div class="flex flex-col min-w-0 pr-0.5">
-                                <div class="flex items-center gap-1 flex-wrap">
-                                    <span class="font-black text-[11px] sm:text-sm text-slate-800 font-outfit truncate max-w-[82px] sm:max-w-[195px]" title="${escapeHtml(habit.name)}">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="neu-badge px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-indigo-700 bg-indigo-500/10 shrink-0 border border-indigo-300/70" title="Habit #${totalHabitsRendered}">#${totalHabitsRendered}</span>
+                                    <span class="font-black text-[11px] sm:text-sm text-slate-800 font-outfit truncate max-w-[75px] sm:max-w-[180px]" title="${escapeHtml(habit.name)}">
                                         ${escapeHtml(habit.name)}
                                     </span>
                                     ${habit.scheduledTime ? `<span class="neu-badge px-1 py-0.5 text-[8px] sm:text-[9px] font-extrabold text-indigo-600 bg-indigo-500/10 flex items-center gap-0.5" title="Scheduled target time: ${formatAMPM(habit.scheduledTime)}">⏰ ${formatAMPM(habit.scheduledTime)}</span>` : ''}
@@ -1271,6 +1272,7 @@ function escapeHtml(str) {
 
 function handleAddHabit(event) {
     event.preventDefault();
+
     const input = document.getElementById("habit-name-input");
     const timeSelect = document.getElementById("habit-time-select");
     const clockInput = document.getElementById("habit-clock-input");
@@ -1297,7 +1299,7 @@ function handleAddHabit(event) {
         createdAt: Date.now()
     };
 
-    habits.unshift(newHabit);
+    habits.push(newHabit);
     saveHabitsToStorage();
     input.value = "";
     if (clockInput) clockInput.value = "";
