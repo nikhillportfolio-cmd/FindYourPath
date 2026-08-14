@@ -10348,13 +10348,26 @@ app.post('/api/user/sync', (req, res) => {
         const queryId = authUserId || userId;
         const queryEmail = email ? email.trim().toLowerCase() : '';
 
-        const user = usersData.users.find(u => 
-            (queryId && u.id === queryId) || 
-            (queryEmail && u.email.toLowerCase() === queryEmail)
+        let user = usersData.users.find(u => 
+            (queryEmail && u.email && u.email.toLowerCase() === queryEmail) ||
+            (queryId && u.id === queryId)
         );
 
+        if (!user && (queryEmail || queryId)) {
+            // Automatically upsert user profile so Google Auth / cross-device users are saved properly
+            user = {
+                id: queryId || ("usr_g_" + Date.now()),
+                name: queryEmail ? queryEmail.split('@')[0] : "Synced User",
+                email: queryEmail || "unknown@device",
+                createdAt: new Date().toISOString(),
+                roadmap: null,
+                routineTracker: null
+            };
+            usersData.users.push(user);
+        }
+
         if (!user) {
-            return res.status(404).json({ error: "User profile not found for data sync." });
+            return res.status(400).json({ error: "User identity (email or userId) required for data sync." });
         }
 
         if (roadmap) user.roadmap = roadmap;
@@ -10393,12 +10406,16 @@ app.get('/api/user/sync', (req, res) => {
         const queryEmail = email ? email.trim().toLowerCase() : '';
 
         const user = usersData.users.find(u => 
-            (queryId && u.id === queryId) || 
-            (queryEmail && u.email.toLowerCase() === queryEmail)
+            (queryEmail && u.email && u.email.toLowerCase() === queryEmail) ||
+            (queryId && u.id === queryId)
         );
 
         if (!user) {
-            return res.status(404).json({ error: "User data not found." });
+            return res.json({
+                success: true,
+                roadmap: null,
+                routineTracker: null
+            });
         }
 
         res.json({
