@@ -1289,42 +1289,70 @@ function escapeHtml(str) {
 }
 
 function handleAddHabit(event) {
-    event.preventDefault();
-
-    const input = document.getElementById("habit-name-input");
-    const timeSelect = document.getElementById("habit-time-select");
-    const clockInput = document.getElementById("habit-clock-input");
-    if (!input) return;
-
-    const name = input.value.trim();
-    if (!name) return;
-
-    const timeOfDay = timeSelect ? timeSelect.value : "Morning Routine";
-    const scheduledTime = clockInput ? clockInput.value : "";
-
-    if (scheduledTime && "Notification" in window && Notification.permission !== "granted") {
-        requestNotificationPermission();
+    if (event && typeof event.preventDefault === "function") {
+        event.preventDefault();
     }
 
-    const newHabit = {
-        id: "habit_" + Date.now(),
-        name: name,
-        timeOfDay: timeOfDay,
-        scheduledTime: scheduledTime,
-        remindedDates: {},
-        missedNotifiedDates: {},
-        days: new Array(30).fill(false),
-        createdAt: Date.now()
-    };
+    try {
+        const input = document.getElementById("habit-name-input");
+        const timeSelect = document.getElementById("habit-time-select");
+        const clockInput = document.getElementById("habit-clock-input");
+        if (!input) return;
 
-    habits.push(newHabit);
-    saveHabitsToStorage();
-    input.value = "";
-    if (clockInput) clockInput.value = "";
-    
-    renderHabitsList();
-    updateGrowthCharts();
-    trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: false });
+        const name = input.value.trim();
+        if (!name) return;
+
+        const timeOfDay = timeSelect ? timeSelect.value : "Morning Routine";
+        const scheduledTime = clockInput ? clockInput.value : "";
+
+        if (scheduledTime && "Notification" in window && Notification.permission !== "granted") {
+            try {
+                requestNotificationPermission();
+            } catch (e) {}
+        }
+
+        // Check if habit with same name already exists to prevent duplicate keying
+        const existingIndex = habits.findIndex(h => h && h.name && h.name.toLowerCase() === name.toLowerCase() && (h.timeOfDay || "Morning Routine") === timeOfDay);
+        if (existingIndex !== -1) {
+            alert(`"${name}" is already in your ${timeOfDay} list.`);
+            return;
+        }
+
+        const newHabit = {
+            id: "habit_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+            name: name,
+            timeOfDay: timeOfDay,
+            scheduledTime: scheduledTime,
+            remindedDates: {},
+            missedNotifiedDates: {},
+            days: new Array(30).fill(false),
+            createdAt: Date.now()
+        };
+
+        habits.push(newHabit);
+        saveHabitsToStorage();
+
+        // Clear input values
+        input.value = "";
+        if (clockInput) clockInput.value = "";
+
+        // If current filter excludes this category, auto-switch filter so user sees the new habit
+        if (currentCategoryFilter !== "all" && currentCategoryFilter !== timeOfDay) {
+            setCategoryFilter(timeOfDay);
+        } else {
+            renderHabitsList();
+        }
+
+        updateGrowthCharts();
+
+        try {
+            trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: false });
+        } catch (e) {}
+
+    } catch (err) {
+        console.error("[PRAXiS UI] Error adding habit:", err);
+        alert("Could not add habit. Please try again.");
+    }
 }
 
 function toggleHabitDay(habitIndex, dayIndex) {
