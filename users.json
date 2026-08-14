@@ -33,13 +33,14 @@
       "routineTracker": {
         "habits": [
           {
-            "id": 1,
-            "title": "Learn Python",
-            "days": [
-              1,
-              1,
-              0
-            ]
+            "id": "habit_1785856512734",
+            "name": "Learn Python",
+            "timeOfDay": "Morning Routine",
+            "scheduledTime": "08:00",
+            "remindedDates": {},
+            "missedNotifiedDates": {},
+            "days": ["done", "done", false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+            "createdAt": 1785856512734
           }
         ]
       },

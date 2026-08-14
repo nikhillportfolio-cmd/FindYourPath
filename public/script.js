@@ -317,17 +317,53 @@ const STORAGE_KEY = "findyourpath_habits";
 let habits = [];
 let currentCategoryFilter = "all";
 
+function normalizeHabit(h) {
+    if (!h || typeof h !== "object") return null;
+
+    const id = h.id ? String(h.id) : "habit_" + Math.random().toString(36).substr(2, 9);
+    const name = h.name || h.title || h.habitName || "Target Habit";
+    const timeOfDay = h.timeOfDay || h.category || h.routine || "Morning Routine";
+    const scheduledTime = h.scheduledTime || h.time || "";
+
+    let daysArray = new Array(30).fill(false);
+    if (Array.isArray(h.days)) {
+        for (let i = 0; i < 30; i++) {
+            if (i < h.days.length) {
+                const val = h.days[i];
+                if (val === true || val === "done" || val === 1 || val === "1" || val === "true") {
+                    daysArray[i] = "done";
+                } else if (val === "missed" || val === -1 || val === "-1") {
+                    daysArray[i] = "missed";
+                } else {
+                    daysArray[i] = false;
+                }
+            }
+        }
+    }
+
+    return {
+        id: id,
+        name: name,
+        timeOfDay: timeOfDay,
+        scheduledTime: scheduledTime,
+        remindedDates: h.remindedDates && typeof h.remindedDates === "object" ? h.remindedDates : {},
+        missedNotifiedDates: h.missedNotifiedDates && typeof h.missedNotifiedDates === "object" ? h.missedNotifiedDates : {},
+        days: daysArray,
+        createdAt: h.createdAt || Date.now()
+    };
+}
+
 function loadHabitsFromStorage() {
-    // 1. Always load from localStorage first so habits render instantly without being wiped
+    // 1. Always load & normalize from localStorage first
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-                habits = parsed;
-                habits.forEach(h => {
-                    if (!h.timeOfDay) h.timeOfDay = "Morning Routine";
-                });
+            if (Array.isArray(parsed)) {
+                const loaded = parsed.map(normalizeHabit).filter(Boolean);
+                if (loaded.length > 0) {
+                    habits = loaded;
+                }
             }
         }
     } catch (e) {
@@ -370,7 +406,7 @@ window.clearUserUIState = function() {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem("praxis_saved_roadmap");
     } catch (e) {}
-    if (typeof renderHabits === "function") renderHabits();
+    if (typeof renderHabitsList === "function") renderHabitsList();
     if (typeof updateStats === "function") updateStats();
     if (typeof updateFloatingBadge === "function") updateFloatingBadge();
 };
@@ -390,11 +426,11 @@ function updateFloatingBadge() {
 // STREAK CALCULATION ENGINE
 // Detects consecutive checked days across the 30-day grid
 function isDayDone(val) {
-    return val === true || val === "done";
+    return val === true || val === "done" || val === 1 || val === "1" || val === "true";
 }
 
 function isDayMissed(val) {
-    return val === "missed";
+    return val === "missed" || val === -1 || val === "-1";
 }
 
 function calculateHabitStreak(days) {
@@ -2347,9 +2383,16 @@ function checkBookmarkStatus() {
  * Render saved routine tracker from Cloud Firestore across all user devices
  */
 window.renderSavedRoutineTracker = function(routineData) {
-    if (!routineData || !Array.isArray(routineData.habits)) return;
-    
-    const cloudHabits = routineData.habits;
+    if (!routineData) return;
+
+    let rawCloudHabits = [];
+    if (Array.isArray(routineData.habits)) {
+        rawCloudHabits = routineData.habits;
+    } else if (Array.isArray(routineData)) {
+        rawCloudHabits = routineData;
+    } else return;
+
+    const cloudHabits = rawCloudHabits.map(normalizeHabit).filter(Boolean);
 
     // If Cloud is empty but local memory has habits, upload local habits to Cloud!
     if (cloudHabits.length === 0 && habits.length > 0) {
@@ -2366,41 +2409,39 @@ window.renderSavedRoutineTracker = function(routineData) {
     const habitMap = new Map();
     // 1. Add current local habits first
     habits.forEach(h => {
-        if (h && (h.id || h.name)) habitMap.set(String(h.id || h.name), h);
+        const norm = normalizeHabit(h);
+        if (norm) habitMap.set(norm.id || norm.name.toLowerCase(), norm);
     });
     // 2. Merge cloud habits into habitMap
     cloudHabits.forEach(ch => {
-        if (!ch) return;
-        const key = String(ch.id || ch.name);
+        const key = ch.id || ch.name.toLowerCase();
         if (!habitMap.has(key)) {
             habitMap.set(key, ch);
         } else {
             const localHabit = habitMap.get(key);
             // Merge days array so completed days aren't lost
-            const mergedDays = (localHabit.days || []).map((val, idx) => {
-                const cloudVal = (ch.days || [])[idx];
-                if (val === "done" || val === true || cloudVal === "done" || cloudVal === true) return "done";
-                if (val === "missed" || cloudVal === "missed") return "missed";
-                return val || cloudVal || false;
+            const mergedDays = localHabit.days.map((val, idx) => {
+                const cloudVal = ch.days[idx];
+                if (isDayDone(val) || isDayDone(cloudVal)) return "done";
+                if (isDayMissed(val) || isDayMissed(cloudVal)) return "missed";
+                return false;
             });
             habitMap.set(key, { ...ch, ...localHabit, days: mergedDays });
         }
     });
 
     habits = Array.from(habitMap.values());
-    habits.forEach(h => {
-        if (!h.timeOfDay) h.timeOfDay = "Morning Routine";
-    });
 
     // Save merged result back to localStorage
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
     } catch (e) {}
 
-    if (typeof renderHabits === "function") renderHabits();
+    if (typeof renderHabitsList === "function") renderHabitsList();
+    if (typeof updateGrowthCharts === "function") updateGrowthCharts();
     if (typeof updateStats === "function") updateStats();
     if (typeof updateFloatingBadge === "function") updateFloatingBadge();
-    console.log("[PRAXiS UI] Routine Tracker safely merged and synced with Cloud.");
+    console.log("[PRAXiS UI] Routine Tracker safely merged and synced with Cloud/Server.");
 };
 
 /**
