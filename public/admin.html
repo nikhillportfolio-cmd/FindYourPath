@@ -48,15 +48,15 @@
             --blue-primary: #3b82f6;
             --lavender-primary: #8b5cf6;
             
-            /* Neomorphic Shadows */
-            --shadow-extruded: 8px 8px 18px rgba(166, 180, 203, 0.65), -8px -8px 18px #ffffff;
-            --shadow-extruded-sm: 4px 4px 10px rgba(166, 180, 203, 0.55), -4px -4px 10px #ffffff;
-            --shadow-extruded-lg: 12px 12px 28px rgba(166, 180, 203, 0.7), -12px -12px 28px #ffffff;
-            --shadow-inset: inset 4px 4px 8px rgba(166, 180, 203, 0.55), inset -4px -4px 8px #ffffff;
-            --shadow-inset-deep: inset 6px 6px 14px rgba(166, 180, 203, 0.65), inset -6px -6px 14px #ffffff;
-            --shadow-btn-hover: 9px 9px 20px rgba(166, 180, 203, 0.75), -9px -9px 20px #ffffff;
-            --shadow-accent-blue: 5px 5px 15px rgba(59, 130, 246, 0.35), -4px -4px 12px #ffffff;
-            --shadow-accent-lavender: 5px 5px 15px rgba(139, 92, 246, 0.35), -4px -4px 12px #ffffff;
+            /* Neomorphic Shadows with Soft Minor Ambient Shadow */
+            --shadow-extruded: 8px 8px 18px rgba(166, 180, 203, 0.65), -8px -8px 18px rgba(255, 255, 255, 0.75), 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-extruded-sm: 4px 4px 10px rgba(166, 180, 203, 0.55), -4px -4px 10px rgba(255, 255, 255, 0.75), 0 2px 6px rgba(0, 0, 0, 0.04);
+            --shadow-extruded-lg: 12px 12px 28px rgba(166, 180, 203, 0.7), -12px -12px 28px rgba(255, 255, 255, 0.75), 0 6px 16px rgba(0, 0, 0, 0.07);
+            --shadow-inset: inset 4px 4px 8px rgba(166, 180, 203, 0.55), inset -4px -4px 8px rgba(255, 255, 255, 0.6);
+            --shadow-inset-deep: inset 6px 6px 14px rgba(166, 180, 203, 0.65), inset -6px -6px 14px rgba(255, 255, 255, 0.6);
+            --shadow-btn-hover: 9px 9px 20px rgba(166, 180, 203, 0.75), -9px -9px 20px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.06);
+            --shadow-accent-blue: 5px 5px 15px rgba(59, 130, 246, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.75), 0 2px 8px rgba(59, 130, 246, 0.15);
+            --shadow-accent-lavender: 5px 5px 15px rgba(139, 92, 246, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.75), 0 2px 8px rgba(139, 92, 246, 0.15);
         }
 
         body {
@@ -75,19 +75,20 @@
             background: var(--bg-base);
             border-radius: 1.25rem;
             box-shadow: var(--shadow-extruded);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 2px solid #000000;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .neo-card:hover {
-            box-shadow: 10px 10px 22px rgba(166, 180, 203, 0.75), -10px -10px 22px #ffffff;
+            box-shadow: 10px 10px 22px rgba(166, 180, 203, 0.75), -10px -10px 22px rgba(255, 255, 255, 0.8), 0 4px 14px rgba(0, 0, 0, 0.06);
+            border-color: #000000;
         }
 
         .neo-card-sm {
             background: var(--bg-base);
             border-radius: 1rem;
             box-shadow: var(--shadow-extruded-sm);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1.5px solid #000000;
         }
 
         /* Interactive Neomorphic Button */
@@ -95,7 +96,7 @@
             background: linear-gradient(145deg, #ffffff, #dce4f2);
             box-shadow: var(--shadow-extruded-sm);
             border-radius: 0.85rem;
-            border: 1px solid rgba(255, 255, 255, 0.9);
+            border: 1.5px solid #000000;
             transition: all 0.2s ease;
             cursor: pointer;
             user-select: none;
@@ -105,12 +106,14 @@
             box-shadow: var(--shadow-btn-hover);
             transform: translateY(-1.5px);
             background: linear-gradient(145deg, #ffffff, #e2eaf7);
+            border-color: #000000;
         }
 
         .neo-btn:active, .neo-btn.active {
             box-shadow: var(--shadow-inset);
             transform: translateY(1px);
             background: #dce4f2;
+            border-color: #000000;
         }
 
         /* Accent Buttons */
@@ -119,14 +122,15 @@
             box-shadow: var(--shadow-accent-blue);
             border-radius: 0.85rem;
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            border: 1.5px solid #000000;
             transition: all 0.2s ease;
         }
 
         .neo-btn-primary:hover {
-            box-shadow: 7px 7px 20px rgba(59, 130, 246, 0.45), -4px -4px 12px #ffffff;
+            box-shadow: 7px 7px 20px rgba(59, 130, 246, 0.45), -4px -4px 12px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(59, 130, 246, 0.2);
             transform: translateY(-1.5px);
             filter: brightness(1.05);
+            border-color: #000000;
         }
 
         /* Neomorphic Inset Surfaces */
@@ -134,37 +138,38 @@
             background: #dce4f2;
             box-shadow: var(--shadow-inset);
             border-radius: 0.85rem;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1.5px solid #000000;
         }
 
         .neo-input {
             background: #dce4f2;
             box-shadow: var(--shadow-inset);
             border-radius: 0.85rem;
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1.5px solid #000000;
             transition: all 0.2s ease;
             color: #1e293b;
         }
 
         .neo-input:focus {
             outline: none;
-            box-shadow: inset 4px 4px 8px rgba(166, 180, 203, 0.6), inset -4px -4px 8px #ffffff, 0 0 0 3px rgba(139, 92, 246, 0.25);
+            box-shadow: inset 4px 4px 8px rgba(166, 180, 203, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.6), 0 0 0 3px rgba(139, 92, 246, 0.25);
+            border-color: #000000;
         }
 
         /* Neomorphic Pill & Badge */
         .neo-pill {
             background: linear-gradient(145deg, #ffffff, #dce4f2);
-            box-shadow: 3px 3px 7px rgba(166, 180, 203, 0.4), -3px -3px 7px #ffffff;
+            box-shadow: 3px 3px 7px rgba(166, 180, 203, 0.4), -3px -3px 7px rgba(255, 255, 255, 0.75), 0 2px 5px rgba(0, 0, 0, 0.04);
             border-radius: 9999px;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1.5px solid #000000;
         }
 
         /* Extruded Icon Container */
         .neo-icon {
             background: linear-gradient(145deg, #ffffff, #dce4f2);
-            box-shadow: 4px 4px 10px rgba(166, 180, 203, 0.5), -4px -4px 10px #ffffff;
+            box-shadow: 4px 4px 10px rgba(166, 180, 203, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.75), 0 2px 6px rgba(0, 0, 0, 0.04);
             border-radius: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1.5px solid #000000;
         }
 
         /* Live Pulsing Dot */
