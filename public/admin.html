@@ -206,6 +206,20 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* Mobile Adaptations */
+        @media (max-width: 640px) {
+            html, body {
+                overflow-x: hidden;
+            }
+            .neo-card {
+                padding: 1rem !important;
+                border-radius: 1rem !important;
+            }
+            table {
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 

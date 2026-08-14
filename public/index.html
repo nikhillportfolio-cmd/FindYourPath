@@ -535,6 +535,53 @@
             color: #4f46e5;
             border-bottom: 2px solid #4f46e5;
         }
+
+        /* -------------------------------------------------------------
+           MOBILE & TABLET RESPONSIVE ENHANCEMENTS
+        ------------------------------------------------------------- */
+        @media (max-width: 640px) {
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
+                -webkit-text-size-adjust: 100%;
+            }
+
+            /* Responsive Neomorphic Cards on Mobile */
+            .neu-card {
+                padding: 1rem !important;
+                border-radius: 1rem !important;
+            }
+
+            .neu-card-sm {
+                padding: 0.75rem !important;
+                border-radius: 0.75rem !important;
+            }
+
+            /* Touch-friendly Tap Targets & Buttons */
+            button, input, select, a, td[onclick] {
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            /* Mobile Modal Adjustments */
+            #tracker-modal > div,
+            #library-modal > div,
+            #book-detail-modal > div,
+            #ebook-reader-modal > div,
+            #auth-modal > div {
+                width: 96vw !important;
+                max-height: 96vh !important;
+                padding: 0.75rem !important;
+                border-radius: 1.25rem !important;
+            }
+
+            /* 3D Book Viewport Scaling for Mobile Phones */
+            .book-viewport {
+                transform: scale(0.85);
+                margin-top: -1rem;
+                margin-bottom: -1rem;
+            }
+        }
     </style>
 </head>
 
