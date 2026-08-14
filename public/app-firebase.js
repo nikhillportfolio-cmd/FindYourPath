@@ -205,13 +205,17 @@ export async function logoutUser() {
     }
   }
 
-  // Purge auth session tokens, preserve user habits & roadmap in local storage
+  // Purge auth session tokens & trigger UI state cleanup
   localStorage.removeItem("praxis_auth_user");
   localStorage.removeItem("praxis_token");
 
   currentUser = null;
   updateProfileUI(null);
-  console.log("[PRAXiS Auth] User logged out and browser memory cleared.");
+
+  if (typeof window.clearUserUIState === "function") {
+    window.clearUserUIState();
+  }
+  console.log("[PRAXiS Auth] User logged out and active UI screen memory cleared.");
 }
 
 function updateProfileUI(user) {

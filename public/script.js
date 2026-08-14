@@ -313,9 +313,25 @@ function backToMatches() {
 // -------------------------------------------------------------
 // 11. ROUTINE TRACKER & STREAK ENGINE (LOCAL STORAGE INTEGRATION)
 // -------------------------------------------------------------
-const STORAGE_KEY = "findyourpath_habits";
-let habits = [];
-let currentCategoryFilter = "all";
+function getHabitsStorageKey() {
+    let email = "";
+    if (window.praxisAuth && typeof window.praxisAuth.getUser === "function") {
+        const user = window.praxisAuth.getUser();
+        if (user && user.email) email = user.email;
+    }
+    if (!email) {
+        try {
+            const stored = localStorage.getItem("praxis_auth_user");
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed && parsed.email) email = parsed.email;
+            }
+        } catch (e) {}
+    }
+    if (!email) email = "guest";
+    const cleanEmail = email.toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+    return `findyourpath_habits_${cleanEmail}`;
+}
 
 function normalizeHabit(h) {
     if (!h || typeof h !== "object") return null;
@@ -354,25 +370,28 @@ function normalizeHabit(h) {
 }
 
 function loadHabitsFromStorage() {
-    // 1. Always load & normalize from localStorage first
+    const key = getHabitsStorageKey();
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(key);
         if (saved) {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed)) {
-                const loaded = parsed.map(normalizeHabit).filter(Boolean);
-                if (loaded.length > 0) {
-                    habits = loaded;
-                }
+                habits = parsed.map(normalizeHabit).filter(Boolean);
             }
+        } else {
+            habits = [];
         }
     } catch (e) {
         console.error("Failed to parse habits from localStorage:", e);
+        habits = [];
     }
 
+    if (typeof renderHabitsList === "function") renderHabitsList();
+    if (typeof updateGrowthCharts === "function") updateGrowthCharts();
+    if (typeof updateStats === "function") updateStats();
     updateFloatingBadge();
 
-    // 2. Fetch latest synced habits from Cloud / Server in background if authenticated
+    // Fetch latest synced habits from Cloud / Server in background if authenticated
     const storedUser = localStorage.getItem("praxis_auth_user");
     if (storedUser || (window.praxisAuth && window.praxisAuth.getUser())) {
         if (window.praxisAuth && typeof window.praxisAuth.fetchData === "function") {
@@ -383,10 +402,11 @@ function loadHabitsFromStorage() {
 
 function saveHabitsToStorage() {
     updateFloatingBadge();
+    const key = getHabitsStorageKey();
 
-    // 1. ALWAYS persist to browser localStorage as instant local fallback
+    // 1. ALWAYS persist to email-namespaced local storage
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+        localStorage.setItem(key, JSON.stringify(habits));
     } catch (e) {
         console.error("Failed to save habits to localStorage:", e);
     }
@@ -402,13 +422,11 @@ function saveHabitsToStorage() {
 
 window.clearUserUIState = function() {
     habits = [];
-    try {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem("praxis_saved_roadmap");
-    } catch (e) {}
     if (typeof renderHabitsList === "function") renderHabitsList();
+    if (typeof updateGrowthCharts === "function") updateGrowthCharts();
     if (typeof updateStats === "function") updateStats();
     if (typeof updateFloatingBadge === "function") updateFloatingBadge();
+    console.log("[PRAXiS UI] Active user memory and screen elements cleared on sign out.");
 };
 
 function updateFloatingBadge() {
@@ -2477,47 +2495,23 @@ window.renderSavedRoutineTracker = function(routineData) {
 
     const cloudHabits = rawCloudHabits.map(normalizeHabit).filter(Boolean);
 
-    // If Cloud is empty but local memory has habits, upload local habits to Cloud!
-    if (cloudHabits.length === 0 && habits.length > 0) {
+    // If Cloud returns habits for this user account, replace habits array with cloudHabits
+    if (cloudHabits.length > 0) {
+        habits = cloudHabits;
+    } else if (habits.length > 0) {
+        // If Cloud is empty for this specific user account, upload local habits to Cloud for this account
         if (window.praxisAuth && window.praxisAuth.getUser()) {
             window.praxisAuth.saveRoutine({
                 habits: habits,
                 updatedAt: new Date().toISOString()
             });
         }
-        return;
     }
 
-    // Merge local habits with cloud habits by ID or name
-    const habitMap = new Map();
-    // 1. Add current local habits first
-    habits.forEach(h => {
-        const norm = normalizeHabit(h);
-        if (norm) habitMap.set(norm.id || norm.name.toLowerCase(), norm);
-    });
-    // 2. Merge cloud habits into habitMap
-    cloudHabits.forEach(ch => {
-        const key = ch.id || ch.name.toLowerCase();
-        if (!habitMap.has(key)) {
-            habitMap.set(key, ch);
-        } else {
-            const localHabit = habitMap.get(key);
-            // Merge days array so completed days aren't lost
-            const mergedDays = localHabit.days.map((val, idx) => {
-                const cloudVal = ch.days[idx];
-                if (isDayDone(val) || isDayDone(cloudVal)) return "done";
-                if (isDayMissed(val) || isDayMissed(cloudVal)) return "missed";
-                return false;
-            });
-            habitMap.set(key, { ...ch, ...localHabit, days: mergedDays });
-        }
-    });
-
-    habits = Array.from(habitMap.values());
-
-    // Save merged result back to localStorage
+    // Save result back to email-namespaced localStorage
+    const key = getHabitsStorageKey();
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+        localStorage.setItem(key, JSON.stringify(habits));
     } catch (e) {}
 
     if (typeof renderHabitsList === "function") renderHabitsList();
