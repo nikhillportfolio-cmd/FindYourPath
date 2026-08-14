@@ -1338,9 +1338,68 @@ function deleteHabit(habitIndex) {
     }
 }
 
+// =====================================================================
+// BROWSER HISTORY & BACK BUTTON NAVIGATION MANAGER
+// Enables seamless browser back-arrow navigation without exiting the site
+// =====================================================================
+
+function pushModalState(modalId, hash) {
+    if (window.location.hash !== hash) {
+        window.history.pushState({ praxisRoot: false, modalId: modalId }, '', hash);
+    }
+}
+
+function handlePopState(event) {
+    const trackerModal = document.getElementById("tracker-modal");
+    const libraryModal = document.getElementById("library-modal");
+    const bookDetailModal = document.getElementById("book-detail-modal");
+    const readerModal = document.getElementById("ebook-reader-modal");
+    const authModal = document.getElementById("auth-modal");
+
+    // 1. Close top-most active modal first when back arrow is pressed
+    if (readerModal && !readerModal.classList.contains("hidden")) {
+        closeEBookReader(true);
+        return;
+    }
+    if (bookDetailModal && !bookDetailModal.classList.contains("hidden")) {
+        closeBookDetailModal(true);
+        return;
+    }
+    if (libraryModal && !libraryModal.classList.contains("hidden")) {
+        closeLibraryModal(true);
+        return;
+    }
+    if (trackerModal && !trackerModal.classList.contains("hidden")) {
+        closeTrackerModal(true);
+        return;
+    }
+    if (authModal && !authModal.classList.contains("hidden")) {
+        if (typeof window.closeAuthModal === "function") {
+            window.closeAuthModal(true);
+        } else {
+            authModal.classList.add("hidden");
+        }
+        return;
+    }
+
+    // 2. Check if sub-views (like career details view) are active
+    const matchesOverview = document.getElementById("matches-overview");
+    const careerDetails = document.getElementById("career-details");
+    if (careerDetails && !careerDetails.classList.contains("hidden") && matchesOverview) {
+        careerDetails.classList.add("hidden");
+        matchesOverview.classList.remove("hidden");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+}
+
+window.addEventListener("popstate", handlePopState);
+
 function openTrackerModal() {
     const modal = document.getElementById("tracker-modal");
     if (!modal) return;
+
+    pushModalState("tracker-modal", "#tracker");
 
     modal.classList.remove("hidden");
     requestAnimationFrame(() => {
@@ -1352,7 +1411,7 @@ function openTrackerModal() {
     updateGrowthCharts();
 }
 
-function closeTrackerModal() {
+function closeTrackerModal(fromPopstate = false) {
     const modal = document.getElementById("tracker-modal");
     if (!modal) return;
 
@@ -1361,6 +1420,10 @@ function closeTrackerModal() {
     setTimeout(() => {
         modal.classList.add("hidden");
     }, 300);
+
+    if (!fromPopstate && window.location.hash === '#tracker') {
+        window.history.replaceState({ praxisRoot: true, view: 'home' }, '', '/praxis');
+    }
 }
 
 // Close modal on Escape key press
@@ -1369,14 +1432,17 @@ window.addEventListener("keydown", (e) => {
         closeTrackerModal();
         closeLibraryModal();
         closeBookDetailModal();
+        closeEBookReader();
+        if (typeof window.closeAuthModal === "function") window.closeAuthModal();
     }
 });
 
-// INITIALIZE TRACKER ON LOAD & UPDATE URL PATH TO /praxis
+// INITIALIZE TRACKER ON LOAD & UPDATE URL PATH SAFELY TO /praxis
 document.addEventListener("DOMContentLoaded", () => {
     loadHabitsFromStorage();
-    if (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html')) {
-        window.history.replaceState(null, '', '/praxis');
+    if (!window.history.state || !window.history.state.praxisRoot) {
+        const targetPath = (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html')) ? '/praxis' : window.location.pathname;
+        window.history.replaceState({ praxisRoot: true, view: 'home' }, '', targetPath + window.location.hash);
     }
 });
 loadHabitsFromStorage();
@@ -1810,6 +1876,8 @@ function openLibraryModal() {
     const modal = document.getElementById("library-modal");
     if (!modal) return;
 
+    pushModalState("library-modal", "#library");
+
     modal.classList.remove("hidden");
     requestAnimationFrame(() => {
         modal.classList.remove("opacity-0");
@@ -1820,7 +1888,7 @@ function openLibraryModal() {
     trackEvent({ type: 'library_open' });
 }
 
-function closeLibraryModal() {
+function closeLibraryModal(fromPopstate = false) {
     const modal = document.getElementById("library-modal");
     if (!modal) return;
 
@@ -1829,6 +1897,10 @@ function closeLibraryModal() {
     setTimeout(() => {
         modal.classList.add("hidden");
     }, 300);
+
+    if (!fromPopstate && window.location.hash === '#library') {
+        window.history.replaceState({ praxisRoot: true, view: 'home' }, '', '/praxis');
+    }
 }
 
 function setLibraryGenre(genre) {
@@ -1995,6 +2067,8 @@ function openBookDetailModal(bookId) {
     if (ratingEl) ratingEl.innerText = `★ ${book.rating} / 5.0 Rating`;
     if (linkEl) linkEl.href = `https://openlibrary.org/search?q=${encodeURIComponent(book.title + ' ' + book.author)}`;
 
+    pushModalState("book-detail-modal", "#book-" + bookId);
+
     modal.classList.remove("hidden");
     requestAnimationFrame(() => {
         modal.classList.remove("opacity-0");
@@ -2002,7 +2076,7 @@ function openBookDetailModal(bookId) {
     });
 }
 
-function closeBookDetailModal() {
+function closeBookDetailModal(fromPopstate = false) {
     const modal = document.getElementById("book-detail-modal");
     if (!modal) return;
 
@@ -2011,6 +2085,10 @@ function closeBookDetailModal() {
     setTimeout(() => {
         modal.classList.add("hidden");
     }, 300);
+
+    if (!fromPopstate && window.location.hash.startsWith('#book-')) {
+        window.history.replaceState({ praxisRoot: true, view: 'home' }, '', '/praxis');
+    }
 }
 
 // -------------------------------------------------------------
@@ -2111,8 +2189,7 @@ async function openEBookReader(title, author) {
 
     if (titleEl) titleEl.innerText = title;
     if (authorEl) authorEl.innerText = author ? `by ${author}` : "Classic Literature";
-    if (loadingEl) loadingEl.classList.remove("hidden");
-
+    pushModalState("ebook-reader-modal", "#reader");
     modal.classList.remove("hidden");
 
     // Track Reading View
@@ -2329,7 +2406,7 @@ function toggleEBookViewMode() {
     }
 }
 
-function closeEBookReader() {
+function closeEBookReader(fromPopstate = false) {
     const modal = document.getElementById("ebook-reader-modal");
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     isEBookTTSPlaying = false;
@@ -2337,6 +2414,10 @@ function closeEBookReader() {
 
     if (modal) {
         modal.classList.add("hidden");
+    }
+
+    if (!fromPopstate && window.location.hash === '#reader') {
+        window.history.replaceState({ praxisRoot: true, view: 'home' }, '', '/praxis');
     }
 }
 

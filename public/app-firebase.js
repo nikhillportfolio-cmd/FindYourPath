@@ -256,16 +256,23 @@ function updateProfileUI(user) {
 window.openAuthModal = function(tab = 'login') {
   const modal = document.getElementById("auth-modal");
   if (modal) {
+    if (window.location.hash !== '#auth') {
+      window.history.pushState({ praxisRoot: false, modalId: 'auth-modal' }, '', '#auth');
+    }
     modal.classList.remove("hidden");
     window.switchAuthTab(tab);
   }
 };
 
-window.closeAuthModal = function() {
+window.closeAuthModal = function(fromPopstate = false) {
   const modal = document.getElementById("auth-modal");
   const alertEl = document.getElementById("auth-alert");
   if (modal) modal.classList.add("hidden");
   if (alertEl) alertEl.classList.add("hidden");
+
+  if (!fromPopstate && window.location.hash === '#auth') {
+    window.history.replaceState({ praxisRoot: true, view: 'home' }, '', '/praxis');
+  }
 };
 
 window.switchAuthTab = function(tab) {
