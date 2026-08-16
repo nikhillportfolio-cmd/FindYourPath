@@ -4,6 +4,8 @@ let currentIndex = 0;
 let userInterest = ""; 
 let userTraits = {}; 
 let globalMatches = []; 
+let habits = [];
+let currentCategoryFilter = "all"; 
 
 // DOM ELEMENTS - MAIN VIEWS
 const landingIntro = document.getElementById("landing-intro");
@@ -336,8 +338,8 @@ function getHabitsStorageKey() {
 function normalizeHabit(h) {
     if (!h || typeof h !== "object") return null;
 
-    const id = h.id ? String(h.id) : "habit_" + Math.random().toString(36).substr(2, 9);
-    const name = h.name || h.title || h.habitName || "Target Habit";
+    const id = h.id ? String(h.id) : "habit_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+    const name = (h.name || h.title || h.habitName || "Target Habit").trim();
     const timeOfDay = h.timeOfDay || h.category || h.routine || "Morning Routine";
     const scheduledTime = h.scheduledTime || h.time || "";
 
@@ -372,11 +374,17 @@ function normalizeHabit(h) {
 function loadHabitsFromStorage() {
     const key = getHabitsStorageKey();
     try {
-        const saved = localStorage.getItem(key);
+        let saved = localStorage.getItem(key);
+        // Fallback checks for legacy local storage keys
+        if (!saved) {
+            saved = localStorage.getItem("findyourpath_habits") || localStorage.getItem("praxis_habits") || localStorage.getItem("habits");
+        }
         if (saved) {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed)) {
                 habits = parsed.map(normalizeHabit).filter(Boolean);
+            } else {
+                habits = [];
             }
         } else {
             habits = [];
@@ -386,9 +394,10 @@ function loadHabitsFromStorage() {
         habits = [];
     }
 
+    if (!Array.isArray(habits)) habits = [];
+
     if (typeof renderHabitsList === "function") renderHabitsList();
     if (typeof updateGrowthCharts === "function") updateGrowthCharts();
-    if (typeof updateStats === "function") updateStats();
     updateFloatingBadge();
 
     // Fetch latest synced habits from Cloud / Server in background if authenticated
@@ -401,6 +410,7 @@ function loadHabitsFromStorage() {
 }
 
 function saveHabitsToStorage() {
+    if (!Array.isArray(habits)) habits = [];
     updateFloatingBadge();
     const key = getHabitsStorageKey();
 
@@ -424,7 +434,6 @@ window.clearUserUIState = function() {
     habits = [];
     if (typeof renderHabitsList === "function") renderHabitsList();
     if (typeof updateGrowthCharts === "function") updateGrowthCharts();
-    if (typeof updateStats === "function") updateStats();
     if (typeof updateFloatingBadge === "function") updateFloatingBadge();
     console.log("[PRAXiS UI] Active user memory and screen elements cleared on sign out.");
 };
@@ -432,8 +441,9 @@ window.clearUserUIState = function() {
 function updateFloatingBadge() {
     const badge = document.getElementById("tracker-badge-count");
     if (badge) {
-        if (habits.length > 0) {
-            badge.innerText = habits.length;
+        const count = Array.isArray(habits) ? habits.length : 0;
+        if (count > 0) {
+            badge.innerText = count;
             badge.classList.remove("hidden");
         } else {
             badge.classList.add("hidden");
@@ -452,6 +462,7 @@ function isDayMissed(val) {
 }
 
 function calculateHabitStreak(days) {
+    if (!Array.isArray(days)) return 0;
     let maxStreak = 0;
     let currentStreak = 0;
     let temp = 0;
@@ -492,15 +503,29 @@ function renderHeatmap() {
     if (!grid) return;
 
     grid.innerHTML = "";
+    if (!Array.isArray(habits)) habits = [];
     const totalHabits = habits.length;
+    const now = new Date();
+    const todayIndex = (now.getDate() - 1) % 30;
 
     for (let day = 0; day < 30; day++) {
         let completedCount = 0;
+        let completedHabitNames = [];
+        let missedHabitNames = [];
+
         habits.forEach(h => {
-            if (h.days && isDayDone(h.days[day])) completedCount++;
+            if (h && Array.isArray(h.days)) {
+                if (isDayDone(h.days[day])) {
+                    completedCount++;
+                    completedHabitNames.push(h.name);
+                } else if (isDayMissed(h.days[day])) {
+                    missedHabitNames.push(h.name);
+                }
+            }
         });
 
         const pct = totalHabits > 0 ? Math.round((completedCount / totalHabits) * 100) : 0;
+        const isToday = (day === todayIndex);
 
         // Tile styling based on completion level
         let styleClass = "";
@@ -508,7 +533,7 @@ function renderHeatmap() {
 
         if (totalHabits === 0 || completedCount === 0) {
             styleClass = "bg-[#e0e5ec] text-slate-400 shadow-[inset_2px_2px_4px_#b8bec7,inset_-2px_-2px_4px_#ffffff]";
-            levelName = "No habits completed";
+            levelName = totalHabits === 0 ? "No habits defined" : "No habits completed";
         } else if (pct <= 25) {
             styleClass = "bg-emerald-200 text-emerald-900 border border-emerald-300 font-bold shadow-xs";
             levelName = "Light activity";
@@ -523,22 +548,39 @@ function renderHeatmap() {
             levelName = "Peak discipline!";
         }
 
+        const todayRingClass = isToday 
+            ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#e0e5ec] relative z-10" 
+            : "";
+
         const tile = document.createElement("button");
         tile.type = "button";
-        tile.className = `h-9 rounded-lg flex flex-col items-center justify-center text-[10px] transition-all duration-200 hover:scale-110 cursor-pointer ${styleClass}`;
-        tile.title = `Day ${day + 1}: ${completedCount}/${totalHabits} completed (${pct}%) - ${levelName}`;
+        tile.className = `h-9 sm:h-10 rounded-lg flex flex-col items-center justify-center text-[10px] transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer relative group ${styleClass} ${todayRingClass}`;
+        tile.title = `Day ${day + 1}${isToday ? ' (Today)' : ''}: ${completedCount}/${totalHabits} completed (${pct}%) - ${levelName}`;
+        
+        const countText = totalHabits > 0 ? `${completedCount}/${totalHabits}` : `-`;
         tile.innerHTML = `
-            <span class="leading-none font-bold">${day + 1}</span>
-            <span class="text-[8px] opacity-80 mt-0.5 font-semibold">${completedCount}/${totalHabits}</span>
+            <span class="leading-none font-black flex items-center gap-0.5">
+                ${day + 1}
+                ${isToday ? '<span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>' : ''}
+            </span>
+            <span class="text-[8px] sm:text-[9px] opacity-80 mt-0.5 font-semibold">${countText}</span>
         `;
 
         const updateBanner = () => {
             const banner = document.getElementById("heatmap-detail-banner");
             if (banner) {
                 if (totalHabits === 0) {
-                    banner.innerHTML = `📅 <strong>Day ${day + 1}</strong>: No habits created yet. Define habits to light up your heatmap!`;
+                    banner.innerHTML = `📅 <strong>Day ${day + 1}${isToday ? ' (Today)' : ''}</strong>: No habits created yet. Define habits below to light up your heatmap!`;
                 } else {
-                    banner.innerHTML = `📅 <strong>Day ${day + 1}</strong>: <span>${completedCount} of ${totalHabits} habits completed</span> (<strong class="text-emerald-700">${pct}%</strong>) • <em>${levelName}</em>`;
+                    let habitsDetailStr = "";
+                    if (completedHabitNames.length > 0) {
+                        habitsDetailStr = ` • <span class="text-emerald-700 font-bold">✓ ${completedHabitNames.slice(0, 3).map(escapeHtml).join(", ")}${completedHabitNames.length > 3 ? ` +${completedHabitNames.length - 3} more` : ''}</span>`;
+                    }
+                    if (missedHabitNames.length > 0) {
+                        habitsDetailStr += ` • <span class="text-rose-600 font-bold">✕ ${missedHabitNames.slice(0, 2).map(escapeHtml).join(", ")}</span>`;
+                    }
+
+                    banner.innerHTML = `📅 <strong>Day ${day + 1}${isToday ? ' (Today)' : ''}</strong>: <span>${completedCount} of ${totalHabits} habits completed</span> (<strong class="text-emerald-700 font-black">${pct}%</strong>) • <em>${levelName}</em>${habitsDetailStr}`;
                 }
             }
         };
@@ -546,12 +588,18 @@ function renderHeatmap() {
         tile.addEventListener("mouseenter", updateBanner);
         tile.addEventListener("click", updateBanner);
 
+        // Highlight and default banner to today
+        if (isToday) {
+            updateBanner();
+        }
+
         grid.appendChild(tile);
     }
 }
 
 // OVERALL & DAILY GROWTH ANALYTICS
 function updateGrowthCharts() {
+    if (!Array.isArray(habits)) habits = [];
     const overallCircle = document.getElementById("overall-progress-circle");
     const overallPercentText = document.getElementById("overall-percent-text");
     const overallStatusText = document.getElementById("overall-status-text");
@@ -564,6 +612,8 @@ function updateGrowthCharts() {
     let highestStreakAcrossAll = 0;
 
     habits.forEach(h => {
+        if (!h) return;
+        if (!Array.isArray(h.days)) h.days = new Array(30).fill(false);
         const checkedCount = h.days.filter(isDayDone).length;
         totalCheckedHabitCells += checkedCount;
         const streak = calculateHabitStreak(h.days);
@@ -574,7 +624,7 @@ function updateGrowthCharts() {
     let uniqueDaysDoneCount = 0;
     if (totalHabitsCount > 0) {
         for (let day = 0; day < 30; day++) {
-            const isDayCompleted = habits.some(h => h.days && isDayDone(h.days[day]));
+            const isDayCompleted = habits.some(h => h && Array.isArray(h.days) && isDayDone(h.days[day]));
             if (isDayCompleted) uniqueDaysDoneCount++;
         }
     }
@@ -1098,6 +1148,7 @@ function renderHabitsList() {
     const blankSlate = document.getElementById("blank-slate");
 
     if (!container || !blankSlate) return;
+    if (!Array.isArray(habits)) habits = [];
 
     if (habits.length === 0) {
         blankSlate.classList.remove("hidden");
@@ -1114,9 +1165,13 @@ function renderHabitsList() {
         { key: "Evening Wind-down", title: "Evening Wind-down", icon: "🌙", badgeBg: "bg-indigo-500/15 text-indigo-700" }
     ];
 
-    const activeCategories = currentCategoryFilter === "all" 
+    const activeFilter = currentCategoryFilter || "all";
+    const activeCategories = activeFilter === "all" 
         ? categories 
-        : categories.filter(c => c.key === currentCategoryFilter);
+        : categories.filter(c => c.key === activeFilter);
+
+    const now = new Date();
+    const todayIndex = (now.getDate() - 1) % 30;
 
     let tableHTML = `
         <div class="neu-card p-2 sm:p-5 bg-[#e0e5ec] shadow-xl border border-white/70 overflow-hidden">
@@ -1129,7 +1184,7 @@ function renderHabitsList() {
                             <h4 class="text-xs sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
                             <span class="inline-flex sm:hidden neu-badge text-[9px] font-extrabold text-blue-600 px-1.5 py-0.5 leading-none">Swipe &rarr;</span>
                         </div>
-                        <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Click cell: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Click cell to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5 sm:gap-3 text-[10px] sm:text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0">
@@ -1145,7 +1200,7 @@ function renderHabitsList() {
                     <thead>
                         <tr>
                             <!-- Top-Left Corner Header (Fixed on Top & Left) -->
-                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-1.5 sm:p-3 text-[11px] sm:text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] min-w-[125px] w-[125px] sm:min-w-[270px] sm:w-auto">
+                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-1.5 sm:p-3 text-[11px] sm:text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] min-w-[130px] w-[130px] sm:min-w-[270px] sm:w-auto">
                                 <div class="flex items-center justify-between">
                                     <span>Habit</span>
                                     <span class="text-[9px] sm:text-[10px] font-extrabold text-slate-500 uppercase">30 Days</span>
@@ -1155,9 +1210,12 @@ function renderHabitsList() {
     `;
 
     for (let day = 1; day <= 30; day++) {
+        const isToday = ((day - 1) === todayIndex);
+        const headerBg = isToday ? 'bg-blue-100 text-blue-900 border-b-2 border-blue-400 font-black shadow-xs' : 'bg-[#d5deeb] text-slate-700 font-bold border-b-2 border-slate-300';
         tableHTML += `
-            <th class="sticky top-0 z-20 bg-[#d5deeb] p-1.5 sm:p-2 text-center text-[10px] sm:text-xs font-bold font-outfit text-slate-700 border-r border-b-2 border-slate-300 min-w-[36px] sm:min-w-[46px] w-[36px] sm:w-[46px] select-none">
-                ${day}
+            <th class="sticky top-0 z-20 ${headerBg} p-1.5 sm:p-2 text-center text-[10px] sm:text-xs font-outfit border-r border-slate-300 min-w-[36px] sm:min-w-[46px] w-[36px] sm:w-[46px] select-none" title="Day ${day}${isToday ? ' (Today)' : ''}">
+                <div>${day}</div>
+                ${isToday ? '<div class="text-[7px] sm:text-[8px] font-black uppercase text-blue-600 leading-none mt-0.5">Today</div>' : ''}
             </th>
         `;
     }
@@ -1171,9 +1229,9 @@ function renderHabitsList() {
     let totalHabitsRendered = 0;
 
     activeCategories.forEach(cat => {
-        const catHabits = habits.filter(h => (h.timeOfDay || "Morning Routine") === cat.key);
+        const catHabits = habits.filter(h => h && (h.timeOfDay || "Morning Routine") === cat.key);
 
-        if (catHabits.length === 0 && currentCategoryFilter !== "all") {
+        if (catHabits.length === 0 && activeFilter !== "all") {
             tableHTML += `
                 <tr>
                     <td colspan="31" class="p-4 sm:p-6 text-center text-xs font-bold text-slate-500 bg-slate-100/50 border border-slate-300/60">
@@ -1203,15 +1261,18 @@ function renderHabitsList() {
 
         catHabits.forEach(habit => {
             totalHabitsRendered++;
+            if (!habit) return;
+            if (!Array.isArray(habit.days)) habit.days = new Array(30).fill(false);
+
+            const habitId = habit.id;
             const habitIndex = habits.indexOf(habit);
             const checkedCount = habit.days.filter(isDayDone).length;
-            const habitPercentage = Math.round((checkedCount / 30) * 100);
             const streak = calculateHabitStreak(habit.days);
 
             tableHTML += `
                 <tr class="hover:bg-slate-200/40 transition-colors">
                     <!-- Sticky Habit Cell (Fixed on Left) -->
-                    <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2.5 sm:px-3 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] min-w-[125px] max-w-[125px] sm:min-w-[270px] sm:max-w-none">
+                    <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2.5 sm:px-3 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] min-w-[130px] max-w-[130px] sm:min-w-[270px] sm:max-w-none">
                         <div class="flex items-center justify-between gap-1 sm:gap-2 min-w-0">
                             <div class="flex flex-col min-w-0 pr-0.5">
                                 <div class="flex items-center gap-1.5 flex-wrap">
@@ -1227,10 +1288,10 @@ function renderHabitsList() {
                                 </div>
                             </div>
                             <div class="flex items-center gap-0.5 shrink-0">
-                                <button onclick="editHabitTime(${habitIndex})" title="Set or edit target time for reminders" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-indigo-600 transition-colors text-[10px] sm:text-xs hover:scale-110">
+                                <button type="button" onclick="editHabitTime('${escapeHtml(habitId)}')" title="Set or edit target time for reminders" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-indigo-600 transition-colors text-[10px] sm:text-xs hover:scale-110 cursor-pointer">
                                     ⏰
                                 </button>
-                                <button onclick="deleteHabit(${habitIndex})" title="Delete Habit" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-red-600 transition-colors text-[10px] sm:text-xs hover:scale-110">
+                                <button type="button" onclick="deleteHabit('${escapeHtml(habitId)}')" title="Delete Habit" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-red-600 transition-colors text-[10px] sm:text-xs hover:scale-110 cursor-pointer">
                                     🗑️
                                 </button>
                             </div>
@@ -1241,15 +1302,16 @@ function renderHabitsList() {
             // 30 Day Grid Cells
             for (let day = 0; day < 30; day++) {
                 const val = habit.days[day];
-                let cellBgClass = "bg-[#e0e5ec] hover:bg-slate-200/90";
-                if (isDayDone(val)) cellBgClass = "bg-emerald-500/15 hover:bg-emerald-500/25";
-                if (isDayMissed(val)) cellBgClass = "bg-rose-500/15 hover:bg-rose-500/25";
+                const isToday = (day === todayIndex);
+                let cellBgClass = isToday ? "bg-blue-50/50 hover:bg-blue-100/60" : "bg-[#e0e5ec] hover:bg-slate-200/90";
+                if (isDayDone(val)) cellBgClass = isToday ? "bg-emerald-500/25 hover:bg-emerald-500/35" : "bg-emerald-500/15 hover:bg-emerald-500/25";
+                if (isDayMissed(val)) cellBgClass = isToday ? "bg-rose-500/25 hover:bg-rose-500/35" : "bg-rose-500/15 hover:bg-rose-500/25";
 
                 const markHTML = getHandwrittenMarkHTML(val, day);
-                const titleText = isDayDone(val) ? `Day ${day + 1}: Completed ✓` : isDayMissed(val) ? `Day ${day + 1}: Missed ✕` : `Day ${day + 1}: Empty`;
+                const titleText = `Day ${day + 1}${isToday ? ' (Today)' : ''}: ${isDayDone(val) ? 'Completed ✓' : isDayMissed(val) ? 'Missed ✕' : 'Blank (Click to mark)'}`;
 
                 tableHTML += `
-                    <td onclick="toggleHabitDay(${habitIndex}, ${day})"
+                    <td onclick="toggleHabitDay('${escapeHtml(habitId)}', ${day})"
                         title="${titleText}"
                         class="border-r border-b border-slate-300/70 p-0 text-center align-middle cursor-pointer transition-colors duration-150 h-9 sm:h-11 w-[36px] sm:w-[46px] min-w-[36px] sm:min-w-[46px] touch-manipulation active:scale-95 ${cellBgClass}">
                         ${markHTML}
@@ -1268,7 +1330,7 @@ function renderHabitsList() {
         </div>
     `;
 
-    if (totalHabitsRendered === 0 && currentCategoryFilter === "all") {
+    if (totalHabitsRendered === 0 && activeFilter === "all") {
         blankSlate.classList.remove("hidden");
         container.innerHTML = "";
     } else {
@@ -1277,6 +1339,7 @@ function renderHabitsList() {
 }
 
 function escapeHtml(str) {
+    if (typeof str !== "string") return "";
     return str.replace(/[&<>"']/g, function(m) {
         return {
             '&': '&amp;',
@@ -1294,13 +1357,17 @@ function handleAddHabit(event) {
     }
 
     try {
+        if (!Array.isArray(habits)) habits = [];
         const input = document.getElementById("habit-name-input");
         const timeSelect = document.getElementById("habit-time-select");
         const clockInput = document.getElementById("habit-clock-input");
         if (!input) return;
 
         const name = input.value.trim();
-        if (!name) return;
+        if (!name) {
+            input.focus();
+            return;
+        }
 
         const timeOfDay = timeSelect ? timeSelect.value : "Morning Routine";
         const scheduledTime = clockInput ? clockInput.value : "";
@@ -1314,12 +1381,12 @@ function handleAddHabit(event) {
         // Check if habit with same name already exists to prevent duplicate keying
         const existingIndex = habits.findIndex(h => h && h.name && h.name.toLowerCase() === name.toLowerCase() && (h.timeOfDay || "Morning Routine") === timeOfDay);
         if (existingIndex !== -1) {
-            alert(`"${name}" is already in your ${timeOfDay} list.`);
+            showInAppToast("⚠️ Habit Exists", `"${name}" is already in your ${timeOfDay} list.`, true);
             return;
         }
 
         const newHabit = {
-            id: "habit_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+            id: "habit_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6),
             name: name,
             timeOfDay: timeOfDay,
             scheduledTime: scheduledTime,
@@ -1344,6 +1411,8 @@ function handleAddHabit(event) {
         }
 
         updateGrowthCharts();
+        playNotificationSound('complete');
+        showInAppToast("✨ Habit Added!", `"${name}" added to ${timeOfDay}. Complete days in your spreadsheet tracker below!`, false);
 
         try {
             trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: false });
@@ -1351,22 +1420,44 @@ function handleAddHabit(event) {
 
     } catch (err) {
         console.error("[PRAXiS UI] Error adding habit:", err);
-        alert("Could not add habit. Please try again.");
+        showInAppToast("❌ Error", "Could not add habit: " + (err.message || "Unknown error"), true);
     }
 }
 
-function toggleHabitDay(habitIndex, dayIndex) {
-    if (habits[habitIndex] && habits[habitIndex].days) {
-        const currentVal = habits[habitIndex].days[dayIndex];
+// 1-Click Quick Preset Habit Creator
+function quickAddPresetHabit(name, timeOfDay = "Morning Routine", scheduledTime = "") {
+    const input = document.getElementById("habit-name-input");
+    const timeSelect = document.getElementById("habit-time-select");
+    const clockInput = document.getElementById("habit-clock-input");
+    if (input) input.value = name;
+    if (timeSelect) timeSelect.value = timeOfDay;
+    if (clockInput) clockInput.value = scheduledTime;
+    handleAddHabit();
+}
+
+function toggleHabitDay(habitIndexOrId, dayIndex) {
+    if (!Array.isArray(habits)) return;
+    let habit = null;
+    if (typeof habitIndexOrId === "number") {
+        habit = habits[habitIndexOrId];
+    } else {
+        habit = habits.find(h => h && (h.id === habitIndexOrId || String(h.id) === String(habitIndexOrId)));
+    }
+
+    if (habit) {
+        if (!Array.isArray(habit.days)) habit.days = new Array(30).fill(false);
+        const currentVal = habit.days[dayIndex];
         let newVal;
         if (!currentVal || currentVal === false) {
             newVal = "done";
+            playNotificationSound('complete');
         } else if (isDayDone(currentVal)) {
             newVal = "missed";
+            playNotificationSound('missed');
         } else {
             newVal = false;
         }
-        habits[habitIndex].days[dayIndex] = newVal;
+        habit.days[dayIndex] = newVal;
         const isNowChecked = isDayDone(newVal);
         saveHabitsToStorage();
         renderHabitsList();
@@ -1375,14 +1466,64 @@ function toggleHabitDay(habitIndex, dayIndex) {
     }
 }
 
-function deleteHabit(habitIndex) {
-    if (confirm("Are you sure you want to delete this habit?")) {
-        habits.splice(habitIndex, 1);
-        saveHabitsToStorage();
-        renderHabitsList();
-        updateGrowthCharts();
+function deleteHabit(habitIndexOrId) {
+    if (!Array.isArray(habits)) return;
+    let index = -1;
+    if (typeof habitIndexOrId === "number") {
+        index = habitIndexOrId;
+    } else {
+        index = habits.findIndex(h => h && (h.id === habitIndexOrId || String(h.id) === String(habitIndexOrId)));
+    }
+
+    if (index !== -1 && habits[index]) {
+        const habitName = habits[index].name;
+        if (confirm(`Are you sure you want to delete "${habitName}"?`)) {
+            habits.splice(index, 1);
+            saveHabitsToStorage();
+            renderHabitsList();
+            updateGrowthCharts();
+            showInAppToast("🗑️ Habit Removed", `"${habitName}" was deleted from your tracker.`, false);
+        }
     }
 }
+
+function editHabitTime(habitIndexOrId) {
+    if (!Array.isArray(habits)) return;
+    let habit = null;
+    if (typeof habitIndexOrId === "number") {
+        habit = habits[habitIndexOrId];
+    } else {
+        habit = habits.find(h => h && (h.id === habitIndexOrId || String(h.id) === String(habitIndexOrId)));
+    }
+    if (!habit) return;
+
+    const currentTime = habit.scheduledTime || "";
+    const newTime = prompt(`Set/Update target time for "${habit.name}"\n(Enter 24-hour time e.g. 07:30 or 18:45, or leave blank to clear):`, currentTime);
+    if (newTime !== null) {
+        habit.scheduledTime = newTime.trim();
+        habit.remindedDates = {};
+        habit.missedNotifiedDates = {};
+        habit.snoozedUntil = 0;
+        saveHabitsToStorage();
+        renderHabitsList();
+        lastNotificationCheckTime = 0;
+        checkHabitNotifications();
+        if (habit.scheduledTime && "Notification" in window && Notification.permission !== "granted") {
+            requestNotificationPermission();
+        }
+    }
+}
+
+// Global window bindings for inline HTML access
+window.handleAddHabit = handleAddHabit;
+window.quickAddPresetHabit = quickAddPresetHabit;
+window.toggleHabitDay = toggleHabitDay;
+window.deleteHabit = deleteHabit;
+window.editHabitTime = editHabitTime;
+window.setCategoryFilter = setCategoryFilter;
+window.renderHabitsList = renderHabitsList;
+window.updateGrowthCharts = updateGrowthCharts;
+window.renderHeatmap = renderHeatmap;
 
 // =====================================================================
 // BROWSER HISTORY & BACK BUTTON NAVIGATION MANAGER
@@ -1483,9 +1624,24 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-// INITIALIZE TRACKER ON LOAD & UPDATE URL PATH SAFELY TO /praxis
+// INITIALIZE TRACKER ON LOAD & ATTACH FORM LISTENERS
 document.addEventListener("DOMContentLoaded", () => {
     loadHabitsFromStorage();
+
+    // Attach Habit Form submission listener
+    const addHabitForm = document.getElementById("add-habit-form");
+    if (addHabitForm) {
+        addHabitForm.addEventListener("submit", handleAddHabit);
+    }
+
+    // Modal backdrop click dismissers
+    document.getElementById("tracker-modal")?.addEventListener("click", (e) => {
+        if (e.target.id === "tracker-modal") closeTrackerModal();
+    });
+    document.getElementById("library-modal")?.addEventListener("click", (e) => {
+        if (e.target.id === "library-modal") closeLibraryModal();
+    });
+
     if (!window.history.state || !window.history.state.praxisRoot) {
         const targetPath = (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html')) ? '/praxis' : window.location.pathname;
         window.history.replaceState({ praxisRoot: true, view: 'home' }, '', targetPath + window.location.hash);

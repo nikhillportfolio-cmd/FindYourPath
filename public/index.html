@@ -702,13 +702,16 @@
                         <p class="text-[10px] text-slate-500 font-medium leading-snug">Personalized roadmap</p>
                     </div>
                 </div>
-                <div class="p-3 neu-card-sm flex items-start gap-2.5">
+                <button type="button" onclick="openTrackerModal()" class="p-3 neu-card-sm flex items-start gap-2.5 text-left hover:scale-[1.02] transition-all cursor-pointer">
                     <span class="text-lg">📊</span>
                     <div>
-                        <h4 class="text-xs font-bold text-slate-800 font-outfit">Routine Heatmap</h4>
+                        <h4 class="text-xs font-bold text-slate-800 font-outfit flex items-center gap-1">
+                            <span>Routine Heatmap</span>
+                            <span class="neu-badge text-[8px] font-black text-blue-600 px-1 py-0.2">Open</span>
+                        </h4>
                         <p class="text-[10px] text-slate-500 font-medium leading-snug">Track daily habits</p>
                     </div>
-                </div>
+                </button>
                 <div class="p-3 neu-card-sm flex items-start gap-2.5">
                     <span class="text-lg">☁️</span>
                     <div>
@@ -1318,10 +1321,35 @@
                                 class="bg-transparent text-slate-700 text-xs sm:text-sm font-bold focus:outline-none cursor-pointer" />
                         </div>
 
-                        <button type="submit" class="neu-btn px-5 py-3 sm:px-6 sm:py-3.5 font-extrabold text-xs sm:text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1.5 shrink-0">
+                        <button type="submit" id="add-habit-submit-btn" class="neu-btn px-5 py-3 sm:px-6 sm:py-3.5 font-extrabold text-xs sm:text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer">
                             <span class="text-base sm:text-lg leading-none">+</span> Add Habit
                         </button>
                     </form>
+
+                    <!-- QUICK HABIT PRESET CHIPS -->
+                    <div class="mt-3 pt-3 border-t border-slate-300/50 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span class="text-[10px] sm:text-[11px] font-bold text-slate-500 flex items-center gap-1 shrink-0">
+                            ⚡ Quick Presets:
+                        </span>
+                        <button type="button" onclick="quickAddPresetHabit('💧 Drink 3L Water', 'Morning Routine', '07:30')" class="neu-badge px-2 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/70 hover:bg-white transition cursor-pointer">
+                            💧 Drink 3L Water
+                        </button>
+                        <button type="button" onclick="quickAddPresetHabit('🧘 15m Meditation', 'Morning Routine', '07:00')" class="neu-badge px-2 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/70 hover:bg-white transition cursor-pointer">
+                            🧘 Meditation
+                        </button>
+                        <button type="button" onclick="quickAddPresetHabit('💻 Deep Code Focus', 'Afternoon Focus', '14:00')" class="neu-badge px-2 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/70 hover:bg-white transition cursor-pointer">
+                            💻 Deep Code
+                        </button>
+                        <button type="button" onclick="quickAddPresetHabit('🏃 30m Workout', 'Afternoon Focus', '17:30')" class="neu-badge px-2 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/70 hover:bg-white transition cursor-pointer">
+                            🏃 30m Workout
+                        </button>
+                        <button type="button" onclick="quickAddPresetHabit('📚 Read 20 Pages', 'Evening Wind-down', '21:30')" class="neu-badge px-2 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/70 hover:bg-white transition cursor-pointer">
+                            📚 Read Books
+                        </button>
+                        <button type="button" onclick="quickAddPresetHabit('🌙 Sleep by 11 PM', 'Evening Wind-down', '23:00')" class="neu-badge px-2 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/70 hover:bg-white transition cursor-pointer">
+                            🌙 Sleep Early
+                        </button>
+                    </div>
                 </div>
 
                 <!-- CATEGORY FILTER & HABITS SECTION -->
