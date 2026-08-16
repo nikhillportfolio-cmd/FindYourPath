@@ -497,6 +497,40 @@ function calculateHabitStreak(days) {
     return Math.max(currentStreak, maxStreak);
 }
 
+// Calculates Day 1-30 tracker day index relative to habit journey start (Day 1 = index 0)
+function getCurrentTrackerDayIndex() {
+    if (!Array.isArray(habits) || habits.length === 0) return 0; // Default to Day 1 (index 0)
+    let earliestTime = Infinity;
+    habits.forEach(h => {
+        if (h && typeof h.createdAt === "number" && !isNaN(h.createdAt) && h.createdAt > 0) {
+            earliestTime = Math.min(earliestTime, h.createdAt);
+        }
+    });
+
+    if (earliestTime === Infinity) return 0;
+
+    const createdDate = new Date(earliestTime);
+    const startOfCreatedDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()).getTime();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const diffMs = startOfToday - startOfCreatedDay;
+    const diffDays = Math.max(0, Math.floor(diffMs / (24 * 60 * 60 * 1000)));
+    return Math.min(29, diffDays); // Day 1 = index 0, Day 2 = index 1, ..., up to Day 30 = index 29
+}
+
+function getHabitTodayIndex(habit) {
+    if (!habit || typeof habit.createdAt !== "number" || isNaN(habit.createdAt) || habit.createdAt <= 0) {
+        return getCurrentTrackerDayIndex();
+    }
+    const createdDate = new Date(habit.createdAt);
+    const startOfCreatedDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()).getTime();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const diffMs = startOfToday - startOfCreatedDay;
+    const diffDays = Math.max(0, Math.floor(diffMs / (24 * 60 * 60 * 1000)));
+    return Math.min(29, diffDays);
+}
+
 // GITHUB-STYLE 30-DAY CONTRIBUTION HEATMAP ENGINE
 function renderHeatmap() {
     const grid = document.getElementById("heatmap-grid");
@@ -505,8 +539,7 @@ function renderHeatmap() {
     grid.innerHTML = "";
     if (!Array.isArray(habits)) habits = [];
     const totalHabits = habits.length;
-    const now = new Date();
-    const todayIndex = (now.getDate() - 1) % 30;
+    const todayIndex = getCurrentTrackerDayIndex();
 
     for (let day = 0; day < 30; day++) {
         let completedCount = 0;
@@ -687,31 +720,35 @@ function setCategoryFilter(category) {
     renderHabitsList();
 }
 
-// LOOSE HANDWRITTEN MARKS GENERATOR
+// SPREADSHEET TICK BOX MARKS GENERATOR (MOBILE OPTIMIZED SQUARE PROPORTIONS)
 function getHandwrittenMarkHTML(val, dayIndex) {
     if (isDayDone(val)) {
-        const rot = ((dayIndex % 5) - 2) * 2; // -4deg to 4deg
+        const rot = ((dayIndex % 5) - 2) * 1.5;
         return `
-            <div class="w-full h-full flex items-center justify-center pointer-events-none">
-                <svg viewBox="0 0 32 32" class="w-5 h-5 sm:w-7 sm:h-7 text-emerald-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 17.5 C 9 20, 11 23.5, 12.5 25.5 C 15 18, 20 10.5, 27 5.5" 
-                        stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+            <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center pointer-events-none bg-emerald-500/15 border border-emerald-500/40 shadow-xs">
+                <svg viewBox="0 0 20 20" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-700 drop-shadow-xs" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.5 10.5 L7.5 14.5 L16.5 5.5" 
+                        stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </div>
         `;
     }
     if (isDayMissed(val)) {
-        const rot = ((dayIndex % 3) - 1) * 3; // -3deg to 3deg
+        const rot = ((dayIndex % 3) - 1) * 2;
         return `
-            <div class="w-full h-full flex items-center justify-center pointer-events-none">
-                <svg viewBox="0 0 32 32" class="w-5 h-5 sm:w-7 sm:h-7 text-rose-500 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M7.5 7.5 C 13 13, 19 19, 24.5 24.5 M24 7.8 C 18.5 13.5, 13 19, 7.8 24.2" 
-                        stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+            <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center pointer-events-none bg-rose-500/15 border border-rose-500/40 shadow-xs">
+                <svg viewBox="0 0 20 20" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 drop-shadow-xs" style="transform: rotate(${rot}deg);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 5 L15 15 M15 5 L5 15" 
+                        stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </div>
         `;
     }
-    return "";
+    return `
+        <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center pointer-events-none border border-slate-300/60 bg-white/20 group-hover:bg-white/40">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-400/40 inline-block"></span>
+        </div>
+    `;
 }
 
 // SERVICE WORKER & HIGH-EFFICIENCY DUAL NOTIFICATION ENGINE
@@ -826,9 +863,8 @@ function markHabitCompletedDirectly(habitId) {
     const habitIndex = habits.findIndex(h => h && (h.id === habitId || String(h.id) === String(habitId)));
     if (habitIndex === -1) return;
 
-    const now = new Date();
-    const todayIndex = (now.getDate() - 1) % 30;
     const habit = habits[habitIndex];
+    const todayIndex = getHabitTodayIndex(habit);
 
     if (!Array.isArray(habit.days)) habit.days = Array(30).fill(false);
     habit.days[todayIndex] = "done";
@@ -837,7 +873,7 @@ function markHabitCompletedDirectly(habitId) {
     updateGrowthCharts();
 
     playNotificationSound('complete');
-    showInAppToast("✅ Habit Completed!", `Awesome work! "${habit.name}" has been marked as done (✓) for today.`, false);
+    showInAppToast("✅ Habit Completed!", `Awesome work! "${habit.name}" has been marked as done (✓) for today (Day ${todayIndex + 1}).`, false);
     trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: true });
 }
 
@@ -847,9 +883,8 @@ function markHabitMissedDirectly(habitId) {
     const habitIndex = habits.findIndex(h => h && (h.id === habitId || String(h.id) === String(habitId)));
     if (habitIndex === -1) return;
 
-    const now = new Date();
-    const todayIndex = (now.getDate() - 1) % 30;
     const habit = habits[habitIndex];
+    const todayIndex = getHabitTodayIndex(habit);
 
     if (!Array.isArray(habit.days)) habit.days = Array(30).fill(false);
     habit.days[todayIndex] = "missed";
@@ -858,7 +893,7 @@ function markHabitMissedDirectly(habitId) {
     updateGrowthCharts();
 
     playNotificationSound('missed');
-    showInAppToast("✕ Habit Missed", `"${habit.name}" marked as missed (✕) for today.`, true);
+    showInAppToast("✕ Habit Missed", `"${habit.name}" marked as missed (✕) for today (Day ${todayIndex + 1}).`, true);
     trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: false });
 }
 
@@ -1075,10 +1110,11 @@ function checkHabitNotifications() {
     const currentTotalMins = currentHour * 60 + currentMin;
 
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const todayIndex = (now.getDate() - 1) % 30;
 
     habits.forEach(habit => {
         if (!habit || !habit.scheduledTime) return;
+
+        const todayIndex = getHabitTodayIndex(habit);
 
         // Skip check if reminder is currently snoozed
         if (habit.snoozedUntil && nowMs < habit.snoozedUntil) return;
@@ -1194,40 +1230,51 @@ function renderHabitsList() {
         ? categories 
         : categories.filter(c => c.key === activeFilter);
 
-    const now = new Date();
-    const todayIndex = (now.getDate() - 1) % 30;
+    const todayIndex = getCurrentTrackerDayIndex();
 
     let tableHTML = `
         <div class="neu-card p-2 sm:p-5 bg-[#e0e5ec] shadow-xl border border-white/70 overflow-hidden">
-            <!-- Header Legend Bar with Mobile Scroll Hint -->
+            <!-- Header Legend Bar with Mobile Scroll Hint & Jump to Today -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-300/70">
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-base sm:text-lg">📊</span>
                     <div>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center gap-1.5 flex-wrap">
                             <h4 class="text-xs sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
-                            <span class="inline-flex sm:hidden neu-badge text-[9px] font-extrabold text-blue-600 px-1.5 py-0.5 leading-none">Swipe &rarr;</span>
+                            <button type="button" onclick="scrollToTodayTracker()" class="neu-badge text-[9px] font-extrabold text-blue-600 px-2 py-0.5 leading-none hover:bg-blue-50 cursor-pointer flex items-center gap-0.5">
+                                📍 Jump to Day ${todayIndex + 1}
+                            </button>
                         </div>
-                        <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Click cell to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Tap box to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-1.5 sm:gap-3 text-[10px] sm:text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0">
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-xs border border-slate-400/50 bg-[#e0e5ec]"></span> Blank</span>
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 flex items-center justify-center text-[9px] sm:text-[10px] font-black">✓</span> Done</span>
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-xs bg-rose-500/20 border border-rose-500/50 text-rose-500 flex items-center justify-center text-[9px] sm:text-[10px] font-black">✕</span> Missed</span>
+                <div class="flex items-center gap-1.5 sm:gap-2.5 text-[10px] sm:text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0 flex-wrap">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs border border-slate-400/50 bg-[#e0e5ec]"></span> Blank</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 flex items-center justify-center text-[9px] font-black">✓</span> Done</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs bg-rose-500/20 border border-rose-500/50 text-rose-500 flex items-center justify-center text-[9px] font-black">✕</span> Missed</span>
                 </div>
             </div>
 
-            <!-- Spreadsheet Grid Table Wrapper (Sticky Headers & Sticky Left Habit Column) -->
-            <div class="overflow-x-auto max-h-[60vh] sm:max-h-[580px] overflow-y-auto custom-scrollbar rounded-xl border-2 border-slate-300/80 bg-[#e0e5ec] shadow-inner relative touch-pan-x touch-pan-y overscroll-x-contain">
-                <table class="w-full border-separate border-spacing-0 select-none text-left min-w-max">
+            <!-- Spreadsheet Grid Table Wrapper (Sticky Headers & Sticky Left Habit Column, Fixed Grid) -->
+            <div id="habits-grid-scroll-wrapper" class="overflow-x-auto max-h-[60vh] sm:max-h-[580px] overflow-y-auto custom-scrollbar rounded-xl border-2 border-slate-300/80 bg-[#e0e5ec] shadow-inner relative touch-pan-x touch-pan-y overscroll-x-contain">
+                <table class="table-fixed border-separate border-spacing-0 select-none text-left w-max">
+                    <colgroup>
+                        <col style="width: 140px;" class="w-[140px] sm:w-[220px]" />
+    `;
+
+    for (let day = 1; day <= 30; day++) {
+        tableHTML += `<col style="width: 36px;" class="w-[36px] sm:w-[42px]" />`;
+    }
+
+    tableHTML += `
+                    </colgroup>
                     <thead>
                         <tr>
                             <!-- Top-Left Corner Header (Fixed on Top & Left) -->
-                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-1.5 sm:p-3 text-[11px] sm:text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] min-w-[130px] w-[130px] sm:min-w-[270px] sm:w-auto">
+                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-1.5 sm:p-2.5 text-[10px] sm:text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] w-[140px] sm:w-[220px] h-10 select-none">
                                 <div class="flex items-center justify-between">
                                     <span>Habit</span>
-                                    <span class="text-[9px] sm:text-[10px] font-extrabold text-slate-500 uppercase">30 Days</span>
+                                    <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">30 Days</span>
                                 </div>
                             </th>
                             <!-- Days 1 to 30 Headers (Fixed on Top) -->
@@ -1235,11 +1282,13 @@ function renderHabitsList() {
 
     for (let day = 1; day <= 30; day++) {
         const isToday = ((day - 1) === todayIndex);
-        const headerBg = isToday ? 'bg-blue-100 text-blue-900 border-b-2 border-blue-400 font-black shadow-xs' : 'bg-[#d5deeb] text-slate-700 font-bold border-b-2 border-slate-300';
+        const headerBg = isToday ? 'bg-blue-100 text-blue-900 border-b-2 border-blue-500 font-black shadow-xs ring-1 ring-inset ring-blue-400' : 'bg-[#d5deeb] text-slate-700 font-bold border-b-2 border-slate-300';
         tableHTML += `
-            <th class="sticky top-0 z-20 ${headerBg} p-1.5 sm:p-2 text-center text-[10px] sm:text-xs font-outfit border-r border-slate-300 min-w-[36px] sm:min-w-[46px] w-[36px] sm:w-[46px] select-none" title="Day ${day}${isToday ? ' (Today)' : ''}">
-                <div>${day}</div>
-                ${isToday ? '<div class="text-[7px] sm:text-[8px] font-black uppercase text-blue-600 leading-none mt-0.5">Today</div>' : ''}
+            <th class="sticky top-0 z-20 ${headerBg} p-0 text-center text-[10px] sm:text-xs font-outfit border-r border-slate-300 w-[36px] min-w-[36px] max-w-[36px] sm:w-[42px] sm:min-w-[42px] sm:max-w-[42px] h-10 select-none" title="Day ${day}${isToday ? ' (Today)' : ''}">
+                <div class="h-full flex flex-col items-center justify-center py-0.5 leading-none">
+                    <span class="font-extrabold text-[10px] sm:text-xs leading-none">${day}</span>
+                    ${isToday ? '<span class="text-[7px] sm:text-[8px] font-black uppercase text-blue-600 leading-none mt-0.5">Today</span>' : ''}
+                </div>
             </th>
         `;
     }
@@ -1271,7 +1320,7 @@ function renderHabitsList() {
         // Bold Category Header Row (Sticky Left Title)
         tableHTML += `
             <tr class="bg-gradient-to-r from-slate-300/90 via-slate-200 to-slate-300/70 text-slate-800">
-                <td colspan="31" class="sticky left-0 z-20 p-2 px-3 sm:p-2.5 sm:px-4 font-black font-outfit text-xs sm:text-sm tracking-wide border-t-2 border-b-2 border-r border-slate-300/90 bg-[#d1d9e6] shadow-xs">
+                <td colspan="31" class="sticky left-0 z-20 p-1.5 px-2.5 sm:p-2 sm:px-3.5 font-black font-outfit text-xs sm:text-sm tracking-wide border-t-2 border-b-2 border-r border-slate-300/90 bg-[#d1d9e6] shadow-xs">
                     <div class="flex items-center gap-2">
                         <span class="text-sm sm:text-base">${cat.icon}</span>
                         <span>${cat.title}</span>
@@ -1289,56 +1338,53 @@ function renderHabitsList() {
             if (!Array.isArray(habit.days)) habit.days = new Array(30).fill(false);
 
             const habitId = habit.id;
-            const habitIndex = habits.indexOf(habit);
             const checkedCount = habit.days.filter(isDayDone).length;
             const streak = calculateHabitStreak(habit.days);
 
             tableHTML += `
-                <tr class="hover:bg-slate-200/40 transition-colors">
+                <tr class="hover:bg-slate-200/40 transition-colors h-11 sm:h-12">
                     <!-- Sticky Habit Cell (Fixed on Left) -->
-                    <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2.5 sm:px-3 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] min-w-[130px] max-w-[130px] sm:min-w-[270px] sm:max-w-none">
-                        <div class="flex items-center justify-between gap-1 sm:gap-2 min-w-0">
-                            <div class="flex flex-col min-w-0 pr-0.5">
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="neu-badge px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black text-indigo-700 bg-indigo-500/10 shrink-0 border border-indigo-300/70" title="Habit #${totalHabitsRendered}">#${totalHabitsRendered}</span>
-                                    <span class="font-black text-[11px] sm:text-sm text-slate-800 font-outfit truncate max-w-[75px] sm:max-w-[180px]" title="${escapeHtml(habit.name)}">
+                    <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2 sm:px-2.5 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] w-[140px] max-w-[140px] sm:w-[220px] sm:max-w-[220px] h-11 sm:h-12 align-middle">
+                        <div class="flex items-center justify-between gap-1 w-full min-w-0">
+                            <div class="flex flex-col min-w-0 pr-0.5 leading-none">
+                                <div class="flex items-center gap-1 min-w-0">
+                                    <span class="neu-badge px-1 py-0.2 text-[8px] sm:text-[9px] font-black text-indigo-700 bg-indigo-500/10 shrink-0 border border-indigo-300/70" title="Habit #${totalHabitsRendered}">#${totalHabitsRendered}</span>
+                                    <span class="font-black text-[11px] sm:text-xs text-slate-800 font-outfit truncate max-w-[70px] sm:max-w-[135px]" title="${escapeHtml(habit.name)}">
                                         ${escapeHtml(habit.name)}
                                     </span>
-                                    ${habit.scheduledTime ? `<span class="neu-badge px-1 py-0.5 text-[8px] sm:text-[9px] font-extrabold text-indigo-600 bg-indigo-500/10 flex items-center gap-0.5" title="Scheduled target time: ${formatAMPM(habit.scheduledTime)}">⏰ ${formatAMPM(habit.scheduledTime)}</span>` : ''}
                                 </div>
-                                <div class="flex items-center gap-1 sm:gap-2 mt-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-500 flex-wrap">
+                                <div class="flex items-center gap-1 mt-1 text-[8px] sm:text-[9px] text-slate-500 font-semibold flex-wrap">
                                     <span class="text-blue-600 font-bold">${checkedCount}/30</span>
-                                    ${streak > 0 ? `<span class="text-amber-600 font-bold flex items-center gap-0.5">🔥${streak}d</span>` : ''}
+                                    ${streak > 0 ? `<span class="text-amber-600 font-bold">🔥${streak}d</span>` : ''}
+                                    ${habit.scheduledTime ? `<span class="text-indigo-600 font-medium">⏰${formatAMPM(habit.scheduledTime)}</span>` : ''}
                                 </div>
                             </div>
                             <div class="flex items-center gap-0.5 shrink-0">
-                                <button type="button" onclick="editHabitTime('${escapeHtml(habitId)}')" title="Set or edit target time for reminders" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-indigo-600 transition-colors text-[10px] sm:text-xs hover:scale-110 cursor-pointer">
-                                    ⏰
-                                </button>
-                                <button type="button" onclick="deleteHabit('${escapeHtml(habitId)}')" title="Delete Habit" class="neu-badge p-1 sm:p-1.5 text-slate-400 hover:text-red-600 transition-colors text-[10px] sm:text-xs hover:scale-110 cursor-pointer">
-                                    🗑️
-                                </button>
+                                <button type="button" onclick="editHabitTime('${escapeHtml(habitId)}')" title="Set target time" class="p-1 text-slate-400 hover:text-indigo-600 text-[10px] sm:text-xs hover:scale-110 cursor-pointer">⏰</button>
+                                <button type="button" onclick="deleteHabit('${escapeHtml(habitId)}')" title="Delete habit" class="p-1 text-slate-400 hover:text-red-600 text-[10px] sm:text-xs hover:scale-110 cursor-pointer">🗑️</button>
                             </div>
                         </div>
                     </td>
             `;
 
-            // 30 Day Grid Cells
+            // 30 Day Grid Cells (Square, Proportional, Centered)
             for (let day = 0; day < 30; day++) {
                 const val = habit.days[day];
                 const isToday = (day === todayIndex);
                 let cellBgClass = isToday ? "bg-blue-50/50 hover:bg-blue-100/60" : "bg-[#e0e5ec] hover:bg-slate-200/90";
-                if (isDayDone(val)) cellBgClass = isToday ? "bg-emerald-500/25 hover:bg-emerald-500/35" : "bg-emerald-500/15 hover:bg-emerald-500/25";
-                if (isDayMissed(val)) cellBgClass = isToday ? "bg-rose-500/25 hover:bg-rose-500/35" : "bg-rose-500/15 hover:bg-rose-500/25";
+                if (isDayDone(val)) cellBgClass = isToday ? "bg-emerald-500/20 hover:bg-emerald-500/30" : "bg-emerald-500/10 hover:bg-emerald-500/20";
+                if (isDayMissed(val)) cellBgClass = isToday ? "bg-rose-500/20 hover:bg-rose-500/30" : "bg-rose-500/10 hover:bg-rose-500/20";
 
                 const markHTML = getHandwrittenMarkHTML(val, day);
-                const titleText = `Day ${day + 1}${isToday ? ' (Today)' : ''}: ${isDayDone(val) ? 'Completed ✓' : isDayMissed(val) ? 'Missed ✕' : 'Blank (Click to mark)'}`;
+                const titleText = `Day ${day + 1}${isToday ? ' (Today)' : ''}: ${isDayDone(val) ? 'Completed ✓' : isDayMissed(val) ? 'Missed ✕' : 'Blank (Tap to mark)'}`;
 
                 tableHTML += `
                     <td onclick="toggleHabitDay('${escapeHtml(habitId)}', ${day})"
                         title="${titleText}"
-                        class="border-r border-b border-slate-300/70 p-0 text-center align-middle cursor-pointer transition-colors duration-150 h-9 sm:h-11 w-[36px] sm:w-[46px] min-w-[36px] sm:min-w-[46px] touch-manipulation active:scale-95 ${cellBgClass}">
-                        ${markHTML}
+                        class="border-r border-b border-slate-300/70 p-0 text-center align-middle cursor-pointer transition-colors duration-150 w-[36px] min-w-[36px] max-w-[36px] sm:w-[42px] sm:min-w-[42px] sm:max-w-[42px] h-11 sm:h-12 touch-manipulation active:scale-95 ${cellBgClass}">
+                        <div class="w-full h-full flex items-center justify-center p-0.5">
+                            ${markHTML}
+                        </div>
                     </td>
                 `;
             }
@@ -1360,6 +1406,16 @@ function renderHabitsList() {
     } else {
         container.innerHTML = tableHTML;
     }
+}
+
+function scrollToTodayTracker() {
+    const scrollContainer = document.getElementById("habits-grid-scroll-wrapper");
+    if (!scrollContainer) return;
+    const todayIndex = getCurrentTrackerDayIndex();
+    const dayWidth = window.innerWidth < 640 ? 36 : 42;
+    const leftOffset = window.innerWidth < 640 ? 140 : 220;
+    const targetScroll = Math.max(0, (todayIndex * dayWidth) - (scrollContainer.clientWidth / 2) + leftOffset + (dayWidth / 2));
+    scrollContainer.scrollTo({ left: targetScroll, behavior: 'smooth' });
 }
 
 function escapeHtml(str) {
@@ -1551,6 +1607,7 @@ window.renderHeatmap = renderHeatmap;
 window.markHabitCompletedDirectly = markHabitCompletedDirectly;
 window.markHabitMissedDirectly = markHabitMissedDirectly;
 window.snoozeHabitReminder = snoozeHabitReminder;
+window.scrollToTodayTracker = scrollToTodayTracker;
 
 // =====================================================================
 // BROWSER HISTORY & BACK BUTTON NAVIGATION MANAGER
@@ -1623,6 +1680,9 @@ function openTrackerModal() {
     
     renderHabitsList();
     updateGrowthCharts();
+    setTimeout(() => {
+        if (typeof scrollToTodayTracker === "function") scrollToTodayTracker();
+    }, 180);
 }
 
 function closeTrackerModal(fromPopstate = false) {
