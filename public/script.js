@@ -751,6 +751,8 @@ if ('serviceWorker' in navigator) {
         if (type === 'NOTIFICATION_ACTION' && habitId) {
             if (action === 'complete') {
                 markHabitCompletedDirectly(habitId);
+            } else if (action === 'missed') {
+                markHabitMissedDirectly(habitId);
             } else if (action === 'snooze') {
                 snoozeHabitReminder(habitId, 10);
             }
@@ -818,27 +820,51 @@ function playNotificationSound(soundType) {
     }
 }
 
+// User-triggered manual Done mark (Tick ✓)
 function markHabitCompletedDirectly(habitId) {
-    const habitIndex = habits.findIndex(h => h.id === habitId || String(h.id) === String(habitId));
+    if (!Array.isArray(habits)) return;
+    const habitIndex = habits.findIndex(h => h && (h.id === habitId || String(h.id) === String(habitId)));
     if (habitIndex === -1) return;
 
     const now = new Date();
     const todayIndex = (now.getDate() - 1) % 30;
     const habit = habits[habitIndex];
 
-    if (!habit.days) habit.days = Array(30).fill(false);
+    if (!Array.isArray(habit.days)) habit.days = Array(30).fill(false);
     habit.days[todayIndex] = "done";
     saveHabitsToStorage();
     renderHabitsList();
     updateGrowthCharts();
 
     playNotificationSound('complete');
-    showInAppToast("✅ Habit Completed!", `Awesome work! "${habit.name}" has been marked as done for today.`, false);
+    showInAppToast("✅ Habit Completed!", `Awesome work! "${habit.name}" has been marked as done (✓) for today.`, false);
     trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: true });
 }
 
+// User-triggered manual Missed mark (Cross ✕)
+function markHabitMissedDirectly(habitId) {
+    if (!Array.isArray(habits)) return;
+    const habitIndex = habits.findIndex(h => h && (h.id === habitId || String(h.id) === String(habitId)));
+    if (habitIndex === -1) return;
+
+    const now = new Date();
+    const todayIndex = (now.getDate() - 1) % 30;
+    const habit = habits[habitIndex];
+
+    if (!Array.isArray(habit.days)) habit.days = Array(30).fill(false);
+    habit.days[todayIndex] = "missed";
+    saveHabitsToStorage();
+    renderHabitsList();
+    updateGrowthCharts();
+
+    playNotificationSound('missed');
+    showInAppToast("✕ Habit Missed", `"${habit.name}" marked as missed (✕) for today.`, true);
+    trackEvent({ type: 'routine_interaction', clientId: getOrCreateClientId(), isCheckoff: false });
+}
+
 function snoozeHabitReminder(habitId, minutes = 10) {
-    const habit = habits.find(h => h.id === habitId || String(h.id) === String(habitId));
+    if (!Array.isArray(habits)) return;
+    const habit = habits.find(h => h && (h.id === habitId || String(h.id) === String(habitId)));
     if (!habit) return;
 
     habit.snoozedUntil = Date.now() + minutes * 60 * 1000;
@@ -871,13 +897,17 @@ function showInAppToast(title, body, isMissed, habitId = null) {
     let actionButtonsHTML = '';
     if (habitId) {
         actionButtonsHTML = `
-            <div class="flex items-center gap-2 mt-1 pt-2 border-t border-current/15">
+            <div class="flex items-center gap-1.5 sm:gap-2 mt-1 pt-2 border-t border-current/15 flex-wrap">
                 <button onclick="markHabitCompletedDirectly('${escapeHtml(habitId)}'); this.closest('.neu-card').remove();" 
                     class="px-2.5 py-1 text-[11px] font-black rounded-lg ${isMissed ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'} transition-all cursor-pointer shadow-sm">
                     ✅ Mark Done
                 </button>
+                <button onclick="markHabitMissedDirectly('${escapeHtml(habitId)}'); this.closest('.neu-card').remove();" 
+                    class="px-2.5 py-1 text-[11px] font-bold rounded-lg ${isMissed ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-400/50'} transition-all cursor-pointer shadow-sm">
+                    ✕ Mark Missed
+                </button>
                 <button onclick="snoozeHabitReminder('${escapeHtml(habitId)}', 10); this.closest('.neu-card').remove();" 
-                    class="px-2.5 py-1 text-[11px] font-bold rounded-lg ${isMissed ? 'bg-rose-200/80 text-rose-900 hover:bg-rose-300' : 'bg-slate-700/80 text-slate-200 hover:bg-slate-700'} transition-all cursor-pointer">
+                    class="px-2 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg ${isMissed ? 'bg-slate-200/80 text-slate-800 hover:bg-slate-300' : 'bg-slate-700/80 text-slate-200 hover:bg-slate-700'} transition-all cursor-pointer">
                     ⏰ Snooze 10m
                 </button>
             </div>
@@ -918,10 +948,10 @@ function sendNotification(title, options) {
     // 1. Play Web Audio chime
     playNotificationSound(soundType);
 
-    // 2. Display In-App Floating Toast with quick action buttons
+    // 2. Display In-App Floating Toast with explicit quick action buttons
     showInAppToast(title, options.body, isMissed, options.habitId);
 
-    // 3. Dispatch Native / Mobile Push Notification with OS Action Buttons
+    // 3. Dispatch Native / Mobile Push Notification with explicit action buttons
     if ("Notification" in window && Notification.permission === "granted") {
         const notifPayload = {
             body: options.body,
@@ -936,6 +966,7 @@ function sendNotification(title, options) {
         if (options.habitId) {
             notifPayload.actions = [
                 { action: 'complete', title: '✅ Mark Done' },
+                { action: 'missed', title: '✕ Mark Missed' },
                 { action: 'snooze', title: '⏰ Snooze 10m' }
             ];
         }
@@ -974,7 +1005,7 @@ function requestNotificationPermission() {
         updateNotificationBtnState();
         if (permission === "granted") {
             sendNotification("🔔 PRAXiS Reminders Activated", {
-                body: "You'll receive 10-minute reminders before your scheduled habits & alerts if missed!",
+                body: "You'll receive 10-minute reminders before your scheduled habits & prompt alerts if missed!",
                 tag: 'praxis-welcome',
                 isMissed: false
             });
@@ -1030,7 +1061,7 @@ function triggerTestAlerts() {
 let lastNotificationCheckTime = 0;
 
 function checkHabitNotifications() {
-    if (habits.length === 0) return;
+    if (!Array.isArray(habits) || habits.length === 0) return;
 
     const now = new Date();
     const nowMs = now.getTime();
@@ -1047,7 +1078,7 @@ function checkHabitNotifications() {
     const todayIndex = (now.getDate() - 1) % 30;
 
     habits.forEach(habit => {
-        if (!habit.scheduledTime) return;
+        if (!habit || !habit.scheduledTime) return;
 
         // Skip check if reminder is currently snoozed
         if (habit.snoozedUntil && nowMs < habit.snoozedUntil) return;
@@ -1080,32 +1111,25 @@ function checkHabitNotifications() {
             }
         }
 
-        // 2. Missed Habit Alert Notification (10 mins past target time)
+        // 2. Prompt Reminder Notification when Target Time passes (NO automatic marking)
         if (currentTotalMins >= scheduledTotalMins + 10) {
             if (!isTodayDone && !habit.missedNotifiedDates[todayStr]) {
                 habit.missedNotifiedDates[todayStr] = true;
-
-                // Auto-mark day cell as missed if still empty
-                if (!habit.days[todayIndex] || habit.days[todayIndex] === false) {
-                    habit.days[todayIndex] = "missed";
-                    renderHabitsList();
-                    updateGrowthCharts();
-                }
-
                 saveHabitsToStorage();
 
+                // NOTE: Automatic tick/cross is completely disabled. The cell remains blank unless explicitly clicked.
                 const quotes = [
-                    `😔 You missed "${habit.name}" scheduled for ${formatAMPM(habit.scheduledTime)}. Discipline is built through daily action!`,
-                    `💔 Habit missed: "${habit.name}". Skipping habits today steals momentum from your future self!`,
-                    `⚠️ Missed target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Reset your focus and stay consistent!`
+                    `⏰ Target time passed for "${habit.name}" (${formatAMPM(habit.scheduledTime)}). Have you finished it yet?`,
+                    `💪 Don't forget your habit: "${habit.name}". Build your streak today!`,
+                    `🎯 Scheduled target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Click to mark Done or Missed!`
                 ];
                 const msg = quotes[Math.floor(Math.random() * quotes.length)];
 
-                sendNotification(`😔 Habit Missed: ${habit.name}`, {
+                sendNotification(`⏰ Habit Check-in: ${habit.name}`, {
                     body: msg,
-                    tag: `praxis-missed-${habit.id}-${todayStr}`,
+                    tag: `praxis-prompt-${habit.id}-${todayStr}`,
                     habitId: habit.id,
-                    isMissed: true
+                    isMissed: false
                 });
             }
         }
@@ -1524,6 +1548,9 @@ window.setCategoryFilter = setCategoryFilter;
 window.renderHabitsList = renderHabitsList;
 window.updateGrowthCharts = updateGrowthCharts;
 window.renderHeatmap = renderHeatmap;
+window.markHabitCompletedDirectly = markHabitCompletedDirectly;
+window.markHabitMissedDirectly = markHabitMissedDirectly;
+window.snoozeHabitReminder = snoozeHabitReminder;
 
 // =====================================================================
 // BROWSER HISTORY & BACK BUTTON NAVIGATION MANAGER
@@ -1641,6 +1668,18 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("library-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "library-modal") closeLibraryModal();
     });
+
+    // Check for notification action in URL parameters
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const habitId = urlParams.get('habitId');
+        if (action && habitId) {
+            if (action === 'complete') markHabitCompletedDirectly(habitId);
+            else if (action === 'missed') markHabitMissedDirectly(habitId);
+            else if (action === 'snooze') snoozeHabitReminder(habitId, 10);
+        }
+    } catch (e) {}
 
     if (!window.history.state || !window.history.state.praxisRoot) {
         const targetPath = (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html')) ? '/praxis' : window.location.pathname;
