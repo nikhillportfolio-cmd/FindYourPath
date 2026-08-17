@@ -366,6 +366,7 @@ function normalizeHabit(h) {
         scheduledTime: scheduledTime,
         remindedDates: h.remindedDates && typeof h.remindedDates === "object" ? h.remindedDates : {},
         missedNotifiedDates: h.missedNotifiedDates && typeof h.missedNotifiedDates === "object" ? h.missedNotifiedDates : {},
+        notifiedEvents: h.notifiedEvents && typeof h.notifiedEvents === "object" ? h.notifiedEvents : {},
         days: daysArray,
         createdAt: h.createdAt || Date.now()
     };
@@ -1172,7 +1173,7 @@ async function requestNotificationPermission() {
         if (permission === "granted") {
             await subscribeToPushNotifications(false);
             sendNotification("🔔 PRAXiS Reminders Activated", {
-                body: "24/7 background reminders are active! You'll receive 10-minute alerts before your scheduled habits even when the website or browser is closed! 💪",
+                body: "24/7 background reminders are active! You'll receive 7-minute alerts before your scheduled habits even when the website or browser is closed! 💪",
                 tag: 'praxis-welcome',
                 isMissed: false
             });
@@ -1194,15 +1195,15 @@ function updateNotificationBtnState() {
     if (Notification.permission === "granted") {
         btn.innerHTML = `<span class="text-emerald-700 font-bold">🔔 24/7 Reminders Active</span>`;
         btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-emerald-700 bg-emerald-500/15 flex items-center gap-1.5 shrink-0";
-        btn.title = "24/7 Closed-Browser & Phone reminders are active";
+        btn.title = "24/7 Closed-Browser & Phone reminders are active (7 mins prior & on time)";
     } else if (Notification.permission === "denied") {
         btn.innerHTML = `<span class="text-rose-700 font-bold">🔕 Notifications Blocked</span>`;
         btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-rose-700 bg-rose-500/15 flex items-center gap-1.5 shrink-0";
         btn.title = "Notifications are blocked in your browser settings";
     } else {
-        btn.innerHTML = `<span class="text-xs">🔔</span> Enable Phone Reminders`;
+        btn.innerHTML = `<span class="text-xs">🔔</span> Enable 24/7 Reminders`;
         btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-all cursor-pointer";
-        btn.title = "Enable phone/browser reminders for scheduled habits";
+        btn.title = "Enable 24/7 phone & closed-browser reminders for scheduled habits";
     }
 }
 
@@ -1235,7 +1236,7 @@ async function triggerTestAlerts() {
     const sampleHabit = (Array.isArray(habits) && habits.length > 0) ? habits[0] : null;
 
     // 1. Play immediate local chime & in-app toast
-    sendNotification("⏰ Test Habit Reminder (10 mins prior)", {
+    sendNotification("⏰ Test Habit Reminder (7 mins prior)", {
         body: "Success! Your habit notifications, phone alerts & audio chime are active! Testing server-to-device closed-browser push next... 🚀",
         tag: 'praxis-test-remind',
         habitId: sampleHabit ? sampleHabit.id : null,
@@ -1294,11 +1295,6 @@ function checkHabitNotifications() {
     habits.forEach(habit => {
         if (!habit || !habit.scheduledTime) return;
 
-        const todayIndex = getHabitTodayIndex(habit);
-
-        // Skip check if reminder is currently snoozed
-        if (habit.snoozedUntil && nowMs < habit.snoozedUntil) return;
-
         const parts = habit.scheduledTime.split(":");
         if (parts.length < 2) return;
         const targetH = parseInt(parts[0], 10);
@@ -1306,34 +1302,72 @@ function checkHabitNotifications() {
         if (isNaN(targetH) || isNaN(targetM)) return;
 
         const scheduledTotalMins = targetH * 60 + targetM;
+        const diffMinutes = currentTotalMins - scheduledTotalMins;
+        const todayIndex = getHabitTodayIndex(habit);
         const isTodayDone = habit.days && isDayDone(habit.days[todayIndex]);
 
-        if (!habit.remindedDates) habit.remindedDates = {};
-        if (!habit.missedNotifiedDates) habit.missedNotifiedDates = {};
+        if (!habit.notifiedEvents) habit.notifiedEvents = {};
+        if (!Array.isArray(habit.notifiedEvents[todayStr])) {
+            habit.notifiedEvents[todayStr] = [];
+        }
+        const sentEvents = habit.notifiedEvents[todayStr];
 
-        // 1. 10-Minute Prior Pre-Habit Reminder Notification
-        const reminderTimeMins = scheduledTotalMins - 10;
-        if (currentTotalMins >= reminderTimeMins && currentTotalMins < scheduledTotalMins) {
-            if (!isTodayDone && !habit.remindedDates[todayStr]) {
-                habit.remindedDates[todayStr] = true;
+        // 1. Snooze Alert Trigger
+        if (habit.snoozedUntil && nowMs >= habit.snoozedUntil && nowMs <= habit.snoozedUntil + 15 * 60 * 1000) {
+            const snoozeKey = 'snooze_' + habit.snoozedUntil;
+            if (!sentEvents.includes(snoozeKey)) {
+                sentEvents.push(snoozeKey);
+                habit.snoozedUntil = 0;
                 saveHabitsToStorage();
-                
-                sendNotification(`⏰ Habit in 10 mins: ${habit.name}`, {
-                    body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)}. Get ready to build discipline! 💪`,
-                    tag: `praxis-remind-${habit.id}-${todayStr}`,
+
+                sendNotification(`⏰ Snooze Over: ${habit.name}`, {
+                    body: `Your 10-minute snooze for "${habit.name}" is up. Ready to crush this habit today? 💪`,
+                    tag: `praxis-snooze-${habit.id}-${nowMs}`,
                     habitId: habit.id,
                     isMissed: false
                 });
             }
         }
 
-        // 2. Prompt Reminder Notification when Target Time passes (NO automatic marking)
-        if (currentTotalMins >= scheduledTotalMins + 10) {
-            if (!isTodayDone && !habit.missedNotifiedDates[todayStr]) {
-                habit.missedNotifiedDates[todayStr] = true;
+        // If habit is already marked done, skip remaining alerts
+        if (isTodayDone) return;
+
+        // 2. 7-Minute Prior Pre-Habit Reminder Notification
+        if (diffMinutes >= -8 && diffMinutes <= -2) {
+            if (!sentEvents.includes('prior_7m')) {
+                sentEvents.push('prior_7m');
+                saveHabitsToStorage();
+                
+                sendNotification(`⏰ In 7 Mins: ${habit.name}`, {
+                    body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)} (in 7 minutes). Get ready to build discipline! 💪`,
+                    tag: `praxis-prior-${habit.id}-${todayStr}`,
+                    habitId: habit.id,
+                    isMissed: false
+                });
+            }
+        }
+
+        // 3. Exact Target Time Due Alert (Fired right as scheduled time arrives!)
+        if (diffMinutes >= -1 && diffMinutes <= 15) {
+            if (!sentEvents.includes('due_exact')) {
+                sentEvents.push('due_exact');
                 saveHabitsToStorage();
 
-                // NOTE: Automatic tick/cross is completely disabled. The cell remains blank unless explicitly clicked.
+                sendNotification(`🔔 Target Time: ${habit.name}!`, {
+                    body: `It's ${formatAMPM(habit.scheduledTime)}! Time for your scheduled routine: "${habit.name}". Build your streak right now! 🎯`,
+                    tag: `praxis-due-${habit.id}-${todayStr}`,
+                    habitId: habit.id,
+                    isMissed: false
+                });
+            }
+        }
+
+        // 4. Prompt Reminder Notification when Target Time passes
+        if (diffMinutes >= 25 && diffMinutes <= 180) {
+            if (!sentEvents.includes('followup_prompt')) {
+                sentEvents.push('followup_prompt');
+                saveHabitsToStorage();
+
                 const quotes = [
                     `⏰ Target time passed for "${habit.name}" (${formatAMPM(habit.scheduledTime)}). Have you finished it yet?`,
                     `💪 Don't forget your habit: "${habit.name}". Build your streak today!`,
@@ -1343,7 +1377,7 @@ function checkHabitNotifications() {
 
                 sendNotification(`⏰ Habit Check-in: ${habit.name}`, {
                     body: msg,
-                    tag: `praxis-prompt-${habit.id}-${todayStr}`,
+                    tag: `praxis-followup-${habit.id}-${todayStr}`,
                     habitId: habit.id,
                     isMissed: false
                 });

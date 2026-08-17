@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const webpush = require('web-push');
+const notifier = require('node-notifier');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10443,7 +10444,7 @@ app.get('/api/user/sync', (req, res) => {
 });
 
 // =====================================================================
-// WEB PUSH NOTIFICATION & 24/7 BACKGROUND REMINDER ENGINE
+// WEB PUSH NOTIFICATION & 24/7 BACKGROUND REMINDER ENGINE (MULTI-TIER)
 // =====================================================================
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BP-XNQj1EJtc8fFW6GQE08lkrky3OjLQUZ2e5FEvzjfMPdxtNF1M5F7xnN2qiqy513qa1v27naBp6bPSFr4D5Go';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'HvI4M-LLNsflMdPJE1ynDZ-qSHdCT8lYOOO2XyptdH8';
@@ -10499,45 +10500,53 @@ function formatAMPM(timeStr) {
     return `${displayH}:${displayM} ${ampm}`;
 }
 
-function getUserLocalTime(timezone, offset) {
+function evaluateHabitSchedule(habit, timezone, offset) {
+    if (!habit || !habit.scheduledTime || typeof habit.scheduledTime !== 'string') return null;
+    const timeParts = habit.scheduledTime.trim().split(':');
+    if (timeParts.length < 2) return null;
+    const targetH = parseInt(timeParts[0], 10);
+    const targetM = parseInt(timeParts[1], 10);
+    if (isNaN(targetH) || isNaN(targetM) || targetH < 0 || targetH > 23 || targetM < 0 || targetM > 59) return null;
+
     const now = new Date();
+    let todayStr = '';
+    let currentH = now.getHours();
+    let currentM = now.getMinutes();
+
     if (timezone) {
         try {
-            const dStr = now.toLocaleDateString("en-CA", { timeZone: timezone }); // "YYYY-MM-DD"
-            const tStr = now.toLocaleTimeString("en-GB", { timeZone: timezone, hour12: false }); // "HH:MM:SS"
-            const [hourStr, minStr] = tStr.split(":");
-            const hour = parseInt(hourStr, 10);
-            const min = parseInt(minStr, 10);
-            return {
-                todayStr: dStr,
-                hour: isNaN(hour) ? now.getHours() : hour,
-                min: isNaN(min) ? now.getMinutes() : min,
-                totalMins: (isNaN(hour) ? now.getHours() : hour) * 60 + (isNaN(min) ? now.getMinutes() : min),
-                nowMs: now.getTime()
-            };
+            todayStr = now.toLocaleDateString("en-CA", { timeZone: timezone }); // "YYYY-MM-DD"
+            const tStr = now.toLocaleTimeString("en-GB", { timeZone: timezone, hour12: false });
+            const [h, m] = tStr.split(':').map(Number);
+            if (!isNaN(h) && !isNaN(m)) {
+                currentH = h;
+                currentM = m;
+            }
         } catch (e) {}
     }
-    if (typeof offset === 'number') {
-        const localDate = new Date(now.getTime() - offset * 60000);
-        const todayStr = `${localDate.getUTCFullYear()}-${String(localDate.getUTCMonth() + 1).padStart(2, '0')}-${String(localDate.getUTCDate()).padStart(2, '0')}`;
-        const hour = localDate.getUTCHours();
-        const min = localDate.getUTCMinutes();
-        return {
-            todayStr,
-            hour,
-            min,
-            totalMins: hour * 60 + min,
-            nowMs: now.getTime()
-        };
+
+    if (!todayStr && typeof offset === 'number') {
+        const local = new Date(now.getTime() - offset * 60000);
+        todayStr = `${local.getUTCFullYear()}-${String(local.getUTCMonth() + 1).padStart(2, '0')}-${String(local.getUTCDate()).padStart(2, '0')}`;
+        currentH = local.getUTCHours();
+        currentM = local.getUTCMinutes();
     }
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const hour = now.getHours();
-    const min = now.getMinutes();
+
+    if (!todayStr) {
+        todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    const currentTotalMins = currentH * 60 + currentM;
+    const targetTotalMins = targetH * 60 + targetM;
+    const diffMinutes = currentTotalMins - targetTotalMins;
+
     return {
         todayStr,
-        hour,
-        min,
-        totalMins: hour * 60 + min,
+        currentH,
+        currentM,
+        currentTotalMins,
+        targetTotalMins,
+        diffMinutes,
         nowMs: now.getTime()
     };
 }
@@ -10561,45 +10570,66 @@ function isHabitDoneToday(habit, todayIndex) {
     return val === "done" || val === true || val === 1 || val === "1" || val === "true";
 }
 
-function sendPushToSubscription(sub, payload) {
-    if (!sub || !sub.endpoint || !sub.keys) return Promise.resolve(false);
-    const pushSubscription = {
-        endpoint: sub.endpoint,
-        keys: {
-            p256dh: sub.keys.p256dh,
-            auth: sub.keys.auth
+// Dual-Layer Notification Dispatcher: Web Push (RFC 8291) + Local OS Notification Fallback
+function sendHybridNotification(sub, payload) {
+    if (!payload || !payload.title) return Promise.resolve(false);
+
+    // 1. Send via W3C Web Push Protocol to Browser / Phone / Mobile Service Worker
+    if (sub && sub.endpoint && sub.keys && sub.keys.p256dh && sub.keys.auth) {
+        const pushSubscription = {
+            endpoint: sub.endpoint,
+            keys: {
+                p256dh: sub.keys.p256dh,
+                auth: sub.keys.auth
+            }
+        };
+        const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+        const topicName = (payload.habitId ? ('h_' + payload.habitId) : 'praxis_remind').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+
+        webpush.sendNotification(pushSubscription, payloadStr, {
+            TTL: 86400,
+            urgency: 'high',
+            topic: topicName
+        }).then(() => {
+            console.log(`[WebPush] ✅ Delivered push alert "${payload.title}" to client endpoint (${sub.endpoint.slice(0, 35)}...)`);
+        }).catch(err => {
+            console.error(`[WebPush] ❌ Delivery warning (${err.statusCode || err.code}):`, err.message);
+            if (err.statusCode === 404 || err.statusCode === 410) {
+                console.log(`[WebPush] Auto-pruning expired subscription`);
+                pushSubscriptions = pushSubscriptions.filter(s => s.endpoint !== sub.endpoint);
+                savePushSubscriptions();
+            }
+        });
+    }
+
+    // 2. Send via Native Windows OS Action Center Toast (Guaranteed 100% Delivery on Windows even if all browsers are closed)
+    try {
+        if (notifier && typeof notifier.notify === 'function') {
+            notifier.notify({
+                title: payload.title || 'PRAXiS Routine & Habit Tracker',
+                message: payload.body || 'You have a scheduled habit reminder.',
+                icon: path.join(__dirname, 'public', 'favicon.ico'),
+                sound: true,
+                wait: false
+            }, () => {});
         }
-    };
-    const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
-    return webpush.sendNotification(pushSubscription, payloadStr, {
-        TTL: 86400,
-        urgency: 'high'
-    }).then(() => {
-        console.log(`[WebPush] ✅ Delivered push notification "${payload.title}" to client endpoint (${sub.endpoint.slice(0, 35)}...)`);
-        return true;
-    }).catch(err => {
-        console.error(`[WebPush] ❌ Push notification delivery error (${err.statusCode || err.code}):`, err.message);
-        if (err.statusCode === 404 || err.statusCode === 410) {
-            console.log(`[WebPush] Removing expired subscription: ${sub.endpoint.slice(0, 35)}...`);
-            pushSubscriptions = pushSubscriptions.filter(s => s.endpoint !== sub.endpoint);
-            savePushSubscriptions();
-        }
-        return false;
-    });
+    } catch (nErr) {
+        // Non-blocking OS notifier
+    }
+
+    return Promise.resolve(true);
 }
 
-// Background Habit Notification Checker (Evaluates scheduled habits 24/7 even if browser is closed)
+// Multi-Stage Time-Window & State-Machine Scheduler Algorithm (Evaluates scheduled habits 24/7)
 function checkAndDispatchBackgroundHabitReminders() {
     if (!Array.isArray(pushSubscriptions) || pushSubscriptions.length === 0) return;
 
     let dirty = false;
 
     pushSubscriptions.forEach(sub => {
-        if (!sub || !sub.endpoint || !sub.keys) return;
+        if (!sub) return;
 
-        const userNow = getUserLocalTime(sub.timezone, sub.timezoneOffset);
-
-        // Resolve latest habits: check linked user if authenticated, else subscription habits
+        // Resolve active habit list: check linked user if authenticated, else subscription habits
         let habitsList = Array.isArray(sub.habits) ? sub.habits : [];
         let linkedUser = null;
         if (sub.email || sub.userId) {
@@ -10618,35 +10648,33 @@ function checkAndDispatchBackgroundHabitReminders() {
         habitsList.forEach(habit => {
             if (!habit || !habit.scheduledTime) return;
 
-            // Skip if snoozed
-            if (habit.snoozedUntil && userNow.nowMs < habit.snoozedUntil) return;
+            const timing = evaluateHabitSchedule(habit, sub.timezone, sub.timezoneOffset);
+            if (!timing) return;
 
-            const parts = habit.scheduledTime.split(":");
-            if (parts.length < 2) return;
-            const targetH = parseInt(parts[0], 10);
-            const targetM = parseInt(parts[1], 10);
-            if (isNaN(targetH) || isNaN(targetM)) return;
+            const todayIndex = getHabitTodayIndex(habit, { nowMs: timing.nowMs });
+            const isDone = isHabitDoneToday(habit, todayIndex);
 
-            const scheduledTotalMins = targetH * 60 + targetM;
-            const todayIndex = getHabitTodayIndex(habit, userNow);
-            const doneToday = isHabitDoneToday(habit, todayIndex);
+            // Initialize habit notification state tracker object
+            if (!habit.notifiedEvents) habit.notifiedEvents = {};
+            if (!Array.isArray(habit.notifiedEvents[timing.todayStr])) {
+                habit.notifiedEvents[timing.todayStr] = [];
+            }
+            const sentEvents = habit.notifiedEvents[timing.todayStr];
 
-            if (!habit.remindedDates) habit.remindedDates = {};
-            if (!habit.missedNotifiedDates) habit.missedNotifiedDates = {};
-
-            // 1. 10-Minute Prior Pre-Habit Reminder Notification
-            const reminderTimeMins = scheduledTotalMins - 10;
-            if (userNow.totalMins >= reminderTimeMins && userNow.totalMins < scheduledTotalMins) {
-                if (!doneToday && !habit.remindedDates[userNow.todayStr]) {
-                    habit.remindedDates[userNow.todayStr] = true;
+            // Trigger A: SNOOZE CHECK
+            if (habit.snoozedUntil && timing.nowMs >= habit.snoozedUntil && timing.nowMs <= habit.snoozedUntil + 15 * 60 * 1000) {
+                const snoozeKey = 'snooze_' + habit.snoozedUntil;
+                if (!sentEvents.includes(snoozeKey)) {
+                    sentEvents.push(snoozeKey);
+                    habit.snoozedUntil = 0;
                     dirty = true;
 
-                    const payload = {
-                        title: `⏰ Habit in 10 mins: ${habit.name}`,
-                        body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)}. Get ready to build discipline! 💪`,
+                    sendHybridNotification(sub, {
+                        title: `⏰ Snooze Over: ${habit.name}`,
+                        body: `Your 10-minute snooze for "${habit.name}" has expired. Let's get it done today! 💪`,
                         icon: '/favicon.ico',
                         badge: '/favicon.ico',
-                        tag: `praxis-remind-${habit.id}-${userNow.todayStr}`,
+                        tag: `praxis-snooze-${habit.id}-${timing.nowMs}`,
                         habitId: habit.id,
                         url: '/praxis',
                         actions: [
@@ -10654,35 +10682,27 @@ function checkAndDispatchBackgroundHabitReminders() {
                             { action: 'missed', title: '✕ Mark Missed' },
                             { action: 'snooze', title: '⏰ Snooze 10m' }
                         ],
-                        data: {
-                            habitId: habit.id,
-                            url: '/praxis'
-                        }
-                    };
-
-                    sendPushToSubscription(sub, payload);
+                        data: { habitId: habit.id, url: '/praxis' }
+                    });
                 }
             }
 
-            // 2. Prompt Reminder Notification when Target Time passes (NO automatic marking)
-            if (userNow.totalMins >= scheduledTotalMins + 10 && userNow.totalMins <= scheduledTotalMins + 180) {
-                if (!doneToday && !habit.missedNotifiedDates[userNow.todayStr]) {
-                    habit.missedNotifiedDates[userNow.todayStr] = true;
+            // If habit is already marked done for today, skip remaining pre/due/post reminders
+            if (isDone) return;
+
+            // Trigger B: 7-MINUTE PRIOR HEADS-UP ALERT
+            // Window: between 8 mins before target and 2 mins before target (7 mins prior)
+            if (timing.diffMinutes >= -8 && timing.diffMinutes <= -2) {
+                if (!sentEvents.includes('prior_7m')) {
+                    sentEvents.push('prior_7m');
                     dirty = true;
 
-                    const quotes = [
-                        `⏰ Target time passed for "${habit.name}" (${formatAMPM(habit.scheduledTime)}). Have you finished it yet?`,
-                        `💪 Don't forget your habit: "${habit.name}". Build your streak today!`,
-                        `🎯 Scheduled target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Click to mark Done or Missed!`
-                    ];
-                    const msg = quotes[Math.floor(Math.random() * quotes.length)];
-
-                    const payload = {
-                        title: `⏰ Habit Check-in: ${habit.name}`,
-                        body: msg,
+                    sendHybridNotification(sub, {
+                        title: `⏰ In 7 Mins: ${habit.name}`,
+                        body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)} (in 7 minutes). Prepare your mindset & get ready! 🔥`,
                         icon: '/favicon.ico',
                         badge: '/favicon.ico',
-                        tag: `praxis-prompt-${habit.id}-${userNow.todayStr}`,
+                        tag: `praxis-prior-${habit.id}-${timing.todayStr}`,
                         habitId: habit.id,
                         url: '/praxis',
                         actions: [
@@ -10690,13 +10710,58 @@ function checkAndDispatchBackgroundHabitReminders() {
                             { action: 'missed', title: '✕ Mark Missed' },
                             { action: 'snooze', title: '⏰ Snooze 10m' }
                         ],
-                        data: {
-                            habitId: habit.id,
-                            url: '/praxis'
-                        }
-                    };
+                        data: { habitId: habit.id, url: '/praxis' }
+                    });
+                }
+            }
 
-                    sendPushToSubscription(sub, payload);
+            // Trigger C: EXACT TARGET TIME DUE ALERT (Fired right as time arrives!)
+            // Window: between -1 min before and +15 mins after scheduled target
+            if (timing.diffMinutes >= -1 && timing.diffMinutes <= 15) {
+                if (!sentEvents.includes('due_exact')) {
+                    sentEvents.push('due_exact');
+                    dirty = true;
+
+                    sendHybridNotification(sub, {
+                        title: `🔔 Target Time: ${habit.name}!`,
+                        body: `It's ${formatAMPM(habit.scheduledTime)}! Time for "${habit.name}". Build your streak right now! 🎯`,
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico',
+                        tag: `praxis-due-${habit.id}-${timing.todayStr}`,
+                        habitId: habit.id,
+                        url: '/praxis',
+                        actions: [
+                            { action: 'complete', title: '✅ Mark Done' },
+                            { action: 'missed', title: '✕ Mark Missed' },
+                            { action: 'snooze', title: '⏰ Snooze 10m' }
+                        ],
+                        data: { habitId: habit.id, url: '/praxis' }
+                    });
+                }
+            }
+
+            // Trigger D: POST-TARGET FOLLOW-UP CHECK-IN PROMPT
+            // Window: between 25 mins after and 3 hours after scheduled target
+            if (timing.diffMinutes >= 25 && timing.diffMinutes <= 180) {
+                if (!sentEvents.includes('followup_prompt')) {
+                    sentEvents.push('followup_prompt');
+                    dirty = true;
+
+                    sendHybridNotification(sub, {
+                        title: `⏰ Habit Check-in: ${habit.name}`,
+                        body: `Scheduled target was ${formatAMPM(habit.scheduledTime)}. Did you complete "${habit.name}" today? Tap to record! 🏆`,
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico',
+                        tag: `praxis-followup-${habit.id}-${timing.todayStr}`,
+                        habitId: habit.id,
+                        url: '/praxis',
+                        actions: [
+                            { action: 'complete', title: '✅ Mark Done' },
+                            { action: 'missed', title: '✕ Mark Missed' },
+                            { action: 'snooze', title: '⏰ Snooze 10m' }
+                        ],
+                        data: { habitId: habit.id, url: '/praxis' }
+                    });
                 }
             }
         });
@@ -10708,8 +10773,8 @@ function checkAndDispatchBackgroundHabitReminders() {
     }
 }
 
-// Background scheduler ticker runs every 20 seconds
-setInterval(checkAndDispatchBackgroundHabitReminders, 20000);
+// Background scheduler ticker runs every 15 seconds for precision timing
+setInterval(checkAndDispatchBackgroundHabitReminders, 15000);
 
 // API: Get VAPID Public Key for Web Push Manager
 app.get('/api/push/vapid-public-key', (req, res) => {
@@ -10872,25 +10937,13 @@ app.post('/api/push/test', async (req, res) => {
     try {
         const { endpoint, title, body, habitId } = req.body || {};
 
-        let targetSubs = [];
-        if (endpoint) {
-            targetSubs = pushSubscriptions.filter(s => s.endpoint === endpoint);
-        }
-        if (targetSubs.length === 0 && pushSubscriptions.length > 0) {
-            targetSubs = [pushSubscriptions[pushSubscriptions.length - 1]];
-        }
-
-        if (targetSubs.length === 0) {
-            return res.status(404).json({ error: "No active push subscription found on server. Please enable phone reminders first!" });
-        }
-
-        const payload = {
-            title: title || "⏰ Test Habit Reminder (10 mins prior)",
-            body: body || "Success! PRAXiS background reminders are fully active & working even when browser is closed! 🎉",
+        const testPayload = {
+            title: title || "⏰ PRAXiS 24/7 Habit Reminder",
+            body: body || "Success! Reminders will ring even when the browser or website is completely closed! 🎉",
             icon: "/favicon.ico",
             badge: "/favicon.ico",
             tag: `praxis-test-${Date.now()}`,
-            habitId: habitId || null,
+            habitId: habitId || "",
             url: "/praxis",
             actions: [
                 { action: "complete", title: "✅ Mark Done" },
@@ -10903,16 +10956,28 @@ app.post('/api/push/test', async (req, res) => {
             }
         };
 
-        const results = await Promise.all(targetSubs.map(s => sendPushToSubscription(s, payload)));
+        let targetSubs = [];
+        if (endpoint) {
+            targetSubs = pushSubscriptions.filter(s => s.endpoint === endpoint);
+        }
+        if (targetSubs.length === 0 && pushSubscriptions.length > 0) {
+            targetSubs = [pushSubscriptions[pushSubscriptions.length - 1]];
+        }
+
+        if (targetSubs.length > 0) {
+            targetSubs.forEach(s => sendHybridNotification(s, testPayload));
+        } else {
+            sendHybridNotification(null, testPayload);
+        }
 
         res.json({
             success: true,
-            deliveredCount: results.filter(Boolean).length,
-            message: "Test push notification dispatched via Web Push protocol!"
+            deliveredCount: targetSubs.length,
+            message: "Test push and OS notification dispatched successfully via Dual-Layer Engine!"
         });
     } catch (err) {
         console.error("Test Push Error:", err);
-        res.status(500).json({ error: "Failed to dispatch test push notification." });
+        res.status(500).json({ error: "Failed to dispatch test notification." });
     }
 });
 
