@@ -428,6 +428,11 @@ function saveHabitsToStorage() {
             updatedAt: new Date().toISOString()
         });
     }
+
+    // 3. Sync latest habits to 24/7 background Push Notification server
+    if (typeof syncHabitsToPushServer === "function") {
+        syncHabitsToPushServer(habits);
+    }
 }
 
 window.clearUserUIState = function() {
@@ -751,7 +756,7 @@ function getHandwrittenMarkHTML(val, dayIndex) {
     `;
 }
 
-// SERVICE WORKER & HIGH-EFFICIENCY DUAL NOTIFICATION ENGINE
+// SERVICE WORKER & 24/7 BACKGROUND WEB PUSH NOTIFICATION ENGINE
 let sharedAudioCtx = null;
 
 function getSharedAudioContext() {
@@ -774,13 +779,39 @@ function getSharedAudioContext() {
     }, { once: true, passive: true });
 });
 
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+async function registerServiceWorkerAndSync() {
+    if (!('serviceWorker' in navigator)) return null;
+    try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        console.log('PRAXiS Service Worker registered:', reg.scope);
+
+        // If notification permission is already granted, verify and sync push subscription in background
+        if (window.Notification && Notification.permission === 'granted') {
+            subscribeToPushNotifications(true).catch(e => {
+                console.warn('Background push subscription sync warning:', e);
+            });
+        }
+        return reg;
+    } catch (err) {
+        console.log('PRAXiS Service Worker registration failed:', err);
+        return null;
+    }
+}
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-            console.log('PRAXiS Service Worker registered:', reg.scope);
-        }).catch(err => {
-            console.log('PRAXiS Service Worker registration failed:', err);
-        });
+        registerServiceWorkerAndSync();
     });
 
     navigator.serviceWorker.addEventListener('message', (event) => {
@@ -795,6 +826,104 @@ if ('serviceWorker' in navigator) {
             }
         }
     });
+}
+
+// Subscribes browser to 24/7 background Web Push via PushManager & VAPID
+async function subscribeToPushNotifications(silent = false) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        if (!silent) {
+            showInAppToast("🔕 Web Push Unavailable", "Your browser does not support background Web Push.", true);
+        }
+        return null;
+    }
+
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        let subscription = await reg.pushManager.getSubscription();
+
+        // 1. Fetch server's VAPID public key
+        const keyRes = await fetch('/api/push/vapid-public-key');
+        const keyData = await keyRes.json();
+
+        if (!keyData || !keyData.publicKey) {
+            throw new Error("Unable to retrieve VAPID public key from server");
+        }
+
+        const convertedVapidKey = urlBase64ToUint8Array(keyData.publicKey);
+
+        // 2. If no existing push subscription, create one with the PushManager
+        if (!subscription) {
+            subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: convertedVapidKey
+            });
+        }
+
+        // 3. Register or update subscription on backend server
+        const user = (window.praxisAuth && window.praxisAuth.getUser()) || null;
+        const email = user?.email || localStorage.getItem("praxis_auth_email") || "";
+        const userId = user?.id || user?.uid || "";
+        const clientId = typeof getOrCreateClientId === "function" ? getOrCreateClientId() : "cid_" + Date.now();
+
+        await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                subscription: subscription.toJSON(),
+                userId: userId,
+                email: email,
+                clientId: clientId,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                timezoneOffset: new Date().getTimezoneOffset(),
+                habits: Array.isArray(habits) ? habits : []
+            })
+        });
+
+        localStorage.setItem("praxis_push_registered", "true");
+        updateNotificationBtnState();
+
+        if (!silent) {
+            showInAppToast("🔔 24/7 Reminders Active", "Background Push Reminders are activated! You will receive routine alerts even when your browser or website is completely closed. 🎉", false);
+        }
+
+        return subscription;
+    } catch (error) {
+        console.error("Push subscription setup error:", error);
+        if (!silent) {
+            showInAppToast("⚠️ Reminder Setup Error", error.message || "Failed to setup background push reminders.", true);
+        }
+        return null;
+    }
+}
+
+// Sync latest habits to backend push engine whenever habits are added, edited, or checked off
+async function syncHabitsToPushServer(habitsToSync) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        const subscription = await reg.pushManager.getSubscription();
+
+        const user = (window.praxisAuth && window.praxisAuth.getUser()) || null;
+        const email = user?.email || localStorage.getItem("praxis_auth_email") || "";
+        const userId = user?.id || user?.uid || "";
+        const clientId = typeof getOrCreateClientId === "function" ? getOrCreateClientId() : "";
+
+        await fetch('/api/push/sync-habits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                endpoint: subscription ? subscription.endpoint : null,
+                userId: userId,
+                email: email,
+                clientId: clientId,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                timezoneOffset: new Date().getTimezoneOffset(),
+                habits: habitsToSync || habits || []
+            })
+        });
+    } catch (e) {
+        // Non-critical background sync
+    }
 }
 
 function formatAMPM(timeStr) {
@@ -1031,23 +1160,28 @@ function fallbackNativeNotification(title, options) {
     }
 }
 
-function requestNotificationPermission() {
+async function requestNotificationPermission() {
     if (!("Notification" in window)) {
         showInAppToast("🔕 Notifications Unsupported", "Web Notifications are not supported in this browser environment.", true);
         return;
     }
-    Notification.requestPermission().then(permission => {
+
+    try {
+        const permission = await Notification.requestPermission();
         updateNotificationBtnState();
         if (permission === "granted") {
+            await subscribeToPushNotifications(false);
             sendNotification("🔔 PRAXiS Reminders Activated", {
-                body: "You'll receive 10-minute reminders before your scheduled habits & prompt alerts if missed!",
+                body: "24/7 background reminders are active! You'll receive 10-minute alerts before your scheduled habits even when the website or browser is closed! 💪",
                 tag: 'praxis-welcome',
                 isMissed: false
             });
         } else if (permission === "denied") {
-            alert("Notification permission was denied. Please allow notifications in your browser/device settings to receive reminders.");
+            alert("Notification permission was denied. Please allow notifications in your browser/device settings so PRAXiS can alert you on schedule.");
         }
-    });
+    } catch (err) {
+        console.error("Permission request error:", err);
+    }
 }
 
 function updateNotificationBtnState() {
@@ -1058,15 +1192,21 @@ function updateNotificationBtnState() {
         return;
     }
     if (Notification.permission === "granted") {
-        btn.innerHTML = `<span class="text-emerald-700 font-bold">🔔 Phone Reminders Active</span>`;
+        btn.innerHTML = `<span class="text-emerald-700 font-bold">🔔 24/7 Reminders Active</span>`;
         btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-emerald-700 bg-emerald-500/15 flex items-center gap-1.5 shrink-0";
+        btn.title = "24/7 Closed-Browser & Phone reminders are active";
     } else if (Notification.permission === "denied") {
         btn.innerHTML = `<span class="text-rose-700 font-bold">🔕 Notifications Blocked</span>`;
         btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-rose-700 bg-rose-500/15 flex items-center gap-1.5 shrink-0";
+        btn.title = "Notifications are blocked in your browser settings";
+    } else {
+        btn.innerHTML = `<span class="text-xs">🔔</span> Enable Phone Reminders`;
+        btn.className = "neu-badge px-2.5 py-1 text-[11px] font-extrabold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-all cursor-pointer";
+        btn.title = "Enable phone/browser reminders for scheduled habits";
     }
 }
 
-function testNotificationNow() {
+async function testNotificationNow() {
     if (!("Notification" in window)) {
         showInAppToast("🧪 Test Notification Active", "In-app toast & audio chime work! Note: Your browser doesn't support system notifications.", false);
         playNotificationSound('reminder');
@@ -1074,23 +1214,63 @@ function testNotificationNow() {
     }
 
     if (Notification.permission !== "granted") {
-        Notification.requestPermission().then(permission => {
+        try {
+            const permission = await Notification.requestPermission();
             updateNotificationBtnState();
-            triggerTestAlerts();
-        });
+            if (permission === "granted") {
+                await subscribeToPushNotifications(true);
+                await triggerTestAlerts();
+            } else {
+                showInAppToast("⚠️ Notifications Blocked", "Please allow notification permissions in your browser to receive alerts.", true);
+            }
+        } catch (e) {
+            console.error("Test notification permission error:", e);
+        }
     } else {
-        triggerTestAlerts();
+        await triggerTestAlerts();
     }
 }
 
-function triggerTestAlerts() {
-    const sampleHabit = habits[0];
+async function triggerTestAlerts() {
+    const sampleHabit = (Array.isArray(habits) && habits.length > 0) ? habits[0] : null;
+
+    // 1. Play immediate local chime & in-app toast
     sendNotification("⏰ Test Habit Reminder (10 mins prior)", {
-        body: "Success! Your habit notifications, phone alerts & audio chime are active and working perfectly! 🎉",
+        body: "Success! Your habit notifications, phone alerts & audio chime are active! Testing server-to-device closed-browser push next... 🚀",
         tag: 'praxis-test-remind',
         habitId: sampleHabit ? sampleHabit.id : null,
         isMissed: false
     });
+
+    // 2. Dispatch real Web Push from Server to prove closed-browser delivery
+    try {
+        let endpoint = null;
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) endpoint = sub.endpoint;
+        }
+
+        const res = await fetch('/api/push/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                endpoint: endpoint,
+                title: sampleHabit ? `⏰ Reminder: ${sampleHabit.name}` : "⏰ PRAXiS 24/7 Habit Reminder",
+                body: sampleHabit 
+                    ? `Time for "${sampleHabit.name}"! Background push arrives even when website & browser are closed. 🎉`
+                    : "Web Push verification successful! Reminders will ring even when your website & browser are closed! 🎉",
+                habitId: sampleHabit ? sampleHabit.id : null
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            console.log("Server test push dispatched successfully:", data);
+        }
+    } catch (e) {
+        console.warn("Server test push dispatch warning:", e);
+    }
 }
 
 let lastNotificationCheckTime = 0;

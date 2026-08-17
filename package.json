@@ -13,6 +13,7 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^9.0.3",
-    "openai": "^6.49.0"
+    "openai": "^6.49.0",
+    "web-push": "^3.6.7"
   }
 }

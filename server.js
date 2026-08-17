@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const webpush = require('web-push');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10371,7 +10372,19 @@ app.post('/api/user/sync', (req, res) => {
         }
 
         if (roadmap) user.roadmap = roadmap;
-        if (routineTracker) user.routineTracker = routineTracker;
+        if (routineTracker) {
+            user.routineTracker = routineTracker;
+            // Also sync latest habits to any active push subscriptions for this user
+            if (Array.isArray(routineTracker.habits)) {
+                pushSubscriptions.forEach(sub => {
+                    if ((queryEmail && sub.email && sub.email.toLowerCase() === queryEmail) || (queryId && sub.userId === queryId)) {
+                        sub.habits = routineTracker.habits;
+                        sub.lastSyncAt = new Date().toISOString();
+                    }
+                });
+                savePushSubscriptions();
+            }
+        }
         user.dataUpdatedAt = new Date().toISOString();
 
         saveUsersData();
@@ -10426,6 +10439,480 @@ app.get('/api/user/sync', (req, res) => {
     } catch (err) {
         console.error("User Sync Fetch Error:", err);
         res.status(500).json({ error: "Failed to fetch user data." });
+    }
+});
+
+// =====================================================================
+// WEB PUSH NOTIFICATION & 24/7 BACKGROUND REMINDER ENGINE
+// =====================================================================
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BP-XNQj1EJtc8fFW6GQE08lkrky3OjLQUZ2e5FEvzjfMPdxtNF1M5F7xnN2qiqy513qa1v27naBp6bPSFr4D5Go';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'HvI4M-LLNsflMdPJE1ynDZ-qSHdCT8lYOOO2XyptdH8';
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@praxis.app';
+
+try {
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+    console.log("🔔 Web Push VAPID initialized successfully for 24/7 closed-browser notifications");
+} catch (vErr) {
+    console.error("⚠️ Web Push VAPID initialization warning:", vErr.message);
+}
+
+const SUBSCRIPTIONS_FILE = path.join(__dirname, 'subscriptions.json');
+let pushSubscriptions = [];
+
+function loadPushSubscriptions() {
+    try {
+        if (fs.existsSync(SUBSCRIPTIONS_FILE)) {
+            const raw = fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf8');
+            const parsed = JSON.parse(raw);
+            pushSubscriptions = Array.isArray(parsed.subscriptions) ? parsed.subscriptions : (Array.isArray(parsed) ? parsed : []);
+            console.log(`🔔 Loaded ${pushSubscriptions.length} Web Push subscriptions from subscriptions.json`);
+        } else {
+            savePushSubscriptions();
+            console.log("🔔 Initialized new subscriptions.json file");
+        }
+    } catch (err) {
+        console.error("⚠️ Failed to load subscriptions.json:", err.message);
+        pushSubscriptions = [];
+    }
+}
+
+function savePushSubscriptions() {
+    try {
+        fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify({ subscriptions: pushSubscriptions }, null, 2), 'utf8');
+    } catch (err) {
+        console.error("⚠️ Failed to write to subscriptions.json:", err.message);
+    }
+}
+
+loadPushSubscriptions();
+
+function formatAMPM(timeStr) {
+    if (!timeStr) return "";
+    const parts = timeStr.split(":");
+    if (parts.length < 2) return timeStr;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return timeStr;
+    const ampm = h >= 12 ? "PM" : "AM";
+    const displayH = h % 12 || 12;
+    const displayM = m < 10 ? "0" + m : m;
+    return `${displayH}:${displayM} ${ampm}`;
+}
+
+function getUserLocalTime(timezone, offset) {
+    const now = new Date();
+    if (timezone) {
+        try {
+            const dStr = now.toLocaleDateString("en-CA", { timeZone: timezone }); // "YYYY-MM-DD"
+            const tStr = now.toLocaleTimeString("en-GB", { timeZone: timezone, hour12: false }); // "HH:MM:SS"
+            const [hourStr, minStr] = tStr.split(":");
+            const hour = parseInt(hourStr, 10);
+            const min = parseInt(minStr, 10);
+            return {
+                todayStr: dStr,
+                hour: isNaN(hour) ? now.getHours() : hour,
+                min: isNaN(min) ? now.getMinutes() : min,
+                totalMins: (isNaN(hour) ? now.getHours() : hour) * 60 + (isNaN(min) ? now.getMinutes() : min),
+                nowMs: now.getTime()
+            };
+        } catch (e) {}
+    }
+    if (typeof offset === 'number') {
+        const localDate = new Date(now.getTime() - offset * 60000);
+        const todayStr = `${localDate.getUTCFullYear()}-${String(localDate.getUTCMonth() + 1).padStart(2, '0')}-${String(localDate.getUTCDate()).padStart(2, '0')}`;
+        const hour = localDate.getUTCHours();
+        const min = localDate.getUTCMinutes();
+        return {
+            todayStr,
+            hour,
+            min,
+            totalMins: hour * 60 + min,
+            nowMs: now.getTime()
+        };
+    }
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const hour = now.getHours();
+    const min = now.getMinutes();
+    return {
+        todayStr,
+        hour,
+        min,
+        totalMins: hour * 60 + min,
+        nowMs: now.getTime()
+    };
+}
+
+function getHabitTodayIndex(habit, userNow) {
+    if (!habit || typeof habit.createdAt !== "number" || isNaN(habit.createdAt) || habit.createdAt <= 0) {
+        return 0;
+    }
+    const createdDate = new Date(habit.createdAt);
+    const startOfCreatedDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()).getTime();
+    const now = new Date(userNow.nowMs);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const diffMs = startOfToday - startOfCreatedDay;
+    const diffDays = Math.max(0, Math.floor(diffMs / (24 * 60 * 60 * 1000)));
+    return Math.min(29, diffDays);
+}
+
+function isHabitDoneToday(habit, todayIndex) {
+    if (!habit || !Array.isArray(habit.days)) return false;
+    const val = habit.days[todayIndex];
+    return val === "done" || val === true || val === 1 || val === "1" || val === "true";
+}
+
+function sendPushToSubscription(sub, payload) {
+    if (!sub || !sub.endpoint || !sub.keys) return Promise.resolve(false);
+    const pushSubscription = {
+        endpoint: sub.endpoint,
+        keys: {
+            p256dh: sub.keys.p256dh,
+            auth: sub.keys.auth
+        }
+    };
+    const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    return webpush.sendNotification(pushSubscription, payloadStr, {
+        TTL: 86400,
+        urgency: 'high'
+    }).then(() => {
+        console.log(`[WebPush] ✅ Delivered push notification "${payload.title}" to client endpoint (${sub.endpoint.slice(0, 35)}...)`);
+        return true;
+    }).catch(err => {
+        console.error(`[WebPush] ❌ Push notification delivery error (${err.statusCode || err.code}):`, err.message);
+        if (err.statusCode === 404 || err.statusCode === 410) {
+            console.log(`[WebPush] Removing expired subscription: ${sub.endpoint.slice(0, 35)}...`);
+            pushSubscriptions = pushSubscriptions.filter(s => s.endpoint !== sub.endpoint);
+            savePushSubscriptions();
+        }
+        return false;
+    });
+}
+
+// Background Habit Notification Checker (Evaluates scheduled habits 24/7 even if browser is closed)
+function checkAndDispatchBackgroundHabitReminders() {
+    if (!Array.isArray(pushSubscriptions) || pushSubscriptions.length === 0) return;
+
+    let dirty = false;
+
+    pushSubscriptions.forEach(sub => {
+        if (!sub || !sub.endpoint || !sub.keys) return;
+
+        const userNow = getUserLocalTime(sub.timezone, sub.timezoneOffset);
+
+        // Resolve latest habits: check linked user if authenticated, else subscription habits
+        let habitsList = Array.isArray(sub.habits) ? sub.habits : [];
+        let linkedUser = null;
+        if (sub.email || sub.userId) {
+            const qEmail = (sub.email || '').trim().toLowerCase();
+            linkedUser = usersData.users.find(u => 
+                (qEmail && u.email && u.email.toLowerCase() === qEmail) ||
+                (sub.userId && u.id === sub.userId)
+            );
+            if (linkedUser && linkedUser.routineTracker && Array.isArray(linkedUser.routineTracker.habits) && linkedUser.routineTracker.habits.length > 0) {
+                habitsList = linkedUser.routineTracker.habits;
+            }
+        }
+
+        if (!Array.isArray(habitsList) || habitsList.length === 0) return;
+
+        habitsList.forEach(habit => {
+            if (!habit || !habit.scheduledTime) return;
+
+            // Skip if snoozed
+            if (habit.snoozedUntil && userNow.nowMs < habit.snoozedUntil) return;
+
+            const parts = habit.scheduledTime.split(":");
+            if (parts.length < 2) return;
+            const targetH = parseInt(parts[0], 10);
+            const targetM = parseInt(parts[1], 10);
+            if (isNaN(targetH) || isNaN(targetM)) return;
+
+            const scheduledTotalMins = targetH * 60 + targetM;
+            const todayIndex = getHabitTodayIndex(habit, userNow);
+            const doneToday = isHabitDoneToday(habit, todayIndex);
+
+            if (!habit.remindedDates) habit.remindedDates = {};
+            if (!habit.missedNotifiedDates) habit.missedNotifiedDates = {};
+
+            // 1. 10-Minute Prior Pre-Habit Reminder Notification
+            const reminderTimeMins = scheduledTotalMins - 10;
+            if (userNow.totalMins >= reminderTimeMins && userNow.totalMins < scheduledTotalMins) {
+                if (!doneToday && !habit.remindedDates[userNow.todayStr]) {
+                    habit.remindedDates[userNow.todayStr] = true;
+                    dirty = true;
+
+                    const payload = {
+                        title: `⏰ Habit in 10 mins: ${habit.name}`,
+                        body: `Your habit "${habit.name}" is scheduled for ${formatAMPM(habit.scheduledTime)}. Get ready to build discipline! 💪`,
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico',
+                        tag: `praxis-remind-${habit.id}-${userNow.todayStr}`,
+                        habitId: habit.id,
+                        url: '/praxis',
+                        actions: [
+                            { action: 'complete', title: '✅ Mark Done' },
+                            { action: 'missed', title: '✕ Mark Missed' },
+                            { action: 'snooze', title: '⏰ Snooze 10m' }
+                        ],
+                        data: {
+                            habitId: habit.id,
+                            url: '/praxis'
+                        }
+                    };
+
+                    sendPushToSubscription(sub, payload);
+                }
+            }
+
+            // 2. Prompt Reminder Notification when Target Time passes (NO automatic marking)
+            if (userNow.totalMins >= scheduledTotalMins + 10 && userNow.totalMins <= scheduledTotalMins + 180) {
+                if (!doneToday && !habit.missedNotifiedDates[userNow.todayStr]) {
+                    habit.missedNotifiedDates[userNow.todayStr] = true;
+                    dirty = true;
+
+                    const quotes = [
+                        `⏰ Target time passed for "${habit.name}" (${formatAMPM(habit.scheduledTime)}). Have you finished it yet?`,
+                        `💪 Don't forget your habit: "${habit.name}". Build your streak today!`,
+                        `🎯 Scheduled target: "${habit.name}" at ${formatAMPM(habit.scheduledTime)}. Click to mark Done or Missed!`
+                    ];
+                    const msg = quotes[Math.floor(Math.random() * quotes.length)];
+
+                    const payload = {
+                        title: `⏰ Habit Check-in: ${habit.name}`,
+                        body: msg,
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico',
+                        tag: `praxis-prompt-${habit.id}-${userNow.todayStr}`,
+                        habitId: habit.id,
+                        url: '/praxis',
+                        actions: [
+                            { action: 'complete', title: '✅ Mark Done' },
+                            { action: 'missed', title: '✕ Mark Missed' },
+                            { action: 'snooze', title: '⏰ Snooze 10m' }
+                        ],
+                        data: {
+                            habitId: habit.id,
+                            url: '/praxis'
+                        }
+                    };
+
+                    sendPushToSubscription(sub, payload);
+                }
+            }
+        });
+    });
+
+    if (dirty) {
+        savePushSubscriptions();
+        saveUsersData();
+    }
+}
+
+// Background scheduler ticker runs every 20 seconds
+setInterval(checkAndDispatchBackgroundHabitReminders, 20000);
+
+// API: Get VAPID Public Key for Web Push Manager
+app.get('/api/push/vapid-public-key', (req, res) => {
+    res.json({
+        success: true,
+        publicKey: VAPID_PUBLIC_KEY
+    });
+});
+
+// API: Register or Update Push Subscription (Supports both Guests & Logged-in Users)
+app.post('/api/push/subscribe', (req, res) => {
+    try {
+        const { subscription, userId, email, clientId, timezone, timezoneOffset, habits } = req.body || {};
+
+        if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+            return res.status(400).json({ error: "Invalid push subscription object" });
+        }
+
+        const existingIndex = pushSubscriptions.findIndex(s => s.endpoint === subscription.endpoint);
+        const subData = {
+            endpoint: subscription.endpoint,
+            keys: subscription.keys,
+            userId: userId || (existingIndex >= 0 ? pushSubscriptions[existingIndex].userId : null),
+            email: email ? email.trim().toLowerCase() : (existingIndex >= 0 ? pushSubscriptions[existingIndex].email : null),
+            clientId: clientId || (existingIndex >= 0 ? pushSubscriptions[existingIndex].clientId : null),
+            timezone: timezone || (existingIndex >= 0 ? pushSubscriptions[existingIndex].timezone : 'UTC'),
+            timezoneOffset: typeof timezoneOffset === 'number' ? timezoneOffset : (existingIndex >= 0 ? pushSubscriptions[existingIndex].timezoneOffset : 0),
+            habits: Array.isArray(habits) ? habits : (existingIndex >= 0 ? pushSubscriptions[existingIndex].habits : []),
+            subscribedAt: existingIndex >= 0 ? pushSubscriptions[existingIndex].subscribedAt : new Date().toISOString(),
+            lastActiveAt: new Date().toISOString()
+        };
+
+        if (existingIndex >= 0) {
+            pushSubscriptions[existingIndex] = { ...pushSubscriptions[existingIndex], ...subData };
+        } else {
+            pushSubscriptions.push(subData);
+        }
+
+        savePushSubscriptions();
+        console.log(`🔔 [WebPush] Device registered for 24/7 push reminders (${subData.endpoint.slice(0, 35)}...)`);
+
+        res.json({
+            success: true,
+            message: "Push subscription registered successfully. Background reminders are active 24/7!"
+        });
+    } catch (err) {
+        console.error("Push Subscribe Error:", err);
+        res.status(500).json({ error: "Failed to register push subscription." });
+    }
+});
+
+// API: Unsubscribe Push
+app.post('/api/push/unsubscribe', (req, res) => {
+    try {
+        const { endpoint } = req.body || {};
+        if (endpoint) {
+            pushSubscriptions = pushSubscriptions.filter(s => s.endpoint !== endpoint);
+            savePushSubscriptions();
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to unsubscribe push." });
+    }
+});
+
+// API: Sync Habits to Push Engine (Called automatically whenever habits change)
+app.post('/api/push/sync-habits', (req, res) => {
+    try {
+        const { endpoint, userId, email, clientId, timezone, timezoneOffset, habits } = req.body || {};
+
+        let matched = false;
+        const qEmail = email ? email.trim().toLowerCase() : '';
+
+        pushSubscriptions.forEach(sub => {
+            if ((endpoint && sub.endpoint === endpoint) ||
+                (qEmail && sub.email && sub.email.toLowerCase() === qEmail) ||
+                (userId && sub.userId === userId) ||
+                (clientId && sub.clientId === clientId)) {
+                
+                if (Array.isArray(habits)) sub.habits = habits;
+                if (timezone) sub.timezone = timezone;
+                if (typeof timezoneOffset === 'number') sub.timezoneOffset = timezoneOffset;
+                if (userId) sub.userId = userId;
+                if (qEmail) sub.email = qEmail;
+                sub.lastActiveAt = new Date().toISOString();
+                matched = true;
+            }
+        });
+
+        if (matched) {
+            savePushSubscriptions();
+        }
+
+        res.json({ success: true, synced: matched });
+    } catch (err) {
+        console.error("Push Habit Sync Error:", err);
+        res.status(500).json({ error: "Failed to sync habits to push service." });
+    }
+});
+
+// API: Handle Quick Notification Action (Done / Missed / Snooze from Service Worker background click)
+app.post('/api/push/habit-action', (req, res) => {
+    try {
+        const { habitId, action, userId, email, endpoint } = req.body || {};
+        if (!habitId || !action) {
+            return res.status(400).json({ error: "Missing habitId or action" });
+        }
+
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        // Helper updater for a habits array
+        const updateHabitInArray = (habitsArr) => {
+            if (!Array.isArray(habitsArr)) return false;
+            const habit = habitsArr.find(h => h && (h.id === habitId || String(h.id) === String(habitId)));
+            if (!habit) return false;
+
+            const todayIdx = getHabitTodayIndex(habit, { nowMs: now.getTime() });
+            if (!Array.isArray(habit.days)) habit.days = new Array(30).fill(false);
+
+            if (action === 'complete') {
+                habit.days[todayIdx] = "done";
+            } else if (action === 'missed') {
+                habit.days[todayIdx] = "missed";
+            } else if (action === 'snooze') {
+                habit.snoozedUntil = Date.now() + 10 * 60 * 1000;
+            }
+            return true;
+        };
+
+        let updated = false;
+
+        // Update in push subscriptions
+        pushSubscriptions.forEach(sub => {
+            if (updateHabitInArray(sub.habits)) updated = true;
+        });
+
+        // Update in usersData
+        usersData.users.forEach(u => {
+            if (u.routineTracker && updateHabitInArray(u.routineTracker.habits)) {
+                u.dataUpdatedAt = new Date().toISOString();
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            savePushSubscriptions();
+            saveUsersData();
+        }
+
+        res.json({ success: true, action: action, habitId: habitId });
+    } catch (err) {
+        console.error("Push Habit Action Error:", err);
+        res.status(500).json({ error: "Failed to apply habit action." });
+    }
+});
+
+// API: Send Immediate Test Web Push to verify background delivery
+app.post('/api/push/test', async (req, res) => {
+    try {
+        const { endpoint, title, body, habitId } = req.body || {};
+
+        let targetSubs = [];
+        if (endpoint) {
+            targetSubs = pushSubscriptions.filter(s => s.endpoint === endpoint);
+        }
+        if (targetSubs.length === 0 && pushSubscriptions.length > 0) {
+            targetSubs = [pushSubscriptions[pushSubscriptions.length - 1]];
+        }
+
+        if (targetSubs.length === 0) {
+            return res.status(404).json({ error: "No active push subscription found on server. Please enable phone reminders first!" });
+        }
+
+        const payload = {
+            title: title || "⏰ Test Habit Reminder (10 mins prior)",
+            body: body || "Success! PRAXiS background reminders are fully active & working even when browser is closed! 🎉",
+            icon: "/favicon.ico",
+            badge: "/favicon.ico",
+            tag: `praxis-test-${Date.now()}`,
+            habitId: habitId || null,
+            url: "/praxis",
+            actions: [
+                { action: "complete", title: "✅ Mark Done" },
+                { action: "missed", title: "✕ Mark Missed" },
+                { action: "snooze", title: "⏰ Snooze 10m" }
+            ],
+            data: {
+                habitId: habitId || "",
+                url: "/praxis"
+            }
+        };
+
+        const results = await Promise.all(targetSubs.map(s => sendPushToSubscription(s, payload)));
+
+        res.json({
+            success: true,
+            deliveredCount: results.filter(Boolean).length,
+            message: "Test push notification dispatched via Web Push protocol!"
+        });
+    } catch (err) {
+        console.error("Test Push Error:", err);
+        res.status(500).json({ error: "Failed to dispatch test push notification." });
     }
 });
 
