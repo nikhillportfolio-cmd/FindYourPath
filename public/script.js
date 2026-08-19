@@ -1456,7 +1456,7 @@ function renderHabitsList() {
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <h4 class="text-xs sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
                             <button type="button" onclick="scrollToTodayTracker()" class="neu-badge text-[9px] font-extrabold text-blue-600 px-2 py-0.5 leading-none hover:bg-blue-50 cursor-pointer flex items-center gap-0.5">
-                                📍 Jump to Day ${todayIndex + 1}
+                                📍 You are on Day ${todayIndex + 1}
                             </button>
                         </div>
                         <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Tap box to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
@@ -3053,4 +3053,4 @@ window.renderSavedRoadmap = function(roadmapData) {
         console.log("[PRAXiS UI] Career Compass Roadmap synced from cloud across devices.");
     }
 };
-
+
