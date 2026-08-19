@@ -1416,23 +1416,9 @@ function editHabitTime(habitIndex) {
     }
 }
 
-// RENDER TIME-OF-DAY CATEGORIZED SPREADSHEET TRACKER GRID (MOBILE COMPATIBLE)
-function renderHabitsList() {
-    const container = document.getElementById("habits-list-container");
-    const blankSlate = document.getElementById("blank-slate");
-
-    if (!container || !blankSlate) return;
-    if (!Array.isArray(habits)) habits = [];
-
-    if (habits.length === 0) {
-        blankSlate.classList.remove("hidden");
-        container.innerHTML = "";
-        return;
-    }
-
-    blankSlate.classList.add("hidden");
-    updateNotificationBtnState();
-
+// BUILD REUSABLE SPREADSHEET 30-DAY HABITS TABLE HTML
+function buildHabitsTableHTML(isExpanded = false) {
+    const todayIndex = getCurrentTrackerDayIndex();
     const categories = [
         { key: "Morning Routine", title: "Morning Routine", icon: "🌅", badgeBg: "bg-amber-500/15 text-amber-700" },
         { key: "Afternoon Focus", title: "Afternoon Focus", icon: "☀️", badgeBg: "bg-blue-500/15 text-blue-700" },
@@ -1444,60 +1430,33 @@ function renderHabitsList() {
         ? categories 
         : categories.filter(c => c.key === activeFilter);
 
-    const todayIndex = getCurrentTrackerDayIndex();
-
-    let tableHTML = `
-        <div class="neu-card p-2 sm:p-5 bg-[#e0e5ec] shadow-xl border border-white/70 overflow-hidden">
-            <!-- Header Legend Bar with Mobile Scroll Hint & Jump to Today -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-300/70">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-base sm:text-lg">📊</span>
-                    <div>
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <h4 class="text-xs sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
-                            <button type="button" onclick="scrollToTodayTracker()" class="neu-badge text-[9px] font-extrabold text-blue-600 px-2 py-0.5 leading-none hover:bg-blue-50 cursor-pointer flex items-center gap-0.5">
-                                📍 You are on Day ${todayIndex + 1}
-                            </button>
-                        </div>
-                        <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Tap box to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2.5 text-[10px] sm:text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0 flex-wrap">
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs border border-slate-400/50 bg-[#e0e5ec]"></span> Blank</span>
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 flex items-center justify-center text-[9px] font-black">✓</span> Done</span>
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs bg-rose-500/20 border border-rose-500/50 text-rose-500 flex items-center justify-center text-[9px] font-black">✕</span> Missed</span>
-                </div>
-            </div>
-
-            <!-- Spreadsheet Grid Table Wrapper (Sticky Headers & Sticky Left Habit Column, Fixed Grid) -->
-            <div id="habits-grid-scroll-wrapper" class="overflow-x-auto max-h-[60vh] sm:max-h-[580px] overflow-y-auto custom-scrollbar rounded-xl border-2 border-slate-300/80 bg-[#e0e5ec] shadow-inner relative touch-pan-x touch-pan-y overscroll-x-contain">
-                <table class="table-fixed border-separate border-spacing-0 select-none text-left w-max">
-                    <colgroup>
-                        <col style="width: 140px;" class="w-[140px] sm:w-[220px]" />
+    let html = `
+        <table class="table-fixed border-separate border-spacing-0 select-none text-left w-max">
+            <colgroup>
+                <col style="width: 140px;" class="w-[140px] sm:w-[220px]" />
     `;
 
     for (let day = 1; day <= 30; day++) {
-        tableHTML += `<col style="width: 36px;" class="w-[36px] sm:w-[42px]" />`;
+        html += `<col style="width: 36px;" class="w-[36px] sm:w-[42px]" />`;
     }
 
-    tableHTML += `
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <!-- Top-Left Corner Header (Fixed on Top & Left) -->
-                            <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-1.5 sm:p-2.5 text-[10px] sm:text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] w-[140px] sm:w-[220px] h-10 select-none">
-                                <div class="flex items-center justify-between">
-                                    <span>Habit</span>
-                                    <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">30 Days</span>
-                                </div>
-                            </th>
-                            <!-- Days 1 to 30 Headers (Fixed on Top) -->
+    html += `
+            </colgroup>
+            <thead>
+                <tr>
+                    <!-- Top-Left Corner Header (Fixed on Top & Left) -->
+                    <th class="sticky top-0 left-0 z-30 bg-[#cbd4e2] p-1.5 sm:p-2.5 text-[10px] sm:text-xs font-black font-outfit text-slate-800 border-r-2 border-b-2 border-slate-300 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] w-[140px] sm:w-[220px] h-10 select-none">
+                        <div class="flex items-center justify-between">
+                            <span>Habit</span>
+                            <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">30 Days</span>
+                        </div>
+                    </th>
     `;
 
     for (let day = 1; day <= 30; day++) {
         const isToday = ((day - 1) === todayIndex);
         const headerBg = isToday ? 'bg-blue-100 text-blue-900 border-b-2 border-blue-500 font-black shadow-xs ring-1 ring-inset ring-blue-400' : 'bg-[#d5deeb] text-slate-700 font-bold border-b-2 border-slate-300';
-        tableHTML += `
+        html += `
             <th class="sticky top-0 z-20 ${headerBg} p-0 text-center text-[10px] sm:text-xs font-outfit border-r border-slate-300 w-[36px] min-w-[36px] max-w-[36px] sm:w-[42px] sm:min-w-[42px] sm:max-w-[42px] h-10 select-none" title="Day ${day}${isToday ? ' (Today)' : ''}">
                 <div class="h-full flex flex-col items-center justify-center py-0.5 leading-none">
                     <span class="font-extrabold text-[10px] sm:text-xs leading-none">${day}</span>
@@ -1507,10 +1466,10 @@ function renderHabitsList() {
         `;
     }
 
-    tableHTML += `
-                        </tr>
-                    </thead>
-                    <tbody>
+    html += `
+                </tr>
+            </thead>
+            <tbody>
     `;
 
     let totalHabitsRendered = 0;
@@ -1519,7 +1478,7 @@ function renderHabitsList() {
         const catHabits = habits.filter(h => h && (h.timeOfDay || "Morning Routine") === cat.key);
 
         if (catHabits.length === 0 && activeFilter !== "all") {
-            tableHTML += `
+            html += `
                 <tr>
                     <td colspan="31" class="p-4 sm:p-6 text-center text-xs font-bold text-slate-500 bg-slate-100/50 border border-slate-300/60">
                         ${cat.icon} No habits defined under <strong>${cat.title}</strong> yet. Use "Define Your Target Habit" above to add one!
@@ -1532,7 +1491,7 @@ function renderHabitsList() {
         if (catHabits.length === 0) return; // Skip empty category in 'all' view
 
         // Bold Category Header Row (Sticky Left Title)
-        tableHTML += `
+        html += `
             <tr class="bg-gradient-to-r from-slate-300/90 via-slate-200 to-slate-300/70 text-slate-800">
                 <td colspan="31" class="sticky left-0 z-20 p-1.5 px-2.5 sm:p-2 sm:px-3.5 font-black font-outfit text-xs sm:text-sm tracking-wide border-t-2 border-b-2 border-r border-slate-300/90 bg-[#d1d9e6] shadow-xs">
                     <div class="flex items-center gap-2">
@@ -1555,7 +1514,7 @@ function renderHabitsList() {
             const checkedCount = habit.days.filter(isDayDone).length;
             const streak = calculateHabitStreak(habit.days);
 
-            tableHTML += `
+            html += `
                 <tr class="hover:bg-slate-200/40 transition-colors h-11 sm:h-12">
                     <!-- Sticky Habit Cell (Fixed on Left) -->
                     <td class="sticky left-0 z-20 bg-[#e0e5ec] p-1.5 px-2 sm:p-2 sm:px-2.5 border-r-2 border-b border-slate-300/80 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.08)] w-[140px] max-w-[140px] sm:w-[220px] sm:max-w-[220px] h-11 sm:h-12 align-middle">
@@ -1592,7 +1551,7 @@ function renderHabitsList() {
                 const markHTML = getHandwrittenMarkHTML(val, day);
                 const titleText = `Day ${day + 1}${isToday ? ' (Today)' : ''}: ${isDayDone(val) ? 'Completed ✓' : isDayMissed(val) ? 'Missed ✕' : 'Blank (Tap to mark)'}`;
 
-                tableHTML += `
+                html += `
                     <td onclick="toggleHabitDay('${escapeHtml(habitId)}', ${day})"
                         title="${titleText}"
                         class="border-r border-b border-slate-300/70 p-0 text-center align-middle cursor-pointer transition-colors duration-150 w-[36px] min-w-[36px] max-w-[36px] sm:w-[42px] sm:min-w-[42px] sm:max-w-[42px] h-11 sm:h-12 touch-manipulation active:scale-95 ${cellBgClass}">
@@ -1603,22 +1562,170 @@ function renderHabitsList() {
                 `;
             }
 
-            tableHTML += `</tr>`;
+            html += `</tr>`;
         });
     });
 
-    tableHTML += `
-                    </tbody>
-                </table>
+    html += `
+            </tbody>
+        </table>
+    `;
+
+    return { html, totalHabitsRendered };
+}
+
+// RENDER TIME-OF-DAY CATEGORIZED SPREADSHEET TRACKER GRID (MOBILE COMPATIBLE)
+function renderHabitsList() {
+    const container = document.getElementById("habits-list-container");
+    const blankSlate = document.getElementById("blank-slate");
+
+    if (!container || !blankSlate) return;
+    if (!Array.isArray(habits)) habits = [];
+
+    if (habits.length === 0) {
+        blankSlate.classList.remove("hidden");
+        container.innerHTML = "";
+        return;
+    }
+
+    blankSlate.classList.add("hidden");
+    updateNotificationBtnState();
+
+    const todayIndex = getCurrentTrackerDayIndex();
+    const { html: tableBodyHTML, totalHabitsRendered } = buildHabitsTableHTML(false);
+
+    let tableHTML = `
+        <div class="neu-card p-2 sm:p-5 bg-[#e0e5ec] shadow-xl border border-white/70 overflow-hidden">
+            <!-- Header Legend Bar with Mobile Scroll Hint, Jump to Today & Mobile Expand Symbol Button -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-300/70">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-base sm:text-lg">📊</span>
+                    <div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <h4 class="text-xs sm:text-base font-black text-slate-800 font-outfit leading-tight">Spreadsheet Habit Tracker</h4>
+                            <button type="button" onclick="scrollToTodayTracker()" class="neu-badge text-[9px] font-extrabold text-blue-600 px-2 py-0.5 leading-none hover:bg-blue-50 cursor-pointer flex items-center gap-0.5">
+                                📍 You are on Day ${todayIndex + 1}
+                            </button>
+                            <!-- Expand symbol for mobile user only -->
+                            <button type="button" onclick="openSpreadsheetExpandModal()" class="sm:hidden neu-badge text-[9px] font-extrabold text-indigo-600 px-2 py-0.5 leading-none hover:bg-indigo-50 active:scale-95 transition cursor-pointer flex items-center gap-1 border border-indigo-300/60" title="Expand to view all 30 days in one go without scrolling">
+                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                                </svg>
+                                <span>Expand ⛶</span>
+                            </button>
+                        </div>
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold leading-snug mt-0.5">Tap box to cycle: Blank &rarr; Done (✓) &rarr; Missed (✕)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 sm:gap-2.5 text-[10px] sm:text-[11px] font-extrabold text-slate-600 bg-slate-200/60 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-300/60 self-start sm:self-auto shrink-0 flex-wrap">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs border border-slate-400/50 bg-[#e0e5ec]"></span> Blank</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 flex items-center justify-center text-[9px] font-black">✓</span> Done</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-xs bg-rose-500/20 border border-rose-500/50 text-rose-500 flex items-center justify-center text-[9px] font-black">✕</span> Missed</span>
+                </div>
+            </div>
+
+            <!-- Spreadsheet Grid Table Wrapper (Sticky Headers & Sticky Left Habit Column, Fixed Grid) -->
+            <div id="habits-grid-scroll-wrapper" class="overflow-x-auto max-h-[60vh] sm:max-h-[580px] overflow-y-auto custom-scrollbar rounded-xl border-2 border-slate-300/80 bg-[#e0e5ec] shadow-inner relative touch-pan-x touch-pan-y overscroll-x-contain">
+                ${tableBodyHTML}
             </div>
         </div>
     `;
 
+    const activeFilter = currentCategoryFilter || "all";
     if (totalHabitsRendered === 0 && activeFilter === "all") {
         blankSlate.classList.remove("hidden");
         container.innerHTML = "";
     } else {
         container.innerHTML = tableHTML;
+    }
+
+    const expandModal = document.getElementById("spreadsheet-expand-modal");
+    if (expandModal && !expandModal.classList.contains("hidden")) {
+        updateExpandedSpreadsheetView();
+    }
+}
+
+// EXPANDED SPREADSHEET HABIT TRACKER FULLSCREEN FIT LOGIC (MOBILE VIEW)
+let isSpreadsheetFitMode = true;
+
+function openSpreadsheetExpandModal() {
+    const modal = document.getElementById("spreadsheet-expand-modal");
+    if (!modal) return;
+
+    pushModalState("spreadsheet-expand-modal", "#spreadsheet-expand");
+
+    modal.classList.remove("hidden");
+    requestAnimationFrame(() => {
+        modal.classList.remove("opacity-0");
+        modal.classList.add("opacity-100");
+        updateExpandedSpreadsheetView();
+    });
+}
+
+function closeSpreadsheetExpandModal(fromPopstate = false) {
+    const modal = document.getElementById("spreadsheet-expand-modal");
+    if (!modal) return;
+
+    modal.classList.remove("opacity-100");
+    modal.classList.add("opacity-0");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+    }, 300);
+
+    if (!fromPopstate && window.location.hash === '#spreadsheet-expand') {
+        window.history.replaceState({ praxisRoot: false, modalId: 'tracker-modal' }, '', '#tracker');
+    }
+}
+
+function toggleSpreadsheetFitMode() {
+    isSpreadsheetFitMode = !isSpreadsheetFitMode;
+    updateExpandedSpreadsheetView();
+}
+
+function updateExpandedSpreadsheetView() {
+    const modal = document.getElementById("spreadsheet-expand-modal");
+    if (!modal || modal.classList.contains("hidden")) return;
+
+    const scaler = document.getElementById("spreadsheet-expand-scaler");
+    const container = document.getElementById("spreadsheet-expand-body");
+    const todayBadge = document.getElementById("expand-modal-today-badge");
+    const toggleIcon = document.getElementById("expand-fit-toggle-icon");
+    const toggleText = document.getElementById("expand-fit-toggle-text");
+
+    const todayIndex = getCurrentTrackerDayIndex();
+    if (todayBadge) {
+        todayBadge.textContent = `📍 Day ${todayIndex + 1}`;
+    }
+
+    if (!scaler || !container) return;
+
+    const { html: tableBodyHTML } = buildHabitsTableHTML(true);
+    scaler.innerHTML = tableBodyHTML;
+
+    if (isSpreadsheetFitMode) {
+        const availableWidth = Math.max(280, container.clientWidth - 8);
+        const tableWidth = 1220;
+        const scale = Math.min(1, availableWidth / tableWidth);
+
+        scaler.style.transform = `scale(${scale})`;
+        scaler.style.transformOrigin = "top left";
+        scaler.style.width = `${tableWidth}px`;
+
+        const tableHeight = scaler.scrollHeight || 250;
+        scaler.style.marginBottom = `-${tableHeight * (1 - scale)}px`;
+        scaler.style.marginRight = `-${tableWidth * (1 - scale)}px`;
+
+        if (toggleIcon) toggleIcon.textContent = "🔍";
+        if (toggleText) toggleText.textContent = "100% Zoom";
+    } else {
+        scaler.style.transform = "none";
+        scaler.style.transformOrigin = "top left";
+        scaler.style.width = "max-content";
+        scaler.style.marginBottom = "0px";
+        scaler.style.marginRight = "0px";
+
+        if (toggleIcon) toggleIcon.textContent = "⛶";
+        if (toggleText) toggleText.textContent = "Fit 30d";
     }
 }
 
@@ -1822,6 +1929,10 @@ window.markHabitCompletedDirectly = markHabitCompletedDirectly;
 window.markHabitMissedDirectly = markHabitMissedDirectly;
 window.snoozeHabitReminder = snoozeHabitReminder;
 window.scrollToTodayTracker = scrollToTodayTracker;
+window.openSpreadsheetExpandModal = openSpreadsheetExpandModal;
+window.closeSpreadsheetExpandModal = closeSpreadsheetExpandModal;
+window.toggleSpreadsheetFitMode = toggleSpreadsheetFitMode;
+window.updateExpandedSpreadsheetView = updateExpandedSpreadsheetView;
 
 // =====================================================================
 // BROWSER HISTORY & BACK BUTTON NAVIGATION MANAGER
@@ -1835,6 +1946,7 @@ function pushModalState(modalId, hash) {
 }
 
 function handlePopState(event) {
+    const expandModal = document.getElementById("spreadsheet-expand-modal");
     const trackerModal = document.getElementById("tracker-modal");
     const libraryModal = document.getElementById("library-modal");
     const bookDetailModal = document.getElementById("book-detail-modal");
@@ -1842,6 +1954,10 @@ function handlePopState(event) {
     const authModal = document.getElementById("auth-modal");
 
     // 1. Close top-most active modal first when back arrow is pressed
+    if (expandModal && !expandModal.classList.contains("hidden")) {
+        closeSpreadsheetExpandModal(true);
+        return;
+    }
     if (readerModal && !readerModal.classList.contains("hidden")) {
         closeEBookReader(true);
         return;
@@ -1917,6 +2033,7 @@ function closeTrackerModal(fromPopstate = false) {
 // Close modal on Escape key press
 window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+        closeSpreadsheetExpandModal();
         closeTrackerModal();
         closeLibraryModal();
         closeBookDetailModal();
@@ -1936,11 +2053,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Modal backdrop click dismissers
+    document.getElementById("spreadsheet-expand-modal")?.addEventListener("click", (e) => {
+        if (e.target.id === "spreadsheet-expand-modal") closeSpreadsheetExpandModal();
+    });
     document.getElementById("tracker-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "tracker-modal") closeTrackerModal();
     });
     document.getElementById("library-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "library-modal") closeLibraryModal();
+    });
+
+    // Window resize & orientation change listeners for smooth fit scaling
+    window.addEventListener("resize", () => {
+        const expandModal = document.getElementById("spreadsheet-expand-modal");
+        if (expandModal && !expandModal.classList.contains("hidden")) {
+            updateExpandedSpreadsheetView();
+        }
+    });
+    window.addEventListener("orientationchange", () => {
+        const expandModal = document.getElementById("spreadsheet-expand-modal");
+        if (expandModal && !expandModal.classList.contains("hidden")) {
+            setTimeout(updateExpandedSpreadsheetView, 100);
+        }
     });
 
     // Check for notification action in URL parameters
