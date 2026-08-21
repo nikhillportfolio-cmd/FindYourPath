@@ -1851,38 +1851,27 @@
                             </div>
                         </div>
 
-                        <!-- STATS CARDS GRID (4-COLUMN RESPONSIVE TILES) -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full lg:w-auto shrink-0">
+                        <!-- STATS CARDS GRID (3-COLUMN RESPONSIVE TILES) -->
+                        <div class="grid grid-cols-3 gap-2 sm:gap-3.5 w-full lg:w-auto shrink-0">
                             
                             <!-- HABITS COUNT -->
-                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70">
+                            <div class="neu-card-sm p-2.5 sm:p-4 text-center min-w-[75px] sm:min-w-[105px] bg-white/70">
                                 <span class="text-[9px] sm:text-[10px] text-slate-400 font-extrabold block uppercase tracking-wider">Habits</span>
-                                <span id="stat-total-habits" class="text-lg sm:text-2xl font-black text-slate-800 font-outfit mt-0.5 block">0</span>
+                                <span id="stat-total-habits" class="text-xl sm:text-2xl font-black text-slate-800 font-outfit mt-0.5 block">0</span>
                                 <span class="text-[8px] sm:text-[9px] text-slate-400 font-semibold block">Active</span>
                             </div>
 
-                            <!-- ACTIVE STREAK (RESETS TO 0 IF BROKEN) -->
-                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70 border border-amber-300/40 shadow-sm">
-                                <span class="text-[9px] sm:text-[10px] text-amber-600 font-extrabold block uppercase tracking-wider">Active Streak</span>
-                                <span id="stat-max-streak" class="text-lg sm:text-2xl font-black text-amber-500 font-outfit mt-0.5 flex items-center justify-center gap-0.5">
-                                    🔥<span id="stat-streak-val">0</span><span class="text-xs sm:text-sm font-bold text-amber-600">d</span>
-                                </span>
-                                <span class="text-[8px] sm:text-[9px] text-amber-600/80 font-bold block">Current</span>
-                            </div>
-
-                            <!-- BEST RECORD STREAK -->
-                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70">
-                                <span class="text-[9px] sm:text-[10px] text-indigo-500 font-extrabold block uppercase tracking-wider">Best Record</span>
-                                <span class="text-lg sm:text-2xl font-black text-indigo-600 font-outfit mt-0.5 flex items-center justify-center gap-0.5">
-                                    🏆<span id="stat-best-streak-val">0</span><span class="text-xs sm:text-sm font-bold text-indigo-500">d</span>
-                                </span>
-                                <span class="text-[8px] sm:text-[9px] text-indigo-500 font-semibold block">All-time</span>
+                            <!-- DAYS DONE -->
+                            <div class="neu-card-sm p-2.5 sm:p-4 text-center min-w-[75px] sm:min-w-[105px] bg-white/70">
+                                <span class="text-[9px] sm:text-[10px] text-blue-600 font-extrabold block uppercase tracking-wider">Days Done</span>
+                                <span id="stat-total-checks" class="text-xl sm:text-2xl font-black text-blue-600 font-outfit mt-0.5 block">0/30</span>
+                                <span class="text-[8px] sm:text-[9px] text-blue-600/70 font-semibold block">30-Day Grid</span>
                             </div>
 
                             <!-- TODAY'S COMPLETION -->
-                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70">
+                            <div class="neu-card-sm p-2.5 sm:p-4 text-center min-w-[75px] sm:min-w-[105px] bg-white/70">
                                 <span class="text-[9px] sm:text-[10px] text-emerald-600 font-extrabold block uppercase tracking-wider">Today</span>
-                                <span id="stat-today-done-val" class="text-lg sm:text-2xl font-black text-emerald-600 font-outfit mt-0.5 block">0/0</span>
+                                <span id="stat-today-done-val" class="text-xl sm:text-2xl font-black text-emerald-600 font-outfit mt-0.5 block">0/0</span>
                                 <span id="stat-today-percent" class="text-[8px] sm:text-[9px] text-emerald-600 font-bold block">0% done</span>
                             </div>
 
