@@ -1420,24 +1420,49 @@
                                 </button>
                             </div>
 
-                            <!-- QUICK PRESET PILLS FOR TIMER / FOCUS GOALS -->
-                            <div id="sw-timer-presets-row" class="hidden flex items-center justify-center gap-1.5 sm:gap-2 mt-3.5 pt-3 border-t border-slate-300/50 flex-wrap w-full max-w-lg">
-                                <span class="text-[10px] sm:text-[11px] font-bold text-slate-500 shrink-0">🎯 Presets:</span>
-                                <button type="button" onclick="setTimerDuration(5)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
-                                    5m Break
-                                </button>
-                                <button type="button" onclick="setTimerDuration(15)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
-                                    15m Focus
-                                </button>
-                                <button type="button" onclick="setTimerDuration(25)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition cursor-pointer">
-                                    🍅 25m Pomodoro
-                                </button>
-                                <button type="button" onclick="setTimerDuration(45)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
-                                    45m Deep Work
-                                </button>
-                                <button type="button" onclick="setTimerDuration(60)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
-                                    60m Mastery
-                                </button>
+                            <!-- QUICK PRESET PILLS & CUSTOMIZABLE TARGET DURATION -->
+                            <div id="sw-timer-presets-row" class="hidden flex flex-col items-center justify-center gap-2.5 mt-3.5 pt-3 border-t border-slate-300/50 w-full max-w-lg">
+                                
+                                <!-- PRESET BUTTONS ROW -->
+                                <div class="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
+                                    <span class="text-[10px] sm:text-[11px] font-bold text-slate-500 shrink-0">🎯 Presets:</span>
+                                    <button type="button" id="sw-preset-5" onclick="setTimerDuration(5)" class="sw-preset-pill neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                        5m Break
+                                    </button>
+                                    <button type="button" id="sw-preset-15" onclick="setTimerDuration(15)" class="sw-preset-pill neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                        15m Focus
+                                    </button>
+                                    <button type="button" id="sw-preset-25" onclick="setTimerDuration(25)" class="sw-preset-pill neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-300 shadow-sm transition cursor-pointer">
+                                        🍅 25m Pomodoro
+                                    </button>
+                                    <button type="button" id="sw-preset-45" onclick="setTimerDuration(45)" class="sw-preset-pill neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                        45m Deep Work
+                                    </button>
+                                    <button type="button" id="sw-preset-60" onclick="setTimerDuration(60)" class="sw-preset-pill neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                        60m Mastery
+                                    </button>
+                                </div>
+
+                                <!-- CUSTOMIZABLE TARGET DURATION CONTROLS -->
+                                <div class="flex items-center justify-center gap-1.5 sm:gap-2 p-1.5 px-3 neu-trench rounded-xl bg-slate-200/50 border border-slate-300/60 flex-wrap">
+                                    <span class="text-[10px] sm:text-[11px] font-black text-slate-700 flex items-center gap-1">
+                                        <span>⚙️ Custom Target:</span>
+                                    </span>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" onclick="adjustTimerDuration(-5)" title="-5 Minutes" class="neu-btn px-2 py-0.5 text-[10px] font-black text-slate-600 hover:text-rose-600 active:scale-95 transition cursor-pointer">-5m</button>
+                                        <button type="button" onclick="adjustTimerDuration(-1)" title="-1 Minute" class="neu-circle w-6 h-6 flex items-center justify-center text-xs font-black text-slate-600 hover:text-blue-600 active:scale-95 transition cursor-pointer">-</button>
+                                        <div class="flex items-center bg-white/90 rounded-lg px-2 py-0.5 border border-slate-300/80 shadow-inner">
+                                            <input id="sw-custom-min-input" type="number" min="1" max="720" value="25" oninput="handleCustomTimerInputChange()" 
+                                                class="w-10 text-center text-xs sm:text-sm font-digital font-black text-slate-800 bg-transparent focus:outline-none" />
+                                            <span class="text-[10px] font-bold text-slate-500 ml-0.5">mins</span>
+                                        </div>
+                                        <button type="button" onclick="adjustTimerDuration(1)" title="+1 Minute" class="neu-circle w-6 h-6 flex items-center justify-center text-xs font-black text-slate-600 hover:text-blue-600 active:scale-95 transition cursor-pointer">+</button>
+                                        <button type="button" onclick="adjustTimerDuration(5)" title="+5 Minutes" class="neu-btn px-2 py-0.5 text-[10px] font-black text-slate-600 hover:text-emerald-600 active:scale-95 transition cursor-pointer">+5m</button>
+                                    </div>
+                                    <button type="button" onclick="applyCustomTimerDuration()" class="neu-btn px-3 py-1 text-[10px] sm:text-[11px] font-black text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm active:scale-95 transition cursor-pointer ml-1">
+                                        Apply Target
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

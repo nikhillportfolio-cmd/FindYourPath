@@ -2716,11 +2716,23 @@ function fallbackCopyText(text) {
 }
 
 function setTimerDuration(minutes) {
+    const mins = Math.max(1, Math.min(720, Math.round(Number(minutes) || 25)));
     if (swState === 'running') {
         pauseStopwatch();
     }
-    swTimerDurationMs = minutes * 60 * 1000;
+    swTimerDurationMs = mins * 60 * 1000;
     swElapsedMs = 0;
+
+    // Update custom input field
+    const customInput = document.getElementById("sw-custom-min-input");
+    if (customInput) customInput.value = mins;
+
+    // Update preset pills active highlight
+    updatePresetPillsActive(mins);
+
+    try {
+        localStorage.setItem("praxis_custom_timer_mins", String(mins));
+    } catch (e) {}
 
     if (swMode !== 'timer') {
         setStopwatchMode('timer');
@@ -2728,10 +2740,46 @@ function setTimerDuration(minutes) {
         updateStopwatchDisplay(swTimerDurationMs);
         updateProgressCircle(0, 1);
         const subStatus = document.getElementById("stopwatch-sub-status");
-        if (subStatus) subStatus.innerHTML = `<span>🎯 Target: ${minutes} mins focus session</span>`;
+        if (subStatus) subStatus.innerHTML = `<span>🎯 Target: ${mins} mins focus session</span>`;
         updateStatusPill("READY");
     }
     playStopwatchSound('tick');
+}
+
+function adjustTimerDuration(deltaMins) {
+    const customInput = document.getElementById("sw-custom-min-input");
+    const currentMins = customInput ? (parseInt(customInput.value, 10) || Math.round(swTimerDurationMs / 60000)) : Math.round(swTimerDurationMs / 60000);
+    const newMins = Math.max(1, Math.min(720, currentMins + deltaMins));
+    setTimerDuration(newMins);
+}
+
+function handleCustomTimerInputChange() {
+    const customInput = document.getElementById("sw-custom-min-input");
+    if (!customInput) return;
+    const mins = parseInt(customInput.value, 10);
+    if (!isNaN(mins) && mins >= 1 && mins <= 720) {
+        setTimerDuration(mins);
+    }
+}
+
+function applyCustomTimerDuration() {
+    const customInput = document.getElementById("sw-custom-min-input");
+    const mins = customInput ? (parseInt(customInput.value, 10) || 25) : 25;
+    setTimerDuration(mins);
+    showInAppToast("🎯 Target Updated", `Focus countdown calibrated to ${mins} minutes!`, false);
+}
+
+function updatePresetPillsActive(activeMins) {
+    const presets = [5, 15, 25, 45, 60];
+    presets.forEach(p => {
+        const el = document.getElementById(`sw-preset-${p}`);
+        if (!el) return;
+        if (p === activeMins) {
+            el.className = "sw-preset-pill neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-300 shadow-sm transition cursor-pointer";
+        } else {
+            el.className = "sw-preset-pill neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer";
+        }
+    });
 }
 
 function onFocusTimerCompleted() {
@@ -2924,6 +2972,19 @@ function initRoutineStopwatch() {
     const soundIcon = document.getElementById("stopwatch-sound-icon");
     if (soundIcon) soundIcon.innerText = swSoundEnabled ? "🔊" : "🔇";
 
+    try {
+        const savedMins = localStorage.getItem("praxis_custom_timer_mins");
+        if (savedMins) {
+            const m = parseInt(savedMins, 10);
+            if (!isNaN(m) && m >= 1 && m <= 720) {
+                swTimerDurationMs = m * 60 * 1000;
+                const customInput = document.getElementById("sw-custom-min-input");
+                if (customInput) customInput.value = m;
+                updatePresetPillsActive(m);
+            }
+        }
+    } catch (e) {}
+
     updateStopwatchDisplay(0);
     updateProgressCircle(0);
 }
@@ -2957,6 +3018,9 @@ window.clearStopwatchLaps = clearStopwatchLaps;
 window.copyStopwatchLaps = copyStopwatchLaps;
 window.setStopwatchMode = setStopwatchMode;
 window.setTimerDuration = setTimerDuration;
+window.adjustTimerDuration = adjustTimerDuration;
+window.handleCustomTimerInputChange = handleCustomTimerInputChange;
+window.applyCustomTimerDuration = applyCustomTimerDuration;
 window.toggleStopwatchSound = toggleStopwatchSound;
 window.toggleStopwatchExpand = toggleStopwatchExpand;
 window.toggleStopwatchVisibility = toggleStopwatchVisibility;
