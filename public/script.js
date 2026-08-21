@@ -467,12 +467,54 @@ function isDayMissed(val) {
     return val === "missed" || val === -1 || val === "-1";
 }
 
-function calculateHabitStreak(days) {
-    if (!Array.isArray(days)) return 0;
-    let maxStreak = 0;
-    let currentStreak = 0;
-    let temp = 0;
+// STREAK ALGORITHM (STRICT RESET TO 0 IF BROKEN)
+function calculateHabitStreak(days, habit = null) {
+    if (!Array.isArray(days) || days.length === 0) return 0;
+    const todayIdx = habit ? getHabitTodayIndex(habit) : getCurrentTrackerDayIndex();
+    if (todayIdx < 0) return 0;
 
+    // 1. If today is completed, streak is alive and counts today + consecutive previous days
+    if (isDayDone(days[todayIdx])) {
+        let currentStreak = 1;
+        for (let i = todayIdx - 1; i >= 0; i--) {
+            if (isDayDone(days[i])) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+        return currentStreak;
+    }
+
+    // 2. If today is not done yet: check yesterday
+    const yesterdayIdx = todayIdx - 1;
+    if (yesterdayIdx < 0) {
+        // We are on Day 1 and today is not completed yet -> Streak is 0
+        return 0;
+    }
+
+    // If yesterday was completed, streak is preserved from yesterday while waiting for today
+    if (isDayDone(days[yesterdayIdx])) {
+        let currentStreak = 1;
+        for (let i = yesterdayIdx - 1; i >= 0; i--) {
+            if (isDayDone(days[i])) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+        return currentStreak;
+    }
+
+    // 3. Yesterday was missed or blank -> THE STREAK IS BROKEN! Reset to 0!
+    return 0;
+}
+
+// ALL-TIME HIGHEST CONSECUTIVE STREAK RECORD
+function calculateHabitBestStreak(days) {
+    if (!Array.isArray(days) || days.length === 0) return 0;
+    let maxStreak = 0;
+    let temp = 0;
     for (let i = 0; i < days.length; i++) {
         if (isDayDone(days[i])) {
             temp++;
@@ -481,26 +523,7 @@ function calculateHabitStreak(days) {
             temp = 0;
         }
     }
-
-    // Active streak up to last checked day
-    let lastCheckedIndex = -1;
-    for (let i = days.length - 1; i >= 0; i--) {
-        if (isDayDone(days[i])) {
-            lastCheckedIndex = i;
-            break;
-        }
-    }
-    if (lastCheckedIndex !== -1) {
-        for (let i = lastCheckedIndex; i >= 0; i--) {
-            if (isDayDone(days[i])) {
-                currentStreak++;
-            } else {
-                break;
-            }
-        }
-    }
-
-    return Math.max(currentStreak, maxStreak);
+    return maxStreak;
 }
 
 // Calculates Day 1-30 tracker day index relative to habit journey start (Day 1 = index 0)
@@ -648,15 +671,34 @@ function updateGrowthCharts() {
 
     const totalHabitsCount = habits.length;
     let totalCheckedHabitCells = 0;
-    let highestStreakAcrossAll = 0;
+    let highestActiveStreak = 0;
+    let highestBestStreak = 0;
+    let todayCompletedHabitsCount = 0;
+
+    const statBestStreakVal = document.getElementById("stat-best-streak-val");
+    const statTodayDoneVal = document.getElementById("stat-today-done-val");
+    const statTodayPercent = document.getElementById("stat-today-percent");
+    const todayIdx = getCurrentTrackerDayIndex();
 
     habits.forEach(h => {
         if (!h) return;
         if (!Array.isArray(h.days)) h.days = new Array(30).fill(false);
         const checkedCount = h.days.filter(isDayDone).length;
         totalCheckedHabitCells += checkedCount;
-        const streak = calculateHabitStreak(h.days);
-        if (streak > highestStreakAcrossAll) highestStreakAcrossAll = streak;
+
+        // Current active streak (resets strictly to 0 if broken)
+        const activeStreak = calculateHabitStreak(h.days, h);
+        if (activeStreak > highestActiveStreak) highestActiveStreak = activeStreak;
+
+        // All-time historical best streak
+        const bestStreak = calculateHabitBestStreak(h.days);
+        if (bestStreak > highestBestStreak) highestBestStreak = bestStreak;
+
+        // Check if habit is done today
+        const hTodayIdx = getHabitTodayIndex(h);
+        if (isDayDone(h.days[hTodayIdx])) {
+            todayCompletedHabitsCount++;
+        }
     });
 
     // Calculate unique calendar days (out of 30) where at least one habit was completed
@@ -673,6 +715,10 @@ function updateGrowthCharts() {
         ? Math.round((totalCheckedHabitCells / totalPossibleChecks) * 100) 
         : 0;
 
+    const todayPercentage = totalHabitsCount > 0 
+        ? Math.round((todayCompletedHabitsCount / totalHabitsCount) * 100) 
+        : 0;
+
     // SVG Circle calculation (r = 40, circumference = ~251.327)
     if (overallCircle) {
         const circumference = 251.327;
@@ -682,18 +728,24 @@ function updateGrowthCharts() {
 
     if (overallPercentText) overallPercentText.innerText = `${overallPercentage}%`;
     if (statHabits) statHabits.innerText = totalHabitsCount;
-    if (statChecks) statChecks.innerText = uniqueDaysDoneCount;
-    if (statStreakVal) statStreakVal.innerText = highestStreakAcrossAll;
+    if (statChecks) statChecks.innerText = `${uniqueDaysDoneCount}/30`;
+    if (statStreakVal) statStreakVal.innerText = highestActiveStreak;
+    if (statBestStreakVal) statBestStreakVal.innerText = highestBestStreak;
+    if (statTodayDoneVal) statTodayDoneVal.innerText = `${todayCompletedHabitsCount}/${totalHabitsCount}`;
+    if (statTodayPercent) statTodayPercent.innerText = `${todayPercentage}% done`;
 
     if (overallStatusText) {
         if (totalHabitsCount === 0) {
-            overallStatusText.innerText = "Add habits below to start measuring your 30-day discipline.";
-        } else if (overallPercentage >= 80) {
-            overallStatusText.innerText = "🔥 Unstoppable Momentum! You are crushing your routine targets!";
-        } else if (overallPercentage >= 40) {
-            overallStatusText.innerText = "⚡ Building Strong Habits! Stay consistent every single day.";
+            overallStatusText.innerHTML = "<span>Add habits below to start measuring your 30-day discipline.</span>";
+        } else if (todayCompletedHabitsCount === totalHabitsCount && totalHabitsCount > 0) {
+            overallStatusText.innerHTML = `<span class="text-emerald-600 font-bold">🎉 All Done Today!</span> <span>${highestActiveStreak > 0 ? `Streak extended to <strong>${highestActiveStreak} days</strong>! Great work!` : 'Outstanding discipline!'}</span>`;
+        } else if (highestActiveStreak > 0 && todayCompletedHabitsCount < totalHabitsCount) {
+            const remaining = totalHabitsCount - todayCompletedHabitsCount;
+            overallStatusText.innerHTML = `<span class="text-amber-600 font-bold">⚡ ${highestActiveStreak}d Streak Active:</span> <span>Complete <strong>${remaining} more</strong> habit${remaining > 1 ? 's' : ''} today to preserve your streak!</span>`;
+        } else if (highestActiveStreak === 0 && highestBestStreak > 0) {
+            overallStatusText.innerHTML = `<span class="text-slate-600">Streak reset to <strong>0d</strong>.</span> <span class="text-blue-600 font-bold">Check off today's habits</span> to reignite your streak (Record: ${highestBestStreak}d)!`;
         } else {
-            overallStatusText.innerText = "🌱 Starting Your Journey! Keep checking off days to build momentum.";
+            overallStatusText.innerHTML = `<span>🌱 <strong>Day ${todayIdx + 1}</strong>: Check off your daily routines to ignite your streak momentum.</span>`;
         }
     }
 
@@ -1512,7 +1564,8 @@ function buildHabitsTableHTML(isExpanded = false) {
 
             const habitId = habit.id;
             const checkedCount = habit.days.filter(isDayDone).length;
-            const streak = calculateHabitStreak(habit.days);
+            const streak = calculateHabitStreak(habit.days, habit);
+            const bestStreak = calculateHabitBestStreak(habit.days);
 
             html += `
                 <tr class="hover:bg-slate-200/40 transition-colors h-11 sm:h-12">
@@ -1528,7 +1581,10 @@ function buildHabitsTableHTML(isExpanded = false) {
                                 </div>
                                 <div class="flex items-center gap-1 mt-1 text-[8px] sm:text-[9px] text-slate-500 font-semibold flex-wrap">
                                     <span class="text-blue-600 font-bold">${checkedCount}/30</span>
-                                    ${streak > 0 ? `<span class="text-amber-600 font-bold">🔥${streak}d</span>` : ''}
+                                    ${streak > 0 
+                                        ? `<span class="text-amber-600 font-bold" title="Current Active Streak: ${streak} days (Best Record: ${bestStreak}d)">🔥${streak}d</span>` 
+                                        : (bestStreak > 0 ? `<span class="text-slate-400 font-medium" title="Streak broken (Reset to 0d). Best Record: ${bestStreak}d">0d</span>` : '')
+                                    }
                                     ${habit.scheduledTime ? `<span class="text-indigo-600 font-medium">⏰${formatAMPM(habit.scheduledTime)}</span>` : ''}
                                 </div>
                             </div>
@@ -3073,6 +3129,8 @@ window.editHabitTime = editHabitTime;
 window.setCategoryFilter = setCategoryFilter;
 window.renderHabitsList = renderHabitsList;
 window.updateGrowthCharts = updateGrowthCharts;
+window.calculateHabitStreak = calculateHabitStreak;
+window.calculateHabitBestStreak = calculateHabitBestStreak;
 window.renderHeatmap = renderHeatmap;
 window.markHabitCompletedDirectly = markHabitCompletedDirectly;
 window.markHabitMissedDirectly = markHabitMissedDirectly;

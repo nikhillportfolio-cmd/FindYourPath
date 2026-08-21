@@ -1808,15 +1808,20 @@
                 </div>
 
                 <!-- OVERALL GROWTH DASHBOARD -->
-                <div class="neu-card p-4 sm:p-6 md:p-8 bg-gradient-to-br from-slate-100/90 to-slate-200/50 relative overflow-hidden">
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+                <div class="neu-card p-4 sm:p-6 md:p-8 bg-gradient-to-br from-slate-100/95 via-slate-100/85 to-blue-50/40 relative overflow-hidden border border-white/80 shadow-xl">
+                    
+                    <!-- Ambient decorative backdrop glow -->
+                    <div class="absolute -top-14 -right-14 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -bottom-14 -left-14 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-5 sm:gap-7 relative z-10">
                         
-                        <!-- CIRCULAR PROGRESS CHART -->
-                        <div class="flex items-center gap-4 sm:gap-6">
+                        <!-- CIRCULAR PROGRESS CHART & DISCIPLINE SUMMARY -->
+                        <div class="flex items-center gap-4 sm:gap-6 w-full lg:w-auto">
                             <div class="relative w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center shrink-0">
-                                <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                                <svg class="w-full h-full -rotate-90 drop-shadow-md" viewBox="0 0 100 100">
                                     <!-- Background Circle -->
-                                    <circle cx="50" cy="50" r="40" stroke="#cbd5e1" stroke-width="8" fill="transparent" />
+                                    <circle cx="50" cy="50" r="40" stroke="#cbd5e1" stroke-width="8" fill="transparent" opacity="0.4" />
                                     <!-- Progress Circle -->
                                     <circle id="overall-progress-circle" cx="50" cy="50" r="40" stroke="url(#tracker-gradient)" stroke-width="8" fill="transparent"
                                         stroke-dasharray="251.327" stroke-dashoffset="251.327" stroke-linecap="round" class="transition-all duration-700 ease-out" />
@@ -1824,41 +1829,63 @@
                                         <linearGradient id="tracker-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                                             <stop offset="0%" stop-color="#2563eb" />
                                             <stop offset="50%" stop-color="#4f46e5" />
-                                            <stop offset="100%" stop-color="#0284c7" />
+                                            <stop offset="100%" stop-color="#06b6d4" />
                                         </linearGradient>
                                     </defs>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                                     <span id="overall-percent-text" class="text-xl sm:text-2xl font-black text-slate-800 font-outfit leading-none">0%</span>
-                                    <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5 sm:mt-1">Growth</span>
+                                    <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5 sm:mt-1">Discipline</span>
                                 </div>
                             </div>
 
-                            <div>
-                                <span class="neu-badge px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-bold text-blue-600 uppercase tracking-wider inline-block mb-1">Overall Dashboard</span>
-                                <h3 class="text-base sm:text-xl font-bold text-slate-800 font-outfit">Total Routine Completion</h3>
-                                <p id="overall-status-text" class="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium max-w-xs leading-relaxed">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="neu-badge px-2.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold text-blue-600 uppercase tracking-wider">Overall Dashboard</span>
+                                    <span class="neu-badge px-2 py-0.5 text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200">30-Day Analytics</span>
+                                </div>
+                                <h3 class="text-base sm:text-xl font-black text-slate-800 font-outfit tracking-tight mt-1">Total Routine Completion</h3>
+                                <p id="overall-status-text" class="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium leading-relaxed">
                                     Add habits below to start measuring your 30-day discipline.
                                 </p>
                             </div>
                         </div>
 
-                        <!-- STATS CARDS GRID -->
-                        <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full md:w-auto">
-                            <div class="neu-card-sm p-2.5 sm:p-4 text-center min-w-0">
-                                <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Habits</span>
-                                <span id="stat-total-habits" class="text-xl sm:text-2xl font-black text-slate-800 font-outfit mt-0.5 block">0</span>
+                        <!-- STATS CARDS GRID (4-COLUMN RESPONSIVE TILES) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full lg:w-auto shrink-0">
+                            
+                            <!-- HABITS COUNT -->
+                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70">
+                                <span class="text-[9px] sm:text-[10px] text-slate-400 font-extrabold block uppercase tracking-wider">Habits</span>
+                                <span id="stat-total-habits" class="text-lg sm:text-2xl font-black text-slate-800 font-outfit mt-0.5 block">0</span>
+                                <span class="text-[8px] sm:text-[9px] text-slate-400 font-semibold block">Active</span>
                             </div>
-                            <div class="neu-card-sm p-2.5 sm:p-4 text-center min-w-0">
-                                <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Days Done</span>
-                                <span id="stat-total-checks" class="text-xl sm:text-2xl font-black text-emerald-600 font-outfit mt-0.5 block">0</span>
-                            </div>
-                            <div class="neu-card-sm p-2.5 sm:p-4 text-center min-w-0">
-                                <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Best Streak</span>
-                                <span id="stat-max-streak" class="text-xl sm:text-2xl font-black text-amber-500 font-outfit mt-0.5 flex items-center justify-center gap-1">
-                                    🔥<span id="stat-streak-val">0</span>
+
+                            <!-- ACTIVE STREAK (RESETS TO 0 IF BROKEN) -->
+                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70 border border-amber-300/40 shadow-sm">
+                                <span class="text-[9px] sm:text-[10px] text-amber-600 font-extrabold block uppercase tracking-wider">Active Streak</span>
+                                <span id="stat-max-streak" class="text-lg sm:text-2xl font-black text-amber-500 font-outfit mt-0.5 flex items-center justify-center gap-0.5">
+                                    🔥<span id="stat-streak-val">0</span><span class="text-xs sm:text-sm font-bold text-amber-600">d</span>
                                 </span>
+                                <span class="text-[8px] sm:text-[9px] text-amber-600/80 font-bold block">Current</span>
                             </div>
+
+                            <!-- BEST RECORD STREAK -->
+                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70">
+                                <span class="text-[9px] sm:text-[10px] text-indigo-500 font-extrabold block uppercase tracking-wider">Best Record</span>
+                                <span class="text-lg sm:text-2xl font-black text-indigo-600 font-outfit mt-0.5 flex items-center justify-center gap-0.5">
+                                    🏆<span id="stat-best-streak-val">0</span><span class="text-xs sm:text-sm font-bold text-indigo-500">d</span>
+                                </span>
+                                <span class="text-[8px] sm:text-[9px] text-indigo-500 font-semibold block">All-time</span>
+                            </div>
+
+                            <!-- TODAY'S COMPLETION -->
+                            <div class="neu-card-sm p-2.5 sm:p-3.5 text-center min-w-[75px] sm:min-w-[95px] bg-white/70">
+                                <span class="text-[9px] sm:text-[10px] text-emerald-600 font-extrabold block uppercase tracking-wider">Today</span>
+                                <span id="stat-today-done-val" class="text-lg sm:text-2xl font-black text-emerald-600 font-outfit mt-0.5 block">0/0</span>
+                                <span id="stat-today-percent" class="text-[8px] sm:text-[9px] text-emerald-600 font-bold block">0% done</span>
+                            </div>
+
                         </div>
                     </div>
                 </div>
