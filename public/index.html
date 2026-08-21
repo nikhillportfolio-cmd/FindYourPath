@@ -190,9 +190,185 @@
             filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.9));
         }
 
-        .sw-tick-major {
-            stroke: #64748b;
-            opacity: 0.65;
+        /* -------------------------------------------------------------
+           OLD STYLE 3D MECHANICAL FLIP CLOCK STYLES
+        ------------------------------------------------------------- */
+        .flip-clock-frame {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        .flip-card {
+            position: relative;
+            width: 22px;
+            height: 38px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Impact', 'SF Mono', monospace;
+            font-weight: 900;
+            font-size: 24px;
+            line-height: 38px;
+            text-align: center;
+            color: #f8fafc;
+            background: #111419;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), inset 0 0 4px rgba(0, 0, 0, 0.8);
+            perspective: 320px;
+            transform-style: preserve-3d;
+            user-select: none;
+        }
+
+        @media (min-width: 640px) {
+            .flip-card {
+                width: 28px;
+                height: 46px;
+                font-size: 30px;
+                line-height: 46px;
+                border-radius: 5px;
+            }
+        }
+
+        .flip-card-mini {
+            width: 16px;
+            height: 32px;
+            font-size: 18px;
+            line-height: 32px;
+        }
+
+        @media (min-width: 640px) {
+            .flip-card-mini {
+                width: 20px;
+                height: 38px;
+                font-size: 22px;
+                line-height: 38px;
+            }
+        }
+
+        /* Upper Half Panel */
+        .flip-card-top,
+        .flip-leaf-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            overflow: hidden;
+            background: linear-gradient(180deg, #242b35 0%, #171b22 100%);
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.85);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+            z-index: 1;
+        }
+
+        .flip-card-top span,
+        .flip-leaf-top span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 200%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Lower Half Panel */
+        .flip-card-bottom,
+        .flip-leaf-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            overflow: hidden;
+            background: linear-gradient(180deg, #161a20 0%, #0d1014 100%);
+            border-bottom-left-radius: inherit;
+            border-bottom-right-radius: inherit;
+            box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.7);
+            z-index: 1;
+        }
+
+        .flip-card-bottom span,
+        .flip-leaf-bottom span {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Center Horizontal Divider & Metallic Rivets */
+        .flip-hinge {
+            position: absolute;
+            top: calc(50% - 1px);
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #080a0d;
+            z-index: 10;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .flip-hinge::before,
+        .flip-hinge::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            width: 2px;
+            height: 5px;
+            background: #64748b;
+            border-radius: 1px;
+        }
+        .flip-hinge::before { left: 1px; }
+        .flip-hinge::after { right: 1px; }
+
+        /* 3D Rotating Leaves */
+        .flip-leaf-top {
+            z-index: 4;
+            transform-origin: bottom;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .flip-leaf-bottom {
+            z-index: 3;
+            transform-origin: top;
+            transform: rotateX(90deg);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        /* 3D Flip Down Keyframe Animations */
+        .flip-animating .flip-leaf-top {
+            animation: flip-leaf-fold 0.18s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+        }
+
+        .flip-animating .flip-leaf-bottom {
+            animation: flip-leaf-unfold 0.18s 0.16s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+        }
+
+        @keyframes flip-leaf-fold {
+            0% {
+                transform: rotateX(0deg);
+                filter: brightness(1);
+            }
+            100% {
+                transform: rotateX(-90deg);
+                filter: brightness(0.4);
+            }
+        }
+
+        @keyframes flip-leaf-unfold {
+            0% {
+                transform: rotateX(90deg);
+                filter: brightness(0.4);
+            }
+            100% {
+                transform: rotateX(0deg);
+                filter: brightness(1);
+            }
         }
 
         /* Mobile specific neumorphic tweaks */
@@ -1377,18 +1553,121 @@
                                     </defs>
                                 </svg>
 
-                                <!-- Central Digital Timer Numbers & State Badge -->
-                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-20 pointer-events-none px-4">
+                                <!-- Central Retro 3D Mechanical Flip Clock Display & State Badge -->
+                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-20 pointer-events-none px-2 sm:px-4">
                                     
                                     <!-- Status Pill -->
-                                    <span id="stopwatch-status-pill" class="neu-badge text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 text-slate-500 mb-1 shadow-sm bg-white/70">
+                                    <span id="stopwatch-status-pill" class="neu-badge text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 text-slate-500 mb-1.5 shadow-sm bg-white/80">
                                         READY
                                     </span>
                                     
-                                    <!-- Big Time Display: HH:MM:SS . MS -->
-                                    <div class="flex items-baseline justify-center font-digital font-black text-slate-800 tracking-tight leading-none">
-                                        <span id="sw-display-main" class="text-3xl sm:text-4xl md:text-5xl font-digital tabular-nums tracking-tighter text-slate-800 drop-shadow-sm">00:00:00</span>
-                                        <span class="text-lg sm:text-xl md:text-2xl text-blue-600 font-digital font-bold ml-1 opacity-90 tabular-nums">.<span id="sw-display-ms">00</span></span>
+                                    <!-- RETRO SPLIT-FLAP FLIP CLOCK DISPLAY -->
+                                    <div class="flip-clock-wrapper relative select-none my-0.5">
+                                        <div class="flip-clock-frame flex items-center justify-center gap-1 sm:gap-1.5 p-2 sm:p-2.5 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 border border-slate-700/80 shadow-[inset_0_2px_6px_rgba(0,0,0,0.9),0_10px_25px_-5px_rgba(0,0,0,0.5)]">
+                                            
+                                            <!-- HOURS GROUP -->
+                                            <div class="flex flex-col items-center">
+                                                <div class="flex items-center gap-0.5">
+                                                    <!-- H1 Card -->
+                                                    <div class="flip-card" id="flip-card-h1">
+                                                        <div class="flip-card-top"><span>0</span></div>
+                                                        <div class="flip-card-bottom"><span>0</span></div>
+                                                        <div class="flip-leaf-top"><span>0</span></div>
+                                                        <div class="flip-leaf-bottom"><span>0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                    <!-- H2 Card -->
+                                                    <div class="flip-card" id="flip-card-h2">
+                                                        <div class="flip-card-top"><span>0</span></div>
+                                                        <div class="flip-card-bottom"><span>0</span></div>
+                                                        <div class="flip-leaf-top"><span>0</span></div>
+                                                        <div class="flip-leaf-bottom"><span>0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[7px] sm:text-[8px] font-black text-slate-400 tracking-wider mt-1 uppercase">HRS</span>
+                                            </div>
+
+                                            <!-- COLON SEPARATOR -->
+                                            <div class="flex flex-col items-center justify-center gap-1.5 px-0.5 pb-3">
+                                                <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.9)] animate-pulse"></span>
+                                                <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.9)] animate-pulse"></span>
+                                            </div>
+
+                                            <!-- MINUTES GROUP -->
+                                            <div class="flex flex-col items-center">
+                                                <div class="flex items-center gap-0.5">
+                                                    <!-- M1 Card -->
+                                                    <div class="flip-card" id="flip-card-m1">
+                                                        <div class="flip-card-top"><span>0</span></div>
+                                                        <div class="flip-card-bottom"><span>0</span></div>
+                                                        <div class="flip-leaf-top"><span>0</span></div>
+                                                        <div class="flip-leaf-bottom"><span>0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                    <!-- M2 Card -->
+                                                    <div class="flip-card" id="flip-card-m2">
+                                                        <div class="flip-card-top"><span>0</span></div>
+                                                        <div class="flip-card-bottom"><span>0</span></div>
+                                                        <div class="flip-leaf-top"><span>0</span></div>
+                                                        <div class="flip-leaf-bottom"><span>0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[7px] sm:text-[8px] font-black text-slate-400 tracking-wider mt-1 uppercase">MIN</span>
+                                            </div>
+
+                                            <!-- COLON SEPARATOR -->
+                                            <div class="flex flex-col items-center justify-center gap-1.5 px-0.5 pb-3">
+                                                <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.9)] animate-pulse"></span>
+                                                <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.9)] animate-pulse"></span>
+                                            </div>
+
+                                            <!-- SECONDS GROUP -->
+                                            <div class="flex flex-col items-center">
+                                                <div class="flex items-center gap-0.5">
+                                                    <!-- S1 Card -->
+                                                    <div class="flip-card" id="flip-card-s1">
+                                                        <div class="flip-card-top"><span>0</span></div>
+                                                        <div class="flip-card-bottom"><span>0</span></div>
+                                                        <div class="flip-leaf-top"><span>0</span></div>
+                                                        <div class="flip-leaf-bottom"><span>0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                    <!-- S2 Card -->
+                                                    <div class="flip-card" id="flip-card-s2">
+                                                        <div class="flip-card-top"><span>0</span></div>
+                                                        <div class="flip-card-bottom"><span>0</span></div>
+                                                        <div class="flip-leaf-top"><span>0</span></div>
+                                                        <div class="flip-leaf-bottom"><span>0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[7px] sm:text-[8px] font-black text-slate-400 tracking-wider mt-1 uppercase">SEC</span>
+                                            </div>
+
+                                            <!-- CENTISECONDS / MS GROUP (COMPACT RETRO FLAP) -->
+                                            <div class="flex flex-col items-center ml-0.5 pl-1 border-l border-slate-700/60">
+                                                <div class="flex items-center gap-0.5">
+                                                    <div class="flip-card flip-card-mini" id="flip-card-ms1">
+                                                        <div class="flip-card-top"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-card-bottom"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-leaf-top"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-leaf-bottom"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                    <div class="flip-card flip-card-mini" id="flip-card-ms2">
+                                                        <div class="flip-card-top"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-card-bottom"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-leaf-top"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-leaf-bottom"><span class="text-amber-400">0</span></div>
+                                                        <div class="flip-hinge"></div>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[7px] sm:text-[8px] font-black text-amber-400/80 tracking-wider mt-1 uppercase">MS</span>
+                                            </div>
+
+                                        </div>
                                     </div>
 
                                     <!-- Sub-info: Active Target / Current Lap delta -->

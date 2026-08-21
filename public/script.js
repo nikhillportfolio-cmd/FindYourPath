@@ -2237,14 +2237,89 @@ function formatStopwatchTime(ms) {
     };
 }
 
-function updateStopwatchDisplay(ms) {
-    const displayMain = document.getElementById("sw-display-main");
-    const displayMs = document.getElementById("sw-display-ms");
-    if (!displayMain || !displayMs) return;
+const swFlipState = {
+    h1: '0', h2: '0',
+    m1: '0', m2: '0',
+    s1: '0', s2: '0',
+    ms1: '0', ms2: '0'
+};
 
+function flipCardDigit(cardId, oldVal, newVal) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    const topStatic = card.querySelector('.flip-card-top span');
+    const bottomStatic = card.querySelector('.flip-card-bottom span');
+    const topLeaf = card.querySelector('.flip-leaf-top span');
+    const bottomLeaf = card.querySelector('.flip-leaf-bottom span');
+
+    if (!topStatic || !bottomStatic || !topLeaf || !bottomLeaf) return;
+
+    topStatic.innerText = newVal;
+    bottomStatic.innerText = oldVal;
+    topLeaf.innerText = oldVal;
+    bottomLeaf.innerText = newVal;
+
+    card.classList.remove('flip-animating');
+    void card.offsetWidth; // Force DOM reflow to retrigger keyframes
+    card.classList.add('flip-animating');
+
+    clearTimeout(card._flipTimer);
+    card._flipTimer = setTimeout(() => {
+        card.classList.remove('flip-animating');
+        bottomStatic.innerText = newVal;
+        topLeaf.innerText = newVal;
+    }, 380);
+}
+
+function setFlipCardDirect(cardId, val) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    card.classList.remove('flip-animating');
+    clearTimeout(card._flipTimer);
+    const spans = card.querySelectorAll('span');
+    spans.forEach(s => s.innerText = val);
+}
+
+function updateStopwatchDisplay(ms, forceDirect = false) {
     const formatted = formatStopwatchTime(ms);
-    displayMain.innerText = formatted.main;
-    displayMs.innerText = formatted.ms;
+    const { hours, mins, secs, centi } = formatted;
+
+    const hStr = hours.toString().padStart(2, "0");
+    const mStr = mins.toString().padStart(2, "0");
+    const sStr = secs.toString().padStart(2, "0");
+    const msStr = centi.toString().padStart(2, "0");
+
+    const newDigits = {
+        h1: hStr[0], h2: hStr[1],
+        m1: mStr[0], m2: mStr[1],
+        s1: sStr[0], s2: sStr[1],
+        ms1: msStr[0], ms2: msStr[1]
+    };
+
+    if (forceDirect) {
+        ['h1', 'h2', 'm1', 'm2', 's1', 's2', 'ms1', 'ms2'].forEach(k => {
+            swFlipState[k] = newDigits[k];
+            setFlipCardDirect(`flip-card-${k}`, newDigits[k]);
+        });
+        return;
+    }
+
+    // 3D Flip animation for Hours, Minutes, and Seconds
+    ['h1', 'h2', 'm1', 'm2', 's1', 's2'].forEach(k => {
+        if (newDigits[k] !== swFlipState[k]) {
+            flipCardDigit(`flip-card-${k}`, swFlipState[k], newDigits[k]);
+            swFlipState[k] = newDigits[k];
+        }
+    });
+
+    // Rapid drum-flip update for Centiseconds / MS
+    ['ms1', 'ms2'].forEach(k => {
+        if (newDigits[k] !== swFlipState[k]) {
+            setFlipCardDirect(`flip-card-${k}`, newDigits[k]);
+            swFlipState[k] = newDigits[k];
+        }
+    });
 }
 
 function updateLiveFloatingBadge(ms) {
@@ -2307,7 +2382,7 @@ function setStopwatchMode(mode) {
         if (lapLabel) lapLabel.innerText = "Lap";
         if (lapBtn) lapBtn.title = "Record a lap split";
 
-        updateStopwatchDisplay(0);
+        updateStopwatchDisplay(0, true);
         updateProgressCircle(0, 0);
     } else {
         btnTimer?.classList.add("bg-white/90", "text-emerald-600", "shadow-sm");
@@ -2325,7 +2400,7 @@ function setStopwatchMode(mode) {
         if (lapLabel) lapLabel.innerText = "+5 Min";
         if (lapBtn) lapBtn.title = "Add 5 minutes to focus timer";
 
-        updateStopwatchDisplay(swTimerDurationMs);
+        updateStopwatchDisplay(swTimerDurationMs, true);
         updateProgressCircle(0, 1);
     }
 
@@ -2500,11 +2575,11 @@ function resetStopwatch() {
     }
 
     if (swMode === 'stopwatch') {
-        updateStopwatchDisplay(0);
+        updateStopwatchDisplay(0, true);
         updateProgressCircle(0);
         if (subStatus) subStatus.innerHTML = "<span>Tap Start to begin precision stopwatch</span>";
     } else {
-        updateStopwatchDisplay(swTimerDurationMs);
+        updateStopwatchDisplay(swTimerDurationMs, true);
         updateProgressCircle(0, 1);
         if (subStatus) subStatus.innerHTML = `<span>🎯 Target: ${Math.round(swTimerDurationMs / 60000)} mins focus session</span>`;
     }
@@ -2737,7 +2812,7 @@ function setTimerDuration(minutes) {
     if (swMode !== 'timer') {
         setStopwatchMode('timer');
     } else {
-        updateStopwatchDisplay(swTimerDurationMs);
+        updateStopwatchDisplay(swTimerDurationMs, true);
         updateProgressCircle(0, 1);
         const subStatus = document.getElementById("stopwatch-sub-status");
         if (subStatus) subStatus.innerHTML = `<span>🎯 Target: ${mins} mins focus session</span>`;
@@ -2985,7 +3060,7 @@ function initRoutineStopwatch() {
         }
     } catch (e) {}
 
-    updateStopwatchDisplay(0);
+    updateStopwatchDisplay(0, true);
     updateProgressCircle(0);
 }
 
