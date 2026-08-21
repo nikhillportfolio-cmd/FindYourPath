@@ -14,10 +14,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- Google Fonts: Outfit (Headings) & Inter (Body) -->
+    <!-- Google Fonts: Outfit (Headings), Inter (Body) & JetBrains Mono (Digital Clocks/Stopwatch) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,6 +26,7 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         outfit: ['Outfit', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'SF Mono', 'Roboto Mono', 'Monaco', 'Consolas', 'monospace'],
                     },
                     colors: {
                         neu: {
@@ -139,6 +140,59 @@
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        /* -------------------------------------------------------------
+           FANCY STOPWATCH & CHRONOGRAPH STYLES
+        ------------------------------------------------------------- */
+        .font-digital {
+            font-family: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', Monaco, Consolas, monospace;
+            font-feature-settings: 'tnum' on, 'zero' on;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stopwatch-glow {
+            filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.4));
+        }
+
+        .stopwatch-glow-emerald {
+            filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.4));
+        }
+
+        .stopwatch-glow-amber {
+            filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.4));
+        }
+
+        @keyframes stopwatch-orbit-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.8)); }
+            50% { transform: scale(1.3); opacity: 0.85; filter: drop-shadow(0 0 8px rgba(37, 99, 235, 1)); }
+        }
+
+        .stopwatch-dot-pulsing {
+            animation: stopwatch-orbit-pulse 1.2s ease-in-out infinite;
+        }
+
+        .sw-tick {
+            transition: stroke 0.15s ease, stroke-width 0.15s ease, opacity 0.15s ease;
+        }
+
+        .sw-tick-active {
+            stroke: #2563eb !important;
+            stroke-width: 2.5px !important;
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 3px rgba(37, 99, 235, 0.9));
+        }
+
+        .sw-tick-active-timer {
+            stroke: #10b981 !important;
+            stroke-width: 2.5px !important;
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.9));
+        }
+
+        .sw-tick-major {
+            stroke: #64748b;
+            opacity: 0.65;
         }
 
         /* Mobile specific neumorphic tweaks */
@@ -1173,6 +1227,10 @@
             <span id="tracker-badge-count" class="hidden neu-badge bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full ml-0.5 sm:ml-1 shrink-0">
                 0
             </span>
+            <!-- Live Stopwatch Mini Pill -->
+            <span id="tracker-stopwatch-live-pill" class="hidden neu-badge bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] sm:text-[11px] font-digital font-black px-2 py-0.5 rounded-full ml-0.5 sm:ml-1 shrink-0 shadow-sm animate-pulse flex items-center gap-1">
+                ⏱️ <span id="tracker-live-stopwatch-text">00:00</span>
+            </span>
         </button>
     </div>
 
@@ -1202,6 +1260,234 @@
             <!-- MODAL SCROLLABLE BODY -->
             <div class="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 overflow-y-auto custom-scrollbar flex-1">
                 
+                <!-- ============================================================== -->
+                <!-- FANCY HIGH-PRECISION STOPWATCH & ROUTINE FOCUS TIMER (TOPMOST) -->
+                <!-- ============================================================== -->
+                <div id="routine-stopwatch-container" class="neu-card p-4 sm:p-6 md:p-7 bg-gradient-to-br from-slate-100/95 via-slate-100/85 to-blue-50/40 relative overflow-hidden border border-white/80 shadow-xl">
+                    
+                    <!-- Ambient decorative lights -->
+                    <div class="absolute -top-16 -right-16 w-52 h-52 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -bottom-16 -left-16 w-52 h-52 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <!-- CARD HEADER & TOOLBAR -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-300/60 relative z-10">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 neu-circle flex items-center justify-center text-lg sm:text-xl text-blue-600 shrink-0 relative group">
+                                <span id="stopwatch-header-icon" class="transition-transform duration-300 inline-block">⏱️</span>
+                                <span id="stopwatch-pulse-dot" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white animate-ping"></span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-base sm:text-lg md:text-xl font-black text-slate-800 font-outfit tracking-tight">Routine Focus Stopwatch</h3>
+                                    <span id="stopwatch-mode-badge" class="neu-badge text-[9px] sm:text-[10px] font-extrabold text-blue-600 uppercase px-2 py-0.5">STOPWATCH MODE</span>
+                                </div>
+                                <p class="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">Time habits, focus sprints & capture high-precision routine splits</p>
+                            </div>
+                        </div>
+
+                        <!-- TOP RIGHT UTILITY BUTTONS -->
+                        <div class="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto flex-wrap">
+                            <!-- Mode Switcher Buttons -->
+                            <div class="flex items-center p-1 neu-trench rounded-xl gap-1">
+                                <button type="button" id="sw-mode-stopwatch" onclick="setStopwatchMode('stopwatch')" class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg transition-all text-blue-600 bg-white/90 shadow-sm cursor-pointer">
+                                    ⏱️ Stopwatch
+                                </button>
+                                <button type="button" id="sw-mode-timer" onclick="setStopwatchMode('timer')" class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg transition-all text-slate-500 hover:text-blue-600 cursor-pointer">
+                                    ⏳ Focus Timer
+                                </button>
+                            </div>
+
+                            <!-- Sound toggle -->
+                            <button type="button" id="stopwatch-sound-toggle-btn" onclick="toggleStopwatchSound()" title="Toggle Sound Feedback"
+                                class="neu-circle w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-600 hover:text-blue-600 transition-colors text-xs font-bold shrink-0">
+                                <span id="stopwatch-sound-icon">🔊</span>
+                            </button>
+
+                            <!-- Collapse/Expand View Toggle -->
+                            <button type="button" id="stopwatch-expand-toggle-btn" onclick="toggleStopwatchExpand()" title="Toggle Compact / Expanded View"
+                                class="neu-circle w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-600 hover:text-blue-600 transition-colors text-xs font-bold shrink-0">
+                                <span id="stopwatch-expand-icon">⤢</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STOPWATCH MAIN GRID BODY -->
+                    <div id="stopwatch-main-grid" class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 mt-4 sm:mt-5 items-center relative z-10">
+                        
+                        <!-- LEFT COLUMN: RADIAL DIAL & DIGITAL TIMER HUD & CONTROLS (7 cols) -->
+                        <div class="lg:col-span-7 flex flex-col items-center justify-center text-center">
+                            
+                            <!-- RADIAL GAUGE & DIGITAL CLOCK -->
+                            <div class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 flex items-center justify-center my-1 select-none">
+                                
+                                <!-- Outer Neumorphic Rings -->
+                                <div class="absolute inset-2 rounded-full neu-circle opacity-75 pointer-events-none"></div>
+                                <div class="absolute inset-5 rounded-full neu-trench opacity-60 pointer-events-none"></div>
+
+                                <!-- SVG Animated Circular Sweep Gauges -->
+                                <svg class="w-full h-full -rotate-90 relative z-10 drop-shadow-md" viewBox="0 0 200 200">
+                                    <!-- Dial 60-Tick Marks Background (populated dynamically) -->
+                                    <g id="stopwatch-tick-marks" opacity="0.45">
+                                    </g>
+                                    
+                                    <!-- Base Track -->
+                                    <circle cx="100" cy="100" r="76" stroke="#cbd5e1" stroke-width="7" fill="transparent" opacity="0.35" />
+                                    
+                                    <!-- Secondary Millisecond Orbit Ring -->
+                                    <circle id="stopwatch-ms-circle" cx="100" cy="100" r="68" stroke="#93c5fd" stroke-width="2" fill="transparent"
+                                        stroke-dasharray="427.25" stroke-dashoffset="427.25" opacity="0.5" stroke-linecap="round" />
+
+                                    <!-- Main Primary Dynamic Progress / Sweep Circle -->
+                                    <circle id="stopwatch-progress-circle" cx="100" cy="100" r="76" stroke="url(#stopwatch-active-gradient)" stroke-width="7.5" fill="transparent"
+                                        stroke-dasharray="477.52" stroke-dashoffset="0" stroke-linecap="round" class="transition-[stroke-dashoffset] duration-75 ease-linear" />
+                                    
+                                    <!-- Orbiting Indicator Dot -->
+                                    <circle id="stopwatch-orbit-dot" cx="100" cy="24" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" class="drop-shadow-md transition-transform duration-75 origin-center" />
+
+                                    <defs>
+                                        <linearGradient id="stopwatch-active-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#2563eb" />
+                                            <stop offset="50%" stop-color="#06b6d4" />
+                                            <stop offset="100%" stop-color="#4f46e5" />
+                                        </linearGradient>
+                                        <linearGradient id="stopwatch-paused-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#f59e0b" />
+                                            <stop offset="100%" stop-color="#d97706" />
+                                        </linearGradient>
+                                        <linearGradient id="stopwatch-timer-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#10b981" />
+                                            <stop offset="50%" stop-color="#06b6d4" />
+                                            <stop offset="100%" stop-color="#3b82f6" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+
+                                <!-- Central Digital Timer Numbers & State Badge -->
+                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-20 pointer-events-none px-4">
+                                    
+                                    <!-- Status Pill -->
+                                    <span id="stopwatch-status-pill" class="neu-badge text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 text-slate-500 mb-1 shadow-sm bg-white/70">
+                                        READY
+                                    </span>
+                                    
+                                    <!-- Big Time Display: HH:MM:SS . MS -->
+                                    <div class="flex items-baseline justify-center font-digital font-black text-slate-800 tracking-tight leading-none">
+                                        <span id="sw-display-main" class="text-3xl sm:text-4xl md:text-5xl font-digital tabular-nums tracking-tighter text-slate-800 drop-shadow-sm">00:00:00</span>
+                                        <span class="text-lg sm:text-xl md:text-2xl text-blue-600 font-digital font-bold ml-1 opacity-90 tabular-nums">.<span id="sw-display-ms">00</span></span>
+                                    </div>
+
+                                    <!-- Sub-info: Active Target / Current Lap delta -->
+                                    <div id="stopwatch-sub-status" class="text-[10px] sm:text-[11px] font-bold text-slate-500 mt-1.5 flex items-center gap-1.5 min-h-[18px]">
+                                        <span>Tap Start to begin</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CONTROLS ROW -->
+                            <div class="flex items-center justify-center gap-2.5 sm:gap-3.5 mt-3 sm:mt-4 w-full max-w-md flex-wrap">
+                                
+                                <!-- START / PAUSE / RESUME PRIMARY ACTION BUTTON -->
+                                <button type="button" id="sw-btn-toggle" onclick="toggleStopwatch()" class="neu-btn px-6 py-3 sm:px-8 sm:py-3.5 font-black text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 min-w-[130px] sm:min-w-[150px] text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer">
+                                    <span id="sw-btn-icon" class="text-sm sm:text-base">▶</span>
+                                    <span id="sw-btn-label">START</span>
+                                </button>
+
+                                <!-- LAP / SPLIT BUTTON -->
+                                <button type="button" id="sw-btn-lap" onclick="recordStopwatchLap()" class="neu-btn px-4 py-3 sm:px-6 sm:py-3.5 font-bold text-xs sm:text-sm text-slate-700 hover:text-blue-600 flex items-center justify-center gap-1.5 active:scale-95 transition-all opacity-50 cursor-not-allowed" disabled>
+                                    <span>🚩</span>
+                                    <span id="sw-lap-label">Lap</span>
+                                </button>
+
+                                <!-- RESET BUTTON -->
+                                <button type="button" id="sw-btn-reset" onclick="resetStopwatch()" class="neu-btn px-4 py-3 sm:px-5 sm:py-3.5 font-bold text-xs sm:text-sm text-slate-500 hover:text-rose-600 flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer">
+                                    <span>🔄</span>
+                                    <span>Reset</span>
+                                </button>
+                            </div>
+
+                            <!-- QUICK PRESET PILLS FOR TIMER / FOCUS GOALS -->
+                            <div id="sw-timer-presets-row" class="hidden flex items-center justify-center gap-1.5 sm:gap-2 mt-3.5 pt-3 border-t border-slate-300/50 flex-wrap w-full max-w-lg">
+                                <span class="text-[10px] sm:text-[11px] font-bold text-slate-500 shrink-0">🎯 Presets:</span>
+                                <button type="button" onclick="setTimerDuration(5)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                    5m Break
+                                </button>
+                                <button type="button" onclick="setTimerDuration(15)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                    15m Focus
+                                </button>
+                                <button type="button" onclick="setTimerDuration(25)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition cursor-pointer">
+                                    🍅 25m Pomodoro
+                                </button>
+                                <button type="button" onclick="setTimerDuration(45)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                    45m Deep Work
+                                </button>
+                                <button type="button" onclick="setTimerDuration(60)" class="neu-badge px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 hover:text-blue-600 bg-white/80 hover:bg-white transition cursor-pointer">
+                                    60m Mastery
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: HABIT LINKING & LAP SPLITS HISTORY DRAWER (5 cols) -->
+                        <div id="stopwatch-side-drawer" class="lg:col-span-5 flex flex-col gap-3 h-full">
+                            
+                            <!-- HABIT LINKING CARD -->
+                            <div class="neu-card-sm p-3.5 sm:p-4 bg-white/60 border border-white/60">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <label for="stopwatch-habit-select" class="text-xs font-bold text-slate-700 font-outfit flex items-center gap-1.5">
+                                        <span>🔗</span> Link to Routine Habit
+                                    </label>
+                                    <span id="sw-link-status" class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Not Linked</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <select id="stopwatch-habit-select" onchange="handleStopwatchHabitLinkChange()" class="neu-input flex-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 focus:outline-none bg-[#e0e5ec] cursor-pointer">
+                                        <option value="">-- Select Habit to Track --</option>
+                                        <!-- Dynamically populated from active habits -->
+                                    </select>
+                                    <button type="button" id="sw-btn-checkoff-habit" onclick="logStopwatchFocusToHabit()" title="Log focus time and mark this habit complete for today!" class="neu-btn px-3 py-2 text-xs font-black text-emerald-600 hover:text-emerald-700 shrink-0 flex items-center gap-1 opacity-50 cursor-not-allowed" disabled>
+                                        <span>✓</span> Mark Done
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- LAP SPLITS / FOCUS LOG DRAWER -->
+                            <div class="neu-card-sm p-3.5 sm:p-4 flex-1 flex flex-col min-h-[220px] max-h-[280px] overflow-hidden bg-white/60 border border-white/60">
+                                <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-300/50 shrink-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs">📋</span>
+                                        <h4 class="text-xs font-bold text-slate-800 font-outfit">Lap Splits & Records</h4>
+                                        <span id="stopwatch-lap-count-badge" class="neu-badge text-[9px] font-black text-blue-600 px-1.5 py-0.2">0 Laps</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" id="sw-btn-copy-laps" onclick="copyStopwatchLaps()" title="Copy lap splits to clipboard" class="text-[10px] font-bold text-slate-500 hover:text-blue-600 p-1 transition cursor-pointer">
+                                            📋 Copy
+                                        </button>
+                                        <span class="text-slate-300">|</span>
+                                        <button type="button" id="sw-btn-clear-laps" onclick="clearStopwatchLaps()" title="Clear lap splits" class="text-[10px] font-bold text-slate-500 hover:text-rose-600 p-1 transition cursor-pointer">
+                                            🗑️ Clear
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Scrollable Laps Container -->
+                                <div id="stopwatch-laps-list" class="overflow-y-auto custom-scrollbar flex-1 space-y-1.5 py-2 pr-1 text-xs">
+                                    <!-- Empty state -->
+                                    <div id="stopwatch-empty-laps" class="flex flex-col items-center justify-center text-center h-full py-6 text-slate-400">
+                                        <span class="text-2xl mb-1 opacity-70">⏱️</span>
+                                        <p class="text-[11px] font-semibold">No laps recorded yet</p>
+                                        <p class="text-[9px] text-slate-400 mt-0.5">Press "Lap" while running to capture splits</p>
+                                    </div>
+                                </div>
+
+                                <!-- Fastest & Slowest Lap Mini Footer -->
+                                <div id="stopwatch-laps-summary" class="hidden pt-2 border-t border-slate-300/50 flex items-center justify-between text-[10px] font-bold text-slate-500 shrink-0">
+                                    <span id="sw-fastest-lap-label" class="text-emerald-600 flex items-center gap-0.5">⚡ Fast: --</span>
+                                    <span id="sw-slowest-lap-label" class="text-rose-500 flex items-center gap-0.5">🐢 Slow: --</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
                 <!-- OVERALL GROWTH DASHBOARD -->
                 <div class="neu-card p-4 sm:p-6 md:p-8 bg-gradient-to-br from-slate-100/90 to-slate-200/50 relative overflow-hidden">
                     <div class="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">

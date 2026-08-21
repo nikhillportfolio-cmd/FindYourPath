@@ -1585,11 +1585,13 @@ function renderHabitsList() {
     if (habits.length === 0) {
         blankSlate.classList.remove("hidden");
         container.innerHTML = "";
+        if (typeof updateStopwatchHabitDropdown === "function") updateStopwatchHabitDropdown();
         return;
     }
 
     blankSlate.classList.add("hidden");
     updateNotificationBtnState();
+    if (typeof updateStopwatchHabitDropdown === "function") updateStopwatchHabitDropdown();
 
     const todayIndex = getCurrentTrackerDayIndex();
     const { html: tableBodyHTML, totalHabitsRendered } = buildHabitsTableHTML(false);
@@ -1915,6 +1917,799 @@ function editHabitTime(habitIndexOrId) {
     }
 }
 
+// =====================================================================
+// FANCY HIGH-PRECISION STOPWATCH & ROUTINE FOCUS TIMER MODULE
+// =====================================================================
+
+let swState = 'idle'; // 'idle' | 'running' | 'paused'
+let swMode = 'stopwatch'; // 'stopwatch' | 'timer'
+let swElapsedMs = 0;
+let swStartTime = 0;
+let swTimerDurationMs = 25 * 60 * 1000; // default 25 min pomodoro
+let swLaps = [];
+let swSoundEnabled = true;
+let swIsExpanded = true;
+let swLinkedHabitId = "";
+let swAnimFrame = null;
+let swLastTickIndex = -1;
+
+try {
+    const savedSound = localStorage.getItem("praxis_sw_sound");
+    if (savedSound !== null) swSoundEnabled = savedSound === "true";
+} catch (e) {}
+
+function playStopwatchSound(type) {
+    if (!swSoundEnabled) return;
+    try {
+        const ctx = getSharedAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'start') {
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.exponentialRampToValueAtTime(840, now + 0.09);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+        } else if (type === 'pause') {
+            osc.frequency.setValueAtTime(840, now);
+            osc.frequency.exponentialRampToValueAtTime(520, now + 0.09);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+        } else if (type === 'lap') {
+            osc.frequency.setValueAtTime(1100, now);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } else if (type === 'reset') {
+            osc.frequency.setValueAtTime(360, now);
+            osc.frequency.setValueAtTime(260, now + 0.05);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'tick') {
+            osc.frequency.setValueAtTime(920, now);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+            osc.start(now);
+            osc.stop(now + 0.02);
+        } else if (type === 'timer_done') {
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+            notes.forEach((freq, idx) => {
+                const noteOsc = ctx.createOscillator();
+                const noteGain = ctx.createGain();
+                noteOsc.connect(noteGain);
+                noteGain.connect(ctx.destination);
+                const noteTime = now + (idx * 0.11);
+                noteOsc.frequency.setValueAtTime(freq, noteTime);
+                noteGain.gain.setValueAtTime(0.22, noteTime);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.38);
+                noteOsc.start(noteTime);
+                noteOsc.stop(noteTime + 0.4);
+                setTimeout(() => {
+                    try { noteOsc.disconnect(); noteGain.disconnect(); } catch (e) {}
+                }, 600);
+            });
+            return;
+        }
+
+        setTimeout(() => {
+            try { osc.disconnect(); gain.disconnect(); } catch (e) {}
+        }, 300);
+    } catch (e) {}
+}
+
+function renderStopwatchTicks() {
+    const tickContainer = document.getElementById("stopwatch-tick-marks");
+    if (!tickContainer) return;
+    tickContainer.innerHTML = "";
+
+    const cx = 100, cy = 100;
+    const rOuter = 88;
+    for (let i = 0; i < 60; i++) {
+        const isMajor = i % 5 === 0;
+        const rInner = isMajor ? 80 : 83.5;
+        const angleRad = (i * 6 - 90) * (Math.PI / 180);
+        
+        const x1 = (cx + rInner * Math.cos(angleRad)).toFixed(2);
+        const y1 = (cy + rInner * Math.sin(angleRad)).toFixed(2);
+        const x2 = (cx + rOuter * Math.cos(angleRad)).toFixed(2);
+        const y2 = (cy + rOuter * Math.sin(angleRad)).toFixed(2);
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("id", `sw-tick-${i}`);
+        line.setAttribute("class", `sw-tick ${isMajor ? 'sw-tick-major' : ''}`);
+        line.setAttribute("stroke", isMajor ? "#64748b" : "#94a3b8");
+        line.setAttribute("stroke-width", isMajor ? "2" : "1.2");
+        line.setAttribute("stroke-linecap", "round");
+        tickContainer.appendChild(line);
+    }
+}
+
+function formatStopwatchTime(ms) {
+    const safeMs = Math.max(0, Math.floor(ms));
+    const hours = Math.floor(safeMs / 3600000);
+    const mins = Math.floor((safeMs % 3600000) / 60000);
+    const secs = Math.floor((safeMs % 60000) / 1000);
+    const centi = Math.floor((safeMs % 1000) / 10);
+
+    const hStr = hours.toString().padStart(2, "0");
+    const mStr = mins.toString().padStart(2, "0");
+    const sStr = secs.toString().padStart(2, "0");
+    const cStr = centi.toString().padStart(2, "0");
+
+    return {
+        hours, mins, secs, centi,
+        main: `${hStr}:${mStr}:${sStr}`,
+        shortMain: `${mStr}:${sStr}`,
+        ms: cStr,
+        full: `${hStr}:${mStr}:${sStr}.${cStr}`
+    };
+}
+
+function updateStopwatchDisplay(ms) {
+    const displayMain = document.getElementById("sw-display-main");
+    const displayMs = document.getElementById("sw-display-ms");
+    if (!displayMain || !displayMs) return;
+
+    const formatted = formatStopwatchTime(ms);
+    displayMain.innerText = formatted.main;
+    displayMs.innerText = formatted.ms;
+}
+
+function updateLiveFloatingBadge(ms) {
+    const livePill = document.getElementById("tracker-stopwatch-live-pill");
+    const liveText = document.getElementById("tracker-live-stopwatch-text");
+    if (!livePill || !liveText) return;
+
+    if (swState === 'running') {
+        const formatted = formatStopwatchTime(ms);
+        liveText.innerText = formatted.shortMain;
+        livePill.classList.remove("hidden");
+    } else {
+        livePill.classList.add("hidden");
+    }
+}
+
+function setStopwatchMode(mode) {
+    if (swState === 'running') {
+        pauseStopwatch();
+    }
+    swMode = mode;
+    swElapsedMs = 0;
+    swLastTickIndex = -1;
+
+    const btnStopwatch = document.getElementById("sw-mode-stopwatch");
+    const btnTimer = document.getElementById("sw-mode-timer");
+    const modeBadge = document.getElementById("stopwatch-mode-badge");
+    const presetsRow = document.getElementById("sw-timer-presets-row");
+    const progressCircle = document.getElementById("stopwatch-progress-circle");
+    const subStatus = document.getElementById("stopwatch-sub-status");
+    const lapBtn = document.getElementById("sw-btn-lap");
+    const lapLabel = document.getElementById("sw-lap-label");
+
+    if (mode === 'stopwatch') {
+        btnStopwatch?.classList.add("bg-white/90", "text-blue-600", "shadow-sm");
+        btnStopwatch?.classList.remove("text-slate-500");
+        btnTimer?.classList.remove("bg-white/90", "text-blue-600", "shadow-sm");
+        btnTimer?.classList.add("text-slate-500");
+
+        if (modeBadge) {
+            modeBadge.innerText = "STOPWATCH MODE";
+            modeBadge.className = "neu-badge text-[9px] sm:text-[10px] font-extrabold text-blue-600 uppercase px-2 py-0.5";
+        }
+        if (presetsRow) presetsRow.classList.add("hidden");
+        if (progressCircle) progressCircle.setAttribute("stroke", "url(#stopwatch-active-gradient)");
+        if (subStatus) subStatus.innerHTML = "<span>Tap Start to begin precision stopwatch</span>";
+        if (lapLabel) lapLabel.innerText = "Lap";
+        if (lapBtn) lapBtn.title = "Record a lap split";
+
+        updateStopwatchDisplay(0);
+        updateProgressCircle(0, 0);
+    } else {
+        btnTimer?.classList.add("bg-white/90", "text-emerald-600", "shadow-sm");
+        btnTimer?.classList.remove("text-slate-500");
+        btnStopwatch?.classList.remove("bg-white/90", "text-blue-600", "shadow-sm");
+        btnStopwatch?.classList.add("text-slate-500");
+
+        if (modeBadge) {
+            modeBadge.innerText = "FOCUS TIMER MODE";
+            modeBadge.className = "neu-badge text-[9px] sm:text-[10px] font-extrabold text-emerald-600 uppercase px-2 py-0.5";
+        }
+        if (presetsRow) presetsRow.classList.remove("hidden");
+        if (progressCircle) progressCircle.setAttribute("stroke", "url(#stopwatch-timer-gradient)");
+        if (subStatus) subStatus.innerHTML = `<span>🎯 Target: ${Math.round(swTimerDurationMs / 60000)} mins focus session</span>`;
+        if (lapLabel) lapLabel.innerText = "+5 Min";
+        if (lapBtn) lapBtn.title = "Add 5 minutes to focus timer";
+
+        updateStopwatchDisplay(swTimerDurationMs);
+        updateProgressCircle(0, 1);
+    }
+
+    resetActiveTicks();
+    updateStatusPill('READY');
+}
+
+function updateProgressCircle(progress, modeType = 0) {
+    const circle = document.getElementById("stopwatch-progress-circle");
+    const msCircle = document.getElementById("stopwatch-ms-circle");
+    const dot = document.getElementById("stopwatch-orbit-dot");
+    if (!circle || !dot) return;
+
+    const circumference = 477.52;
+    const offset = circumference * (1 - Math.max(0, Math.min(1, progress)));
+    circle.style.strokeDashoffset = offset;
+
+    const angle = (progress * 360 - 90) * (Math.PI / 180);
+    const cx = (100 + 76 * Math.cos(angle)).toFixed(2);
+    const cy = (100 + 76 * Math.sin(angle)).toFixed(2);
+    dot.setAttribute("cx", cx);
+    dot.setAttribute("cy", cy);
+
+    if (msCircle) {
+        const msCircumference = 427.25;
+        const msOffset = msCircumference * (1 - ((Date.now() % 1000) / 1000));
+        msCircle.style.strokeDashoffset = msOffset;
+    }
+}
+
+function updateActiveTick(secondIndex, isTimer = false) {
+    if (secondIndex === swLastTickIndex) return;
+    if (swLastTickIndex >= 0) {
+        const oldTick = document.getElementById(`sw-tick-${swLastTickIndex}`);
+        if (oldTick) {
+            oldTick.classList.remove("sw-tick-active", "sw-tick-active-timer");
+        }
+    }
+    const newTick = document.getElementById(`sw-tick-${secondIndex}`);
+    if (newTick) {
+        newTick.classList.add(isTimer ? "sw-tick-active-timer" : "sw-tick-active");
+    }
+    swLastTickIndex = secondIndex;
+}
+
+function resetActiveTicks() {
+    if (swLastTickIndex >= 0) {
+        const oldTick = document.getElementById(`sw-tick-${swLastTickIndex}`);
+        if (oldTick) oldTick.classList.remove("sw-tick-active", "sw-tick-active-timer");
+        swLastTickIndex = -1;
+    }
+}
+
+function updateStatusPill(statusText, variant = 'default') {
+    const pill = document.getElementById("stopwatch-status-pill");
+    if (!pill) return;
+    pill.innerText = statusText;
+    if (variant === 'running') {
+        pill.className = "neu-badge text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 text-emerald-600 bg-emerald-50 mb-1 shadow-sm border border-emerald-200/50";
+    } else if (variant === 'paused') {
+        pill.className = "neu-badge text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 text-amber-600 bg-amber-50 mb-1 shadow-sm border border-amber-200/50";
+    } else if (variant === 'complete') {
+        pill.className = "neu-badge text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 text-indigo-600 bg-indigo-50 mb-1 shadow-sm border border-indigo-200/50 animate-bounce";
+    } else {
+        pill.className = "neu-badge text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 text-slate-500 mb-1 shadow-sm bg-white/70";
+    }
+}
+
+function toggleStopwatch() {
+    if (swState === 'running') {
+        pauseStopwatch();
+    } else {
+        startStopwatch();
+    }
+}
+
+function startStopwatch() {
+    swStartTime = performance.now();
+    swState = 'running';
+
+    const toggleBtn = document.getElementById("sw-btn-toggle");
+    const btnIcon = document.getElementById("sw-btn-icon");
+    const btnLabel = document.getElementById("sw-btn-label");
+    const lapBtn = document.getElementById("sw-btn-lap");
+    const pulseDot = document.getElementById("stopwatch-pulse-dot");
+    const progressCircle = document.getElementById("stopwatch-progress-circle");
+
+    if (toggleBtn) {
+        toggleBtn.className = "neu-btn px-6 py-3 sm:px-8 sm:py-3.5 font-black text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 min-w-[130px] sm:min-w-[150px] text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-500/20 active:scale-95 transition-all cursor-pointer";
+    }
+    if (btnIcon) btnIcon.innerText = "⏸";
+    if (btnLabel) btnLabel.innerText = "PAUSE";
+
+    if (lapBtn) {
+        lapBtn.disabled = false;
+        lapBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        lapBtn.classList.add("cursor-pointer");
+    }
+
+    if (pulseDot) pulseDot.classList.remove("hidden");
+    if (progressCircle) {
+        progressCircle.setAttribute("stroke", swMode === 'stopwatch' ? "url(#stopwatch-active-gradient)" : "url(#stopwatch-timer-gradient)");
+    }
+
+    updateStatusPill("RUNNING", "running");
+    playStopwatchSound('start');
+
+    if (swAnimFrame) cancelAnimationFrame(swAnimFrame);
+    swAnimFrame = requestAnimationFrame(updateStopwatchLoop);
+}
+
+function pauseStopwatch() {
+    if (swState !== 'running') return;
+    const now = performance.now();
+    swElapsedMs += (now - swStartTime);
+    swState = 'paused';
+
+    if (swAnimFrame) cancelAnimationFrame(swAnimFrame);
+    swAnimFrame = null;
+
+    const toggleBtn = document.getElementById("sw-btn-toggle");
+    const btnIcon = document.getElementById("sw-btn-icon");
+    const btnLabel = document.getElementById("sw-btn-label");
+    const pulseDot = document.getElementById("stopwatch-pulse-dot");
+    const progressCircle = document.getElementById("stopwatch-progress-circle");
+
+    if (toggleBtn) {
+        toggleBtn.className = "neu-btn px-6 py-3 sm:px-8 sm:py-3.5 font-black text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 min-w-[130px] sm:min-w-[150px] text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer";
+    }
+    if (btnIcon) btnIcon.innerText = "▶";
+    if (btnLabel) btnLabel.innerText = "RESUME";
+
+    if (pulseDot) pulseDot.classList.add("hidden");
+    if (progressCircle) progressCircle.setAttribute("stroke", "url(#stopwatch-paused-gradient)");
+
+    updateStatusPill("PAUSED", "paused");
+    updateLiveFloatingBadge(swMode === 'stopwatch' ? swElapsedMs : Math.max(0, swTimerDurationMs - swElapsedMs));
+    playStopwatchSound('pause');
+}
+
+function resetStopwatch() {
+    if (swAnimFrame) cancelAnimationFrame(swAnimFrame);
+    swAnimFrame = null;
+
+    swState = 'idle';
+    swElapsedMs = 0;
+    resetActiveTicks();
+
+    const toggleBtn = document.getElementById("sw-btn-toggle");
+    const btnIcon = document.getElementById("sw-btn-icon");
+    const btnLabel = document.getElementById("sw-btn-label");
+    const lapBtn = document.getElementById("sw-btn-lap");
+    const pulseDot = document.getElementById("stopwatch-pulse-dot");
+    const progressCircle = document.getElementById("stopwatch-progress-circle");
+    const subStatus = document.getElementById("stopwatch-sub-status");
+
+    if (toggleBtn) {
+        toggleBtn.className = "neu-btn px-6 py-3 sm:px-8 sm:py-3.5 font-black text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 min-w-[130px] sm:min-w-[150px] text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer";
+    }
+    if (btnIcon) btnIcon.innerText = "▶";
+    if (btnLabel) btnLabel.innerText = "START";
+
+    if (lapBtn && swMode === 'stopwatch') {
+        lapBtn.disabled = true;
+        lapBtn.classList.add("opacity-50", "cursor-not-allowed");
+        lapBtn.classList.remove("cursor-pointer");
+    }
+
+    if (pulseDot) pulseDot.classList.add("hidden");
+    if (progressCircle) {
+        progressCircle.setAttribute("stroke", swMode === 'stopwatch' ? "url(#stopwatch-active-gradient)" : "url(#stopwatch-timer-gradient)");
+    }
+
+    if (swMode === 'stopwatch') {
+        updateStopwatchDisplay(0);
+        updateProgressCircle(0);
+        if (subStatus) subStatus.innerHTML = "<span>Tap Start to begin precision stopwatch</span>";
+    } else {
+        updateStopwatchDisplay(swTimerDurationMs);
+        updateProgressCircle(0, 1);
+        if (subStatus) subStatus.innerHTML = `<span>🎯 Target: ${Math.round(swTimerDurationMs / 60000)} mins focus session</span>`;
+    }
+
+    updateStatusPill("READY");
+    updateLiveFloatingBadge(0);
+    playStopwatchSound('reset');
+}
+
+function updateStopwatchLoop() {
+    if (swState !== 'running') return;
+
+    const now = performance.now();
+    const currentRun = now - swStartTime;
+    const totalElapsed = swElapsedMs + currentRun;
+
+    if (swMode === 'stopwatch') {
+        updateStopwatchDisplay(totalElapsed);
+        updateLiveFloatingBadge(totalElapsed);
+
+        // Sweep 0 to 60s
+        const secondInMinute = (totalElapsed % 60000) / 60000;
+        updateProgressCircle(secondInMinute);
+
+        const currentSec = Math.floor((totalElapsed % 60000) / 1000);
+        updateActiveTick(currentSec, false);
+
+        const subStatus = document.getElementById("stopwatch-sub-status");
+        if (subStatus) {
+            if (swLaps.length > 0) {
+                const lastLapTotal = swLaps[swLaps.length - 1].totalTime;
+                const curLapDuration = totalElapsed - lastLapTotal;
+                subStatus.innerHTML = `<span>Lap ${swLaps.length + 1}: <strong class="text-blue-600 font-digital">+${formatStopwatchTime(curLapDuration).full}</strong></span>`;
+            } else {
+                subStatus.innerHTML = `<span>Elapsed: <strong class="text-slate-700 font-digital">${formatStopwatchTime(totalElapsed).full}</strong></span>`;
+            }
+        }
+    } else {
+        // Timer mode (countdown)
+        const remainingMs = Math.max(0, swTimerDurationMs - totalElapsed);
+        updateStopwatchDisplay(remainingMs);
+        updateLiveFloatingBadge(remainingMs);
+
+        const progress = Math.min(1, totalElapsed / swTimerDurationMs);
+        updateProgressCircle(progress);
+
+        const currentSec = Math.floor((remainingMs % 60000) / 1000);
+        updateActiveTick(currentSec, true);
+
+        const subStatus = document.getElementById("stopwatch-sub-status");
+        if (subStatus) {
+            subStatus.innerHTML = `<span>Focusing... <strong class="text-emerald-600 font-digital">${Math.ceil(remainingMs / 1000)}s left</strong></span>`;
+        }
+
+        if (remainingMs <= 0) {
+            onFocusTimerCompleted();
+            return;
+        }
+    }
+
+    if (swState === 'running') {
+        swAnimFrame = requestAnimationFrame(updateStopwatchLoop);
+    }
+}
+
+function recordStopwatchLap() {
+    if (swMode === 'timer') {
+        // In timer mode, act as +5 min boost
+        swTimerDurationMs += 5 * 60 * 1000;
+        showInAppToast("⏳ Focus Extended", "+5 Minutes added to your focus timer goal!", false);
+        playStopwatchSound('tick');
+        const subStatus = document.getElementById("stopwatch-sub-status");
+        if (subStatus) {
+            subStatus.innerHTML = `<span>🎯 Target extended to ${Math.round(swTimerDurationMs / 60000)} mins</span>`;
+        }
+        return;
+    }
+
+    if (swState !== 'running') return;
+
+    const now = performance.now();
+    const totalElapsed = swElapsedMs + (now - swStartTime);
+    const lastLapTotal = swLaps.length > 0 ? swLaps[swLaps.length - 1].totalTime : 0;
+    const lapTime = totalElapsed - lastLapTotal;
+    const lapNum = swLaps.length + 1;
+
+    swLaps.push({ lapNum, lapTime, totalTime: totalElapsed });
+    renderStopwatchLaps();
+    playStopwatchSound('lap');
+}
+
+function renderStopwatchLaps() {
+    const listContainer = document.getElementById("stopwatch-laps-list");
+    const emptyState = document.getElementById("stopwatch-empty-laps");
+    const countBadge = document.getElementById("stopwatch-lap-count-badge");
+    const summaryFooter = document.getElementById("stopwatch-laps-summary");
+    const fastLabel = document.getElementById("sw-fastest-lap-label");
+    const slowLabel = document.getElementById("sw-slowest-lap-label");
+
+    if (!listContainer) return;
+
+    if (swLaps.length === 0) {
+        listContainer.innerHTML = `
+            <div id="stopwatch-empty-laps" class="flex flex-col items-center justify-center text-center h-full py-6 text-slate-400">
+                <span class="text-2xl mb-1 opacity-70">⏱️</span>
+                <p class="text-[11px] font-semibold">No laps recorded yet</p>
+                <p class="text-[9px] text-slate-400 mt-0.5">Press "Lap" while running to capture splits</p>
+            </div>
+        `;
+        if (countBadge) countBadge.innerText = "0 Laps";
+        if (summaryFooter) summaryFooter.classList.add("hidden");
+        return;
+    }
+
+    if (countBadge) countBadge.innerText = `${swLaps.length} Lap${swLaps.length > 1 ? 's' : ''}`;
+
+    let minLap = Infinity, maxLap = -Infinity;
+    if (swLaps.length > 1) {
+        swLaps.forEach(l => {
+            if (l.lapTime < minLap) minLap = l.lapTime;
+            if (l.lapTime > maxLap) maxLap = l.lapTime;
+        });
+    }
+
+    let rowsHTML = "";
+    for (let i = swLaps.length - 1; i >= 0; i--) {
+        const lap = swLaps[i];
+        const isFastest = swLaps.length > 1 && lap.lapTime === minLap;
+        const isSlowest = swLaps.length > 1 && lap.lapTime === maxLap;
+
+        let badgeHTML = "";
+        let rowBg = "bg-white/80 border-slate-200/80";
+
+        if (isFastest) {
+            badgeHTML = `<span class="neu-badge text-[8px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.2">⚡ FASTEST</span>`;
+            rowBg = "bg-emerald-50/90 border-emerald-300";
+        } else if (isSlowest) {
+            badgeHTML = `<span class="neu-badge text-[8px] font-black text-rose-700 bg-rose-100 px-1.5 py-0.2">🐢 SLOWEST</span>`;
+            rowBg = "bg-rose-50/90 border-rose-300";
+        }
+
+        const lapDurationFormatted = formatStopwatchTime(lap.lapTime).full;
+        const totalFormatted = formatStopwatchTime(lap.totalTime).full;
+
+        rowsHTML += `
+            <div class="neu-card-sm p-2 sm:p-2.5 flex items-center justify-between gap-2 border ${rowBg} text-[11px] sm:text-xs">
+                <div class="flex items-center gap-1.5">
+                    <span class="font-black text-slate-700 font-digital text-[10px] sm:text-[11px] w-10 shrink-0">#${lap.lapNum.toString().padStart(2, '0')}</span>
+                    ${badgeHTML}
+                </div>
+                <div class="flex items-center gap-3 sm:gap-4 font-digital">
+                    <span class="font-bold text-slate-800 tracking-tight">+${lapDurationFormatted}</span>
+                    <span class="text-[10px] text-slate-500 font-semibold">${totalFormatted}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    listContainer.innerHTML = rowsHTML;
+
+    if (summaryFooter && swLaps.length > 1) {
+        summaryFooter.classList.remove("hidden");
+        if (fastLabel) fastLabel.innerHTML = `⚡ Fast: <strong>+${formatStopwatchTime(minLap).full}</strong>`;
+        if (slowLabel) slowLabel.innerHTML = `🐢 Slow: <strong>+${formatStopwatchTime(maxLap).full}</strong>`;
+    } else if (summaryFooter) {
+        summaryFooter.classList.add("hidden");
+    }
+}
+
+function clearStopwatchLaps() {
+    swLaps = [];
+    renderStopwatchLaps();
+    playStopwatchSound('tick');
+}
+
+function copyStopwatchLaps() {
+    if (swLaps.length === 0) {
+        showInAppToast("📋 No Laps", "Record some laps before copying.", true);
+        return;
+    }
+
+    let text = "PRAXiS Stopwatch Lap Records\n";
+    text += "=============================\n";
+    swLaps.forEach(l => {
+        text += `Lap ${l.lapNum.toString().padStart(2, '0')}: +${formatStopwatchTime(l.lapTime).full} | Total: ${formatStopwatchTime(l.totalTime).full}\n`;
+    });
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showInAppToast("📋 Laps Copied!", `${swLaps.length} lap split records copied to clipboard.`, false);
+        }).catch(() => {
+            fallbackCopyText(text);
+        });
+    } else {
+        fallbackCopyText(text);
+    }
+}
+
+function fallbackCopyText(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showInAppToast("📋 Laps Copied!", `${swLaps.length} lap split records copied to clipboard.`, false);
+    } catch (err) {}
+    document.body.removeChild(textArea);
+}
+
+function setTimerDuration(minutes) {
+    if (swState === 'running') {
+        pauseStopwatch();
+    }
+    swTimerDurationMs = minutes * 60 * 1000;
+    swElapsedMs = 0;
+
+    if (swMode !== 'timer') {
+        setStopwatchMode('timer');
+    } else {
+        updateStopwatchDisplay(swTimerDurationMs);
+        updateProgressCircle(0, 1);
+        const subStatus = document.getElementById("stopwatch-sub-status");
+        if (subStatus) subStatus.innerHTML = `<span>🎯 Target: ${minutes} mins focus session</span>`;
+        updateStatusPill("READY");
+    }
+    playStopwatchSound('tick');
+}
+
+function onFocusTimerCompleted() {
+    swState = 'idle';
+    swElapsedMs = swTimerDurationMs;
+    if (swAnimFrame) cancelAnimationFrame(swAnimFrame);
+    swAnimFrame = null;
+
+    updateStopwatchDisplay(0);
+    updateProgressCircle(1);
+    updateActiveTick(0, true);
+    updateStatusPill("🎉 COMPLETED!", "complete");
+
+    const toggleBtn = document.getElementById("sw-btn-toggle");
+    const btnIcon = document.getElementById("sw-btn-icon");
+    const btnLabel = document.getElementById("sw-btn-label");
+    const pulseDot = document.getElementById("stopwatch-pulse-dot");
+
+    if (toggleBtn) {
+        toggleBtn.className = "neu-btn px-6 py-3 sm:px-8 sm:py-3.5 font-black text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 min-w-[130px] sm:min-w-[150px] text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer";
+    }
+    if (btnIcon) btnIcon.innerText = "▶";
+    if (btnLabel) btnLabel.innerText = "START";
+    if (pulseDot) pulseDot.classList.add("hidden");
+
+    updateLiveFloatingBadge(0);
+    playStopwatchSound('timer_done');
+
+    const focusMins = Math.round(swTimerDurationMs / 60000);
+    showInAppToast("🎉 Focus Goal Completed!", `Outstanding discipline! You conquered your ${focusMins}-minute focus session!`, false);
+
+    // Auto-prompt habit completion if linked
+    if (swLinkedHabitId) {
+        const habit = Array.isArray(habits) ? habits.find(h => h && (h.id === swLinkedHabitId || String(h.id) === String(swLinkedHabitId))) : null;
+        if (habit) {
+            setTimeout(() => {
+                const confirmed = confirm(`🎉 You finished your ${focusMins}m focus sprint!\n\nWould you like to mark "${habit.name}" as COMPLETED for today?`);
+                if (confirmed) {
+                    markHabitCompletedDirectly(swLinkedHabitId);
+                }
+            }, 500);
+        }
+    }
+}
+
+function updateStopwatchHabitDropdown() {
+    const select = document.getElementById("stopwatch-habit-select");
+    const checkoffBtn = document.getElementById("sw-btn-checkoff-habit");
+    const linkStatus = document.getElementById("sw-link-status");
+    if (!select) return;
+
+    const currentVal = select.value || swLinkedHabitId;
+    select.innerHTML = `<option value="">-- Select Habit to Track --</option>`;
+
+    if (!Array.isArray(habits) || habits.length === 0) {
+        if (linkStatus) linkStatus.innerText = "No Habits Created";
+        if (checkoffBtn) {
+            checkoffBtn.disabled = true;
+            checkoffBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        return;
+    }
+
+    habits.forEach(h => {
+        if (!h || !h.name) return;
+        const opt = document.createElement("option");
+        opt.value = h.id;
+        const catIcon = (h.timeOfDay || "").includes("Morning") ? "🌅" : (h.timeOfDay || "").includes("Evening") ? "🌙" : "☀️";
+        opt.innerText = `${catIcon} ${h.name} (${h.timeOfDay || "Morning Routine"})`;
+        if (String(h.id) === String(currentVal)) {
+            opt.selected = true;
+            swLinkedHabitId = h.id;
+        }
+        select.appendChild(opt);
+    });
+
+    handleStopwatchHabitLinkChange();
+}
+
+function handleStopwatchHabitLinkChange() {
+    const select = document.getElementById("stopwatch-habit-select");
+    const checkoffBtn = document.getElementById("sw-btn-checkoff-habit");
+    const linkStatus = document.getElementById("sw-link-status");
+    if (!select) return;
+
+    swLinkedHabitId = select.value;
+    if (swLinkedHabitId && Array.isArray(habits)) {
+        const habit = habits.find(h => h && (h.id === swLinkedHabitId || String(h.id) === String(swLinkedHabitId)));
+        if (habit) {
+            if (linkStatus) {
+                linkStatus.innerText = `Linked: ${habit.name.slice(0, 18)}`;
+                linkStatus.className = "text-[9px] font-bold text-emerald-600 uppercase tracking-wider";
+            }
+            if (checkoffBtn) {
+                checkoffBtn.disabled = false;
+                checkoffBtn.classList.remove("opacity-50", "cursor-not-allowed");
+                checkoffBtn.classList.add("cursor-pointer");
+            }
+            return;
+        }
+    }
+
+    if (linkStatus) {
+        linkStatus.innerText = "Not Linked";
+        linkStatus.className = "text-[9px] font-bold text-slate-400 uppercase tracking-wider";
+    }
+    if (checkoffBtn) {
+        checkoffBtn.disabled = true;
+        checkoffBtn.classList.add("opacity-50", "cursor-not-allowed");
+        checkoffBtn.classList.remove("cursor-pointer");
+    }
+}
+
+function logStopwatchFocusToHabit() {
+    if (!swLinkedHabitId) {
+        showInAppToast("🔗 Link a Habit", "Select a habit from the dropdown to log your focus session.", true);
+        return;
+    }
+    markHabitCompletedDirectly(swLinkedHabitId);
+}
+
+function toggleStopwatchSound() {
+    swSoundEnabled = !swSoundEnabled;
+    try {
+        localStorage.setItem("praxis_sw_sound", String(swSoundEnabled));
+    } catch (e) {}
+
+    const icon = document.getElementById("stopwatch-sound-icon");
+    if (icon) icon.innerText = swSoundEnabled ? "🔊" : "🔇";
+
+    if (swSoundEnabled) {
+        playStopwatchSound('start');
+        showInAppToast("🔊 Sound Enabled", "Stopwatch & Timer audio feedback active.", false);
+    } else {
+        showInAppToast("🔇 Sound Muted", "Stopwatch sound effects muted.", false);
+    }
+}
+
+function toggleStopwatchExpand() {
+    swIsExpanded = !swIsExpanded;
+    const drawer = document.getElementById("stopwatch-side-drawer");
+    const mainGrid = document.getElementById("stopwatch-main-grid");
+    const icon = document.getElementById("stopwatch-expand-icon");
+
+    if (drawer && mainGrid) {
+        if (swIsExpanded) {
+            drawer.classList.remove("hidden");
+            mainGrid.className = "grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 mt-4 sm:mt-5 items-center relative z-10";
+            if (icon) icon.innerText = "⤢";
+        } else {
+            drawer.classList.add("hidden");
+            mainGrid.className = "grid grid-cols-1 gap-5 sm:gap-6 mt-4 sm:mt-5 items-center justify-center relative z-10 max-w-xl mx-auto";
+            if (icon) icon.innerText = "⤡";
+        }
+    }
+}
+
+function initRoutineStopwatch() {
+    renderStopwatchTicks();
+    updateStopwatchHabitDropdown();
+
+    const soundIcon = document.getElementById("stopwatch-sound-icon");
+    if (soundIcon) soundIcon.innerText = swSoundEnabled ? "🔊" : "🔇";
+
+    updateStopwatchDisplay(0);
+    updateProgressCircle(0);
+}
+
 // Global window bindings for inline HTML access
 window.handleAddHabit = handleAddHabit;
 window.quickAddPresetHabit = quickAddPresetHabit;
@@ -1933,6 +2728,23 @@ window.openSpreadsheetExpandModal = openSpreadsheetExpandModal;
 window.closeSpreadsheetExpandModal = closeSpreadsheetExpandModal;
 window.toggleSpreadsheetFitMode = toggleSpreadsheetFitMode;
 window.updateExpandedSpreadsheetView = updateExpandedSpreadsheetView;
+
+// Stopwatch & Timer bindings
+window.toggleStopwatch = toggleStopwatch;
+window.startStopwatch = startStopwatch;
+window.pauseStopwatch = pauseStopwatch;
+window.resetStopwatch = resetStopwatch;
+window.recordStopwatchLap = recordStopwatchLap;
+window.clearStopwatchLaps = clearStopwatchLaps;
+window.copyStopwatchLaps = copyStopwatchLaps;
+window.setStopwatchMode = setStopwatchMode;
+window.setTimerDuration = setTimerDuration;
+window.toggleStopwatchSound = toggleStopwatchSound;
+window.toggleStopwatchExpand = toggleStopwatchExpand;
+window.handleStopwatchHabitLinkChange = handleStopwatchHabitLinkChange;
+window.logStopwatchFocusToHabit = logStopwatchFocusToHabit;
+window.initRoutineStopwatch = initRoutineStopwatch;
+window.updateStopwatchHabitDropdown = updateStopwatchHabitDropdown;
 
 // =====================================================================
 // BROWSER HISTORY & BACK BUTTON NAVIGATION MANAGER
@@ -2010,6 +2822,7 @@ function openTrackerModal() {
     
     renderHabitsList();
     updateGrowthCharts();
+    if (typeof updateStopwatchHabitDropdown === "function") updateStopwatchHabitDropdown();
     setTimeout(() => {
         if (typeof scrollToTodayTracker === "function") scrollToTodayTracker();
     }, 180);
@@ -2045,6 +2858,7 @@ window.addEventListener("keydown", (e) => {
 // INITIALIZE TRACKER ON LOAD & ATTACH FORM LISTENERS
 document.addEventListener("DOMContentLoaded", () => {
     loadHabitsFromStorage();
+    if (typeof initRoutineStopwatch === "function") initRoutineStopwatch();
 
     // Attach Habit Form submission listener
     const addHabitForm = document.getElementById("add-habit-form");
