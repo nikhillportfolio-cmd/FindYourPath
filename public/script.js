@@ -2008,6 +2008,183 @@ function playStopwatchSound(type) {
     } catch (e) {}
 }
 
+let jarvisAudioCache = {
+    sir: null,
+    maam: null
+};
+
+// -------------------------------------------------------------------
+// DETECT USER GENDER / HONORIFIC (SIR / MA'AM) FROM GMAIL / LOGIN INFO
+// -------------------------------------------------------------------
+function detectUserHonorific() {
+    try {
+        let user = null;
+        if (window.praxisAuth && typeof window.praxisAuth.getUser === "function") {
+            user = window.praxisAuth.getUser();
+        }
+        if (!user) {
+            const stored = localStorage.getItem("praxis_auth_user");
+            if (stored) user = JSON.parse(stored);
+        }
+        
+        let nameStr = "";
+        let emailStr = "";
+
+        if (user) {
+            nameStr = (user.displayName || user.name || "").trim().toLowerCase();
+            emailStr = (user.email || "").trim().toLowerCase();
+        } else {
+            nameStr = (localStorage.getItem("findyourpath_user_name") || "").trim().toLowerCase();
+            emailStr = (localStorage.getItem("findyourpath_user_email") || "").trim().toLowerCase();
+        }
+
+        // If explicitly stored gender in profile
+        if (user && user.gender) {
+            const g = user.gender.toLowerCase();
+            if (g === "female" || g === "f" || g === "woman") return "maam";
+            if (g === "male" || g === "m" || g === "man") return "sir";
+        }
+
+        // Check titles in name
+        if (nameStr) {
+            if (nameStr.startsWith("mrs.") || nameStr.startsWith("mrs ") || nameStr.startsWith("ms.") || nameStr.startsWith("ms ") || nameStr.startsWith("miss ")) {
+                return "maam";
+            }
+            if (nameStr.startsWith("mr.") || nameStr.startsWith("mr ")) {
+                return "sir";
+            }
+        }
+
+        // Extract first name token from display name or email
+        let firstName = "";
+        if (nameStr && nameStr !== "google user" && nameStr !== "user") {
+            const parts = nameStr.split(/[\s._-]+/);
+            firstName = parts[0] || "";
+        }
+
+        if (!firstName && emailStr) {
+            const username = emailStr.split("@")[0] || "";
+            const parts = username.split(/[0-9._-]+/).filter(Boolean);
+            firstName = parts[0] || "";
+        }
+
+        if (!firstName) return "sir";
+
+        firstName = firstName.toLowerCase().replace(/[^a-z]/g, "");
+
+        // Comprehensive female names dictionary
+        const femaleNames = new Set([
+            "priya", "sneha", "ananya", "aarti", "arti", "pooja", "puja", "neha", "shreya", "tanvi",
+            "riya", "divya", "kavya", "anita", "deepa", "sunita", "geeta", "gita", "radha", "meena",
+            "leela", "isha", "sakshi", "simran", "sonam", "swati", "shruti", "komal", "rashi", "aditi",
+            "kriti", "trisha", "mansi", "khushi", "muskan", "megha", "rashmi", "parul", "payal", "monika",
+            "garima", "shikha", "jyoti", "sonia", "rekha", "seema", "jaya", "alka", "anjali", "bhavna",
+            "chhavi", "damini", "ekta", "falguni", "gargi", "hema", "indira", "jayshree", "kiran", "latika",
+            "madhuri", "nandini", "pallavi", "radhika", "sarita", "tanya", "urvashi", "vandana", "yashika",
+            "zenab", "aisha", "fatima", "zoya", "sara", "zara", "mary", "emma", "olivia", "sophia",
+            "emily", "jessica", "sarah", "rachel", "laura", "anna", "hannah", "chloe", "zoe", "claire",
+            "elizabeth", "jennifer", "linda", "barbara", "susan", "karen", "nancy", "lisa", "betty",
+            "margaret", "sandra", "ashley", "kimberly", "donna", "carol", "michelle", "amanda", "melissa",
+            "deborah", "stephanie", "rebecca", "sharon", "cynthia", "kathleen", "amy", "shirley", "angela",
+            "helen", "brenda", "pamela", "nicole", "samantha", "katherine", "christine", "debra", "carolyn",
+            "janet", "catherine", "maria", "heather", "diane", "ruth", "julie", "joyce", "virginia",
+            "victoria", "kelly", "lauren", "christina", "joan", "evelyn", "judith", "megan", "andrea",
+            "cheryl", "jacqueline", "martha", "gloria", "teresa", "ann", "madison", "frances", "kathryn",
+            "janice", "jean", "abigail", "alice", "julia", "judy", "grace", "denise", "amber", "doris",
+            "marilyn", "danielle", "beverly", "isabella", "theresa", "diana", "natalie", "brittany",
+            "charlotte", "marie", "kayla", "alexis", "lori", "anupama", "archana", "avantika", "bhumika",
+            "chetna", "deepali", "diksha", "divyanshi", "gayatri", "harshita", "heena", "ishita", "kanchan",
+            "karishma", "kashish", "krishnaa", "madhu", "mahima", "manisha", "namrata", "navya", "nidhi",
+            "nikita", "nishita", "pragya", "prachi", "prerna", "punita", "rachna", "rani", "reet",
+            "renuka", "richa", "rimjhim", "ritika", "roshni", "ruchika", "sadhna", "saloni", "samyukta",
+            "sanika", "sanjana", "saumya", "shalini", "sheetal", "shivani", "shobha", "shubhi", "smriti",
+            "snehal", "sonal", "soumya", "srishti", "srushti", "sudha", "surabhi", "surbhi", "swarna",
+            "tejaswini", "tina", "tripti", "tulsi", "upasana", "vaishali", "vaishnavi", "vanshika",
+            "vidhi", "vidya", "vini", "vrinda", "yasmin"
+        ]);
+
+        if (femaleNames.has(firstName)) return "maam";
+
+        // Known male names ending with 'a' or 'i' to avoid false female phonetic match
+        const maleExceptions = new Set([
+            "shiva", "krishna", "aditya", "surya", "rishi", "rabi", "ravi", "baba", "rana",
+            "mustafa", "murtaza", "hamza", "reza", "joshua", "luca", "noah", "ezra", "elija",
+            "nikhil", "rahul", "amit", "rohit", "alex", "john", "david", "aryan", "rohan", "ali",
+            "yash", "harsh", "raj", "vikram", "manish", "suresh", "ramesh", "ajay", "vijay", "sanjay",
+            "anil", "sunil", "deepak", "rakesh", "mukesh", "dinesh", "mahesh", "naresh", "kamlesh",
+            "abhishek", "gaurav", "saurabh", "varun", "tarun", "karan", "arjun", "kunal", "akash",
+            "vikas", "vishal", "praveen", "naveen", "ashish", "anand", "alok", "vivek", "prashant"
+        ]);
+
+        if (maleExceptions.has(firstName)) return "sir";
+
+        // Indian/international female name ending heuristic
+        if (
+            firstName.endsWith("a") || firstName.endsWith("i") || firstName.endsWith("ya") ||
+            firstName.endsWith("ka") || firstName.endsWith("ti") || firstName.endsWith("ni") ||
+            firstName.endsWith("na") || firstName.endsWith("ee") || firstName.endsWith("shree") ||
+            firstName.endsWith("devi") || firstName.endsWith("kumari") || firstName.endsWith("kaur")
+        ) {
+            return "maam";
+        }
+
+        return "sir";
+    } catch (e) {
+        return "sir";
+    }
+}
+
+function playJarvisTimesUpVoice() {
+    if (!swSoundEnabled) return;
+    try {
+        const honorific = detectUserHonorific(); // "sir" or "maam"
+        const audioSrc = honorific === "maam" ? "/jarvis-times-up-maam.mp3" : "/jarvis-times-up-sir.mp3";
+        const spokenText = honorific === "maam" ? "Time is up, ma'am. Focus session completed." : "Time is up, sir. Focus session completed.";
+
+        if (!jarvisAudioCache[honorific]) {
+            jarvisAudioCache[honorific] = new Audio(audioSrc);
+        }
+        
+        const audioObj = jarvisAudioCache[honorific];
+        audioObj.currentTime = 0;
+        audioObj.volume = 1.0;
+        
+        const playPromise = audioObj.play();
+        if (playPromise !== undefined) {
+            playPromise.catch((err) => {
+                console.warn(`[Jarvis Voice] Audio playback blocked/failed for ${honorific}, falling back to SpeechSynthesis:`, err);
+                speakJarvisFallback(spokenText);
+            });
+        }
+    } catch (e) {
+        const honorific = detectUserHonorific();
+        const spokenText = honorific === "maam" ? "Time is up, ma'am. Focus session completed." : "Time is up, sir. Focus session completed.";
+        speakJarvisFallback(spokenText);
+    }
+}
+
+function speakJarvisFallback(text) {
+    try {
+        if (!("speechSynthesis" in window)) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+        
+        // Find best British English male voice to mimic Jarvis
+        const jarvisVoice = voices.find(v => 
+            (v.lang === "en-GB" || v.lang === "en_GB" || (v.lang && v.lang.startsWith("en-GB"))) &&
+            (v.name.toLowerCase().includes("male") || v.name.toLowerCase().includes("george") || v.name.toLowerCase().includes("daniel") || v.name.toLowerCase().includes("oliver") || v.name.toLowerCase().includes("uk"))
+        ) || voices.find(v => v.lang === "en-GB" || (v.lang && v.lang.startsWith("en-GB"))) || voices.find(v => v.lang && v.lang.startsWith("en"));
+
+        if (jarvisVoice) utterance.voice = jarvisVoice;
+        utterance.rate = 0.95;
+        utterance.pitch = 0.88;
+        utterance.volume = 1.0;
+
+        window.speechSynthesis.speak(utterance);
+    } catch (e) {}
+}
+
 function renderStopwatchTicks() {
     const tickContainer = document.getElementById("stopwatch-tick-marks");
     if (!tickContainer) return;
@@ -2582,6 +2759,7 @@ function onFocusTimerCompleted() {
 
     updateLiveFloatingBadge(0);
     playStopwatchSound('timer_done');
+    playJarvisTimesUpVoice();
 
     const focusMins = Math.round(swTimerDurationMs / 60000);
     showInAppToast("🎉 Focus Goal Completed!", `Outstanding discipline! You conquered your ${focusMins}-minute focus session!`, false);
@@ -2784,6 +2962,8 @@ window.toggleStopwatchExpand = toggleStopwatchExpand;
 window.toggleStopwatchVisibility = toggleStopwatchVisibility;
 window.handleStopwatchHabitLinkChange = handleStopwatchHabitLinkChange;
 window.logStopwatchFocusToHabit = logStopwatchFocusToHabit;
+window.playJarvisTimesUpVoice = playJarvisTimesUpVoice;
+window.detectUserHonorific = detectUserHonorific;
 window.initRoutineStopwatch = initRoutineStopwatch;
 window.updateStopwatchHabitDropdown = updateStopwatchHabitDropdown;
 
