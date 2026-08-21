@@ -595,19 +595,28 @@ function renderHeatmap() {
 
         if (totalHabits === 0 || completedCount === 0) {
             styleClass = "bg-[#e0e5ec] text-slate-400 shadow-[inset_2px_2px_4px_#b8bec7,inset_-2px_-2px_4px_#ffffff]";
-            levelName = totalHabits === 0 ? "No habits defined" : "No habits completed";
-        } else if (pct <= 25) {
-            styleClass = "bg-emerald-200 text-emerald-900 border border-emerald-300 font-bold shadow-xs";
-            levelName = "Light activity";
-        } else if (pct <= 50) {
+            levelName = totalHabits === 0 ? "No habits defined" : "0% completed";
+        } else if (pct <= 15) {
+            styleClass = "bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold shadow-xs";
+            levelName = "Spark (1-15%)";
+        } else if (pct <= 30) {
+            styleClass = "bg-emerald-200 text-emerald-950 font-bold border border-emerald-300 shadow-xs";
+            levelName = "Seedling (16-30%)";
+        } else if (pct <= 45) {
+            styleClass = "bg-emerald-300 text-emerald-950 font-bold border border-emerald-400 shadow-xs";
+            levelName = "Sprout (31-45%)";
+        } else if (pct <= 60) {
             styleClass = "bg-emerald-400 text-emerald-950 font-bold border border-emerald-500 shadow-sm";
-            levelName = "Moderate activity";
+            levelName = "Momentum (46-60%)";
         } else if (pct <= 75) {
-            styleClass = "bg-emerald-500 text-white font-black shadow-md shadow-emerald-500/30";
-            levelName = "High activity";
+            styleClass = "bg-emerald-500 text-white font-black shadow-sm shadow-emerald-500/25 border border-emerald-600/40";
+            levelName = "Flourishing (61-75%)";
+        } else if (pct <= 90) {
+            styleClass = "bg-emerald-600 text-white font-black shadow-md shadow-emerald-600/35 border border-emerald-400/40";
+            levelName = "Surge (76-90%)";
         } else {
-            styleClass = "bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-black shadow-lg shadow-emerald-500/40 border border-emerald-300/30";
-            levelName = "Peak discipline!";
+            styleClass = "bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white font-black shadow-lg shadow-emerald-700/45 border border-emerald-300/50 ring-1 ring-emerald-400/30";
+            levelName = "Peak 100% Mastery!";
         }
 
         const todayRingClass = isToday 
