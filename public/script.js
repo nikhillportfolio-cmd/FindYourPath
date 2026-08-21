@@ -2073,14 +2073,27 @@ function updateStopwatchDisplay(ms) {
 function updateLiveFloatingBadge(ms) {
     const livePill = document.getElementById("tracker-stopwatch-live-pill");
     const liveText = document.getElementById("tracker-live-stopwatch-text");
-    if (!livePill || !liveText) return;
+    const headerPill = document.getElementById("stopwatch-btn-status-pill");
+    const headerPillText = document.getElementById("stopwatch-btn-status-text");
 
-    if (swState === 'running') {
-        const formatted = formatStopwatchTime(ms);
-        liveText.innerText = formatted.shortMain;
-        livePill.classList.remove("hidden");
-    } else {
-        livePill.classList.add("hidden");
+    const formatted = formatStopwatchTime(ms);
+
+    if (livePill && liveText) {
+        if (swState === 'running') {
+            liveText.innerText = formatted.shortMain;
+            livePill.classList.remove("hidden");
+        } else {
+            livePill.classList.add("hidden");
+        }
+    }
+
+    if (headerPill) {
+        if (swState === 'running') {
+            if (headerPillText) headerPillText.innerText = formatted.shortMain;
+            headerPill.classList.remove("hidden");
+        } else {
+            headerPill.classList.add("hidden");
+        }
     }
 }
 
@@ -2699,6 +2712,33 @@ function toggleStopwatchExpand() {
     }
 }
 
+function toggleStopwatchVisibility(forceState = null) {
+    const container = document.getElementById("routine-stopwatch-container");
+    const btn = document.getElementById("toggle-stopwatch-view-btn");
+    const btnText = document.getElementById("stopwatch-btn-text");
+    if (!container) return;
+
+    const shouldShow = forceState !== null ? forceState : container.classList.contains("hidden");
+    
+    if (shouldShow) {
+        container.classList.remove("hidden");
+        if (btn) {
+            btn.classList.add("bg-blue-600", "text-white", "shadow-md");
+            btn.classList.remove("text-slate-700");
+        }
+        if (btnText) btnText.innerText = "Hide Stopwatch";
+        // Smoothly scroll to the stopwatch at top of modal
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        container.classList.add("hidden");
+        if (btn) {
+            btn.classList.remove("bg-blue-600", "text-white", "shadow-md");
+            btn.classList.add("text-slate-700");
+        }
+        if (btnText) btnText.innerText = "Focus Stopwatch";
+    }
+}
+
 function initRoutineStopwatch() {
     renderStopwatchTicks();
     updateStopwatchHabitDropdown();
@@ -2741,6 +2781,7 @@ window.setStopwatchMode = setStopwatchMode;
 window.setTimerDuration = setTimerDuration;
 window.toggleStopwatchSound = toggleStopwatchSound;
 window.toggleStopwatchExpand = toggleStopwatchExpand;
+window.toggleStopwatchVisibility = toggleStopwatchVisibility;
 window.handleStopwatchHabitLinkChange = handleStopwatchHabitLinkChange;
 window.logStopwatchFocusToHabit = logStopwatchFocusToHabit;
 window.initRoutineStopwatch = initRoutineStopwatch;
