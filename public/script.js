@@ -3282,10 +3282,46 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-// INITIALIZE TRACKER ON LOAD & ATTACH FORM LISTENERS
+// INITIALIZE TRACKER & LIBRARY ON LOAD & ATTACH FORM LISTENERS
 document.addEventListener("DOMContentLoaded", () => {
     loadHabitsFromStorage();
     if (typeof initRoutineStopwatch === "function") initRoutineStopwatch();
+
+    // Standalone Routine Tracker page initialization
+    const isRoutinePage = window.location.pathname.includes('routine') || window.location.pathname.includes('habits') || window.location.pathname.includes('tracker');
+    if (isRoutinePage) {
+        const swContainer = document.getElementById("routine-stopwatch-container");
+        if (swContainer) {
+            swContainer.classList.remove("hidden");
+        }
+        if (typeof renderHabitsList === "function") renderHabitsList();
+        if (typeof updateGrowthCharts === "function") updateGrowthCharts();
+        if (typeof updateStats === "function") updateStats();
+    }
+
+    // Standalone Modern Library page initialization
+    const libGrid = document.getElementById("library-grid");
+    if (libGrid) {
+        if (typeof populateDefaultRecommendations === "function") populateDefaultRecommendations();
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const genreParam = urlParams.get('genre');
+            const searchParam = urlParams.get('search');
+            if (genreParam) {
+                setLibraryGenre(genreParam);
+            } else {
+                renderLibraryGrid();
+            }
+            if (searchParam) {
+                const searchInput = document.getElementById("library-search-input");
+                if (searchInput) searchInput.value = searchParam;
+                librarySearchQuery = searchParam.trim().toLowerCase();
+                renderLibraryGrid();
+            }
+        } catch(e) {
+            renderLibraryGrid();
+        }
+    }
 
     // Attach Habit Form submission listener
     const addHabitForm = document.getElementById("add-habit-form");
@@ -3680,16 +3716,38 @@ function openLibraryWithRecommendations(careerBooks) {
         };
     });
 
+    try {
+        localStorage.setItem("praxis_recommendations", JSON.stringify(recommendationBooks));
+    } catch (e) {}
+
     const tabCountEl = document.getElementById("recommendations-tab-count");
     if (tabCountEl) {
         tabCountEl.innerText = recommendationBooks.length;
     }
 
-    openLibraryModal();
+    const modal = document.getElementById("library-modal");
+    if (modal) {
+        openLibraryModal();
+    }
     setLibraryGenre('recommendations');
 }
 
 function populateDefaultRecommendations() {
+    try {
+        const savedRecs = localStorage.getItem("praxis_recommendations");
+        if (savedRecs) {
+            const parsed = JSON.parse(savedRecs);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                recommendationBooks = parsed;
+                const tabCountEl = document.getElementById("recommendations-tab-count");
+                if (tabCountEl) {
+                    tabCountEl.innerText = recommendationBooks.length;
+                }
+                return;
+            }
+        }
+    } catch (e) {}
+
     const defaultBooks = [
         "Atomic Habits by James Clear",
         "Zero to One by Peter Thiel",

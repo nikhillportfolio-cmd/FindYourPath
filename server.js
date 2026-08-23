@@ -11053,6 +11053,19 @@ app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+// Serve Modern Library Dedicated Web Page
+app.get('/library', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'library.html'));
+});
+app.get('/library.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'library.html'));
+});
+
+// Serve Routine & Habit Tracker Dedicated Web Page
+app.get(['/routine', '/routine.html', '/habits', '/habits.html', '/tracker', '/tracker.html'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'routine.html'));
+});
+
 // =====================================================================
 // MODERN LIBRARY FULL-BOOK CONTENT & GUTENBERG INTEGRATION ENGINE
 // =====================================================================

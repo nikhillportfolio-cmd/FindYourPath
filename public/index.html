@@ -867,26 +867,46 @@
 
     <!-- TOP NAVIGATION BAR -->
     <header class="relative w-full max-w-5xl px-3 sm:px-6 py-4 sm:py-6 flex items-center justify-between z-20 gap-2 min-h-[64px]">
-        <!-- CENTERED PRAXiS LOGO -->
-        <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 pointer-events-auto">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 neu-circle flex items-center justify-center text-amber-500 shrink-0">
-                <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-nav)" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="star-grad-nav" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#fbbf24"/>
-                            <stop offset="1" stop-color="#d97706"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
-            </div>
-            <span class="font-outfit font-extrabold text-xl sm:text-2xl text-slate-800 tracking-tight">PRAXiS</span>
+        <!-- LEFT: LOGO & NAV LINKS -->
+        <div class="flex items-center gap-2 sm:gap-3">
+            <a href="/praxis" class="flex items-center gap-2 sm:gap-2.5 group cursor-pointer" title="Return to PRAXiS Home">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 neu-circle flex items-center justify-center text-amber-500 shrink-0 group-hover:scale-105 transition-transform">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-nav)" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="star-grad-nav" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#fbbf24"/>
+                                <stop offset="1" stop-color="#d97706"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="font-outfit font-extrabold text-xl sm:text-2xl text-slate-800 tracking-tight">PRAXiS</span>
+            </a>
+
+            <!-- DESKTOP NAV LINKS -->
+            <nav class="hidden md:flex items-center gap-2 ml-2">
+                <a href="/praxis" class="neu-btn pressed px-3.5 py-1.5 text-xs font-extrabold text-blue-600 flex items-center gap-1.5 border border-blue-200 shadow-inner">
+                    <span>🧭</span> Compass
+                </a>
+                <a href="/library.html" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center gap-1.5 transition-all">
+                    <span>📚</span> Modern Library
+                </a>
+                <a href="/routine.html" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all">
+                    <span>🔥</span> Routine Tracker
+                </a>
+            </nav>
         </div>
 
-        <div class="ml-auto flex items-center gap-2.5 shrink-0">
-            <div class="neu-badge px-2.5 py-1.5 sm:px-3 py-2 text-[10px] sm:text-xs font-bold text-slate-600 hidden md:flex items-center gap-1.5 sm:gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Compass Active</span>
+        <div class="ml-auto flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <!-- MOBILE TOP NAV ICONS -->
+            <div class="flex md:hidden items-center gap-1.5">
+                <a href="/library.html" title="Modern Library" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-indigo-600">
+                    📚
+                </a>
+                <a href="/routine.html" title="Routine Tracker" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-amber-500">
+                    🔥
+                </a>
             </div>
 
             <!-- AUTH & PROFILE CONTAINER -->
@@ -1381,7 +1401,7 @@
 
                         <!-- EXPLORE IN MODERN LIBRARY PROMINENT NEUMORPHIC BUTTON -->
                         <div class="mt-6">
-                            <button id="explore-library-results-btn" onclick="openLibraryWithRecommendations()" 
+                            <a id="explore-library-results-btn" href="/library.html?genre=recommendations" onclick="if(typeof openLibraryWithRecommendations==='function'){openLibraryWithRecommendations();}" 
                                 class="w-full neu-btn p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-800 font-extrabold shadow-xl hover:scale-[1.015] active:scale-[0.995] transition-all duration-300 group border border-indigo-200/80 bg-gradient-to-r from-indigo-50/90 via-white to-blue-50/90">
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 sm:w-11 sm:h-11 neu-circle flex items-center justify-center text-xl sm:text-2xl text-indigo-600 group-hover:scale-110 group-hover:rotate-12 transition-all shrink-0">
@@ -1389,14 +1409,14 @@
                                     </div>
                                     <div class="flex flex-col text-left">
                                         <span class="text-sm sm:text-base font-black text-indigo-600 font-outfit tracking-wide">Explore in Modern Library 🚀</span>
-                                        <span class="text-[11px] sm:text-xs font-semibold text-slate-500 mt-0.5">Open Library for your recommended books</span>
+                                        <span class="text-[11px] sm:text-xs font-semibold text-slate-500 mt-0.5">Open dedicated Modern Library for your recommended books</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-center gap-2 text-indigo-600 font-black text-xs uppercase tracking-wider shrink-0 bg-indigo-100/60 px-3 py-2 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                    <span>Open Library</span>
+                                    <span>Open Library Page</span>
                                     <span class="text-sm group-hover:translate-x-1 transition-transform">&rarr;</span>
                                 </div>
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -1411,7 +1431,7 @@
     <!-- FLOATING ACTION BUTTONS CONTAINER (MOBILE RESPONSIVE FLOATING BAR) -->
     <div class="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
         <!-- MODERN LIBRARY BUTTON -->
-        <button id="library-floating-btn" onclick="openLibraryModal()" title="Open Modern Library"
+        <a id="library-floating-btn" href="/library.html" title="Open Modern Library Page"
             class="neu-btn px-3 py-2 sm:px-5 sm:py-3.5 flex items-center gap-2 sm:gap-3 text-slate-800 font-bold shadow-2xl hover:scale-105 transition-all duration-300 group border border-white/60">
             <div class="w-8 h-8 sm:w-10 sm:h-10 neu-circle flex items-center justify-center text-base sm:text-xl text-indigo-600 group-hover:scale-110 transition-transform shrink-0">
                 📚
@@ -1423,10 +1443,10 @@
             <span class="neu-badge bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full ml-0.5 sm:ml-1 shrink-0">
                 120
             </span>
-        </button>
+        </a>
 
         <!-- ROUTINE TRACKER BUTTON -->
-        <button id="tracker-floating-btn" onclick="openTrackerModal()" title="Open Routine Tracker"
+        <a id="tracker-floating-btn" href="/routine.html" title="Open Routine Tracker Page"
             class="neu-btn px-3 py-2 sm:px-5 sm:py-3.5 flex items-center gap-2 sm:gap-3 text-slate-800 font-bold shadow-2xl hover:scale-105 transition-all duration-300 group border border-white/60">
             <div class="w-8 h-8 sm:w-10 sm:h-10 neu-circle flex items-center justify-center text-base sm:text-xl text-amber-500 group-hover:scale-110 transition-transform shrink-0">
                 🔥
@@ -1442,7 +1462,7 @@
             <span id="tracker-stopwatch-live-pill" class="hidden neu-badge bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] sm:text-[11px] font-digital font-black px-2 py-0.5 rounded-full ml-0.5 sm:ml-1 shrink-0 shadow-sm animate-pulse flex items-center gap-1">
                 ⏱️ <span id="tracker-live-stopwatch-text">00:00</span>
             </span>
-        </button>
+        </a>
     </div>
 
     <!-- ROUTINE TRACKER OVERLAY MODAL -->
