@@ -2334,7 +2334,7 @@ function flipCardDigit(cardId, oldVal, newVal) {
         card.classList.remove('flip-animating');
         bottomStatic.innerText = newVal;
         topLeaf.innerText = newVal;
-    }, 380);
+    }, 260);
 }
 
 function setFlipCardDirect(cardId, val) {
