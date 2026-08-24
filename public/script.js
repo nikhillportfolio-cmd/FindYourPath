@@ -4074,12 +4074,33 @@ function initPingEngine() {
 
     const sendPing = async (isNew = false) => {
         try {
+            const pathName = window.location.pathname.toLowerCase();
+            const hash = window.location.hash.toLowerCase();
             const routineSection = document.getElementById("routine-tracker-section");
-            const isRoutineActive = routineSection && !routineSection.classList.contains("hidden");
+            const isRoutineModal = routineSection && !routineSection.classList.contains("hidden");
+            const libraryModal = document.getElementById("library-modal");
+            const isLibraryModal = libraryModal && !libraryModal.classList.contains("hidden");
+
+            let currentFeature = 'compass';
+            if (pathName.includes('library') || hash.includes('#library') || isLibraryModal) {
+                currentFeature = 'library';
+            } else if (pathName.includes('routine') || pathName.includes('habit') || pathName.includes('tracker') || hash.includes('#routine') || isRoutineModal) {
+                currentFeature = 'routine';
+            } else {
+                currentFeature = 'compass';
+            }
+
             await fetch("/api/ping", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ clientId, isNewVisit: isNew, isRoutineActive: !!isRoutineActive })
+                body: JSON.stringify({
+                    clientId,
+                    isNewVisit: isNew,
+                    feature: currentFeature,
+                    isRoutineActive: currentFeature === 'routine',
+                    isLibraryActive: currentFeature === 'library',
+                    isCompassActive: currentFeature === 'compass'
+                })
             });
         } catch (err) {
             // silent catch for background ping

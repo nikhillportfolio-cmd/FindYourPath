@@ -355,6 +355,7 @@ async function handleUserRegister(event) {
 
   const name = document.getElementById("reg-name")?.value.trim();
   const email = document.getElementById("reg-email")?.value.trim();
+  const mobile = document.getElementById("reg-mobile")?.value.trim() || "";
   const username = document.getElementById("reg-username")?.value.trim();
   const password = document.getElementById("reg-password")?.value;
 
@@ -365,7 +366,7 @@ async function handleUserRegister(event) {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, username, password })
+      body: JSON.stringify({ name, email, mobile, username, password })
     });
     const data = await res.json();
 

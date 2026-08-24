@@ -14,12 +14,72 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ensure Uploads Directory Exists & Serve Static Files
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+// =====================================================================
+// PERMANENT DATABASE ENGINE (F:\Praxis Admin server)
+// =====================================================================
+const PRIMARY_DB_DIR = 'F:\\Praxis Admin server';
+let DB_DIR = PRIMARY_DB_DIR;
+
+try {
+    if (!fs.existsSync(PRIMARY_DB_DIR)) {
+        fs.mkdirSync(PRIMARY_DB_DIR, { recursive: true });
+    }
+    console.log(`💾 Praxis Database permanently mounted at: ${PRIMARY_DB_DIR}`);
+} catch (dbErr) {
+    console.warn(`⚠️ Could not initialize ${PRIMARY_DB_DIR}, falling back to local workspace:`, dbErr.message);
+    DB_DIR = __dirname;
+}
+
+const USERS_FILE = path.join(DB_DIR, 'users.json');
+const ANALYTICS_FILE = path.join(DB_DIR, 'analytics.json');
+const SUBSCRIPTIONS_FILE = path.join(DB_DIR, 'subscriptions.json');
+const UPLOADS_DIR = path.join(DB_DIR, 'uploads');
+
 if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    try { fs.mkdirSync(UPLOADS_DIR, { recursive: true }); } catch(e){}
 }
 app.use('/uploads', express.static(UPLOADS_DIR));
+if (DB_DIR !== __dirname) {
+    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+}
+
+// Data Migration from workspace to F:\Praxis Admin server if files don't exist in F: drive yet
+function migrateWorkspaceDataIfNeeded() {
+    try {
+        if (DB_DIR !== __dirname) {
+            const localUsers = path.join(__dirname, 'users.json');
+            if (fs.existsSync(localUsers) && !fs.existsSync(USERS_FILE)) {
+                fs.copyFileSync(localUsers, USERS_FILE);
+                console.log(`📦 Migrated users.json to ${USERS_FILE}`);
+            }
+            const localAnalytics = path.join(__dirname, 'analytics.json');
+            if (fs.existsSync(localAnalytics) && !fs.existsSync(ANALYTICS_FILE)) {
+                fs.copyFileSync(localAnalytics, ANALYTICS_FILE);
+                console.log(`📦 Migrated analytics.json to ${ANALYTICS_FILE}`);
+            }
+            const localSubs = path.join(__dirname, 'subscriptions.json');
+            if (fs.existsSync(localSubs) && !fs.existsSync(SUBSCRIPTIONS_FILE)) {
+                fs.copyFileSync(localSubs, SUBSCRIPTIONS_FILE);
+                console.log(`📦 Migrated subscriptions.json to ${SUBSCRIPTIONS_FILE}`);
+            }
+            const localUploads = path.join(__dirname, 'uploads');
+            if (fs.existsSync(localUploads)) {
+                const files = fs.readdirSync(localUploads);
+                files.forEach(file => {
+                    const dest = path.join(UPLOADS_DIR, file);
+                    if (!fs.existsSync(dest)) {
+                        try {
+                            fs.copyFileSync(path.join(localUploads, file), dest);
+                        } catch(e){}
+                    }
+                });
+            }
+        }
+    } catch (mErr) {
+        console.warn("⚠️ Data migration warning:", mErr.message);
+    }
+}
+migrateWorkspaceDataIfNeeded();
 
 // =====================================================================
 // USER DATABASE & AUTHENTICATION ENGINE (users.json)
@@ -27,7 +87,6 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'praxis_jwt_secret_987654321_secure';
-const USERS_FILE = path.join(__dirname, 'users.json');
 
 let usersData = {
     users: [],
@@ -43,10 +102,10 @@ function loadUsersData() {
                 users: Array.isArray(parsed.users) ? parsed.users : [],
                 loginLogs: Array.isArray(parsed.loginLogs) ? parsed.loginLogs : []
             };
-            console.log(`👤 Loaded ${usersData.users.length} users and ${usersData.loginLogs.length} login logs from users.json`);
+            console.log(`👤 Loaded ${usersData.users.length} users and ${usersData.loginLogs.length} login logs from ${USERS_FILE}`);
         } else {
             saveUsersData();
-            console.log("👤 Initialized new users.json file");
+            console.log(`👤 Initialized new users.json file at ${USERS_FILE}`);
         }
     } catch (err) {
         console.error("⚠️ Failed to load/initialize users.json:", err.message);
@@ -55,7 +114,11 @@ function loadUsersData() {
 
 function saveUsersData() {
     try {
-        fs.writeFileSync(USERS_FILE, JSON.stringify(usersData, null, 2), 'utf8');
+        const jsonStr = JSON.stringify(usersData, null, 2);
+        fs.writeFileSync(USERS_FILE, jsonStr, 'utf8');
+        if (DB_DIR !== __dirname) {
+            try { fs.writeFileSync(path.join(__dirname, 'users.json'), jsonStr, 'utf8'); } catch(e){}
+        }
     } catch (err) {
         console.error("⚠️ Failed to write to users.json:", err.message);
     }
@@ -66,7 +129,6 @@ loadUsersData();
 // =====================================================================
 // REAL-TIME ANALYTICS & ACTIVE USER TRACKING ENGINE
 // =====================================================================
-const ANALYTICS_FILE = path.join(__dirname, 'analytics.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const activeSessions = new Map(); // clientId -> lastPingTimestamp
 const activeRoutineSessions = new Map(); // clientId -> lastPingTimestamp
@@ -74,7 +136,13 @@ const PING_TIMEOUT_MS = 45000; // 45 seconds (ping sent every 30s)
 
 let analyticsData = {
     totalVisitors: 0,
+    uniqueVisitors: {}, // clientId -> { firstSeen, lastSeen, ip, userAgent, visitCount }
     totalQuizzesCompleted: 0,
+    featureUsage: {
+        compass: 0,
+        library: 0,
+        routine: 0
+    },
     domainStats: {},
     careerStats: {},
     libraryStats: {
@@ -95,15 +163,34 @@ try {
         const fileData = fs.readFileSync(ANALYTICS_FILE, 'utf8');
         const parsed = JSON.parse(fileData);
         analyticsData = {
-            ...analyticsData,
-            ...parsed,
-            libraryStats: { ...analyticsData.libraryStats, ...(parsed.libraryStats || {}) },
-            routineStats: { ...analyticsData.routineStats, ...(parsed.routineStats || {}) }
+            totalVisitors: parsed.totalVisitors || 0,
+            uniqueVisitors: parsed.uniqueVisitors || {},
+            totalQuizzesCompleted: parsed.totalQuizzesCompleted || 0,
+            featureUsage: {
+                compass: (parsed.featureUsage && parsed.featureUsage.compass) || (parsed.domainStats ? Object.values(parsed.domainStats).reduce((a, b) => a + b, 0) : 0) || 0,
+                library: (parsed.featureUsage && parsed.featureUsage.library) || (parsed.libraryStats?.totalViews || 0) || 0,
+                routine: (parsed.featureUsage && parsed.featureUsage.routine) || (parsed.routineStats?.totalInteractions || 0) || 0,
+                ...(parsed.featureUsage || {})
+            },
+            domainStats: parsed.domainStats || {},
+            careerStats: parsed.careerStats || {},
+            libraryStats: {
+                totalViews: 0,
+                bookViews: 0,
+                popularBooks: {},
+                ...(parsed.libraryStats || {})
+            },
+            routineStats: {
+                totalInteractions: 0,
+                totalHabitCheckoffs: 0,
+                dailyUsers: {},
+                ...(parsed.routineStats || {})
+            }
         };
-        console.log("📊 Loaded existing analytics data:", analyticsData);
+        console.log(`📊 Loaded existing analytics data from ${ANALYTICS_FILE}`);
     } else {
-        fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(analyticsData, null, 2), 'utf8');
-        console.log("📊 Initialized new analytics.json file");
+        saveAnalytics();
+        console.log(`📊 Initialized new analytics.json file at ${ANALYTICS_FILE}`);
     }
 } catch (err) {
     console.error("⚠️ Failed to load/initialize analytics.json:", err.message);
@@ -111,7 +198,11 @@ try {
 
 function saveAnalytics() {
     try {
-        fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(analyticsData, null, 2), 'utf8');
+        const jsonStr = JSON.stringify(analyticsData, null, 2);
+        fs.writeFileSync(ANALYTICS_FILE, jsonStr, 'utf8');
+        if (DB_DIR !== __dirname) {
+            try { fs.writeFileSync(path.join(__dirname, 'analytics.json'), jsonStr, 'utf8'); } catch(e){}
+        }
     } catch (err) {
         console.error("⚠️ Failed to write to analytics.json:", err.message);
     }
@@ -9988,6 +10079,8 @@ app.post('/api/calculate-result', (req, res) => {
 
         // Update Analytics: Increment completed quizzes, domain stats, and top career stats
         analyticsData.totalQuizzesCompleted = (analyticsData.totalQuizzesCompleted || 0) + 1;
+        analyticsData.featureUsage = analyticsData.featureUsage || { compass: 0, library: 0, routine: 0 };
+        analyticsData.featureUsage.compass = (analyticsData.featureUsage.compass || 0) + 1;
         if (interest) {
             analyticsData.domainStats[interest] = (analyticsData.domainStats[interest] || 0) + 1;
         }
@@ -10012,49 +10105,97 @@ app.post('/api/calculate-result', (req, res) => {
 
 // Ping route for live active user tracking & page visit counts
 app.post('/api/ping', (req, res) => {
-    const { clientId, isNewVisit, isRoutineActive } = req.body || {};
+    const { clientId, isNewVisit, isRoutineActive, isLibraryActive, isCompassActive, feature } = req.body || {};
     if (!clientId) {
         return res.status(400).json({ error: "clientId is required" });
     }
 
     activeSessions.set(clientId, Date.now());
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers['user-agent'] || 'Browser';
+    const nowIso = new Date().toISOString();
+    const today = nowIso.split('T')[0];
 
-    if (isRoutineActive) {
+    if (!analyticsData.uniqueVisitors) analyticsData.uniqueVisitors = {};
+    if (!analyticsData.featureUsage) {
+        analyticsData.featureUsage = { compass: 0, library: 0, routine: 0 };
+    }
+
+    // Permanent unique visitor tracking
+    if (!analyticsData.uniqueVisitors[clientId]) {
+        analyticsData.uniqueVisitors[clientId] = {
+            firstSeen: nowIso,
+            lastSeen: nowIso,
+            ip: clientIp,
+            userAgent: userAgent,
+            visitCount: 1
+        };
+    } else {
+        analyticsData.uniqueVisitors[clientId].lastSeen = nowIso;
+        if (isNewVisit) {
+            analyticsData.uniqueVisitors[clientId].visitCount = (analyticsData.uniqueVisitors[clientId].visitCount || 1) + 1;
+        }
+    }
+
+    if (isRoutineActive || feature === 'routine') {
         activeRoutineSessions.set(clientId, Date.now());
-        const today = new Date().toISOString().split('T')[0];
         analyticsData.routineStats = analyticsData.routineStats || { totalInteractions: 0, totalHabitCheckoffs: 0, dailyUsers: {} };
         analyticsData.routineStats.dailyUsers[today] = analyticsData.routineStats.dailyUsers[today] || [];
         if (!analyticsData.routineStats.dailyUsers[today].includes(clientId)) {
             analyticsData.routineStats.dailyUsers[today].push(clientId);
-            saveAnalytics();
+        }
+        if (isNewVisit || feature === 'routine') {
+            analyticsData.featureUsage.routine = (analyticsData.featureUsage.routine || 0) + 1;
+        }
+    }
+
+    if (isLibraryActive || feature === 'library') {
+        if (isNewVisit || feature === 'library') {
+            analyticsData.featureUsage.library = (analyticsData.featureUsage.library || 0) + 1;
+        }
+    }
+
+    if (isCompassActive || feature === 'compass') {
+        if (isNewVisit || feature === 'compass') {
+            analyticsData.featureUsage.compass = (analyticsData.featureUsage.compass || 0) + 1;
         }
     }
 
     if (isNewVisit) {
         analyticsData.totalVisitors = (analyticsData.totalVisitors || 0) + 1;
-        saveAnalytics();
+        if (!isRoutineActive && !isLibraryActive && !isCompassActive && !feature) {
+            analyticsData.featureUsage.compass = (analyticsData.featureUsage.compass || 0) + 1;
+        }
     }
+
+    saveAnalytics();
+
+    const uniqueCount = Object.keys(analyticsData.uniqueVisitors || {}).length;
 
     res.json({
         success: true,
         activeUsers: getActiveUserCount(),
+        uniqueVisitors: uniqueCount,
         totalVisitors: analyticsData.totalVisitors
     });
 });
 
 // Event tracking endpoint for Modern Library & Routine Tracker
 app.post('/api/track-event', (req, res) => {
-    const { type, clientId, bookTitle, isCheckoff } = req.body || {};
+    const { type, clientId, bookTitle, isCheckoff, feature } = req.body || {};
     const today = new Date().toISOString().split('T')[0];
 
     analyticsData.libraryStats = analyticsData.libraryStats || { totalViews: 0, bookViews: 0, popularBooks: {} };
     analyticsData.routineStats = analyticsData.routineStats || { totalInteractions: 0, totalHabitCheckoffs: 0, dailyUsers: {} };
+    analyticsData.featureUsage = analyticsData.featureUsage || { compass: 0, library: 0, routine: 0 };
 
     if (type === 'library_open') {
         analyticsData.libraryStats.totalViews = (analyticsData.libraryStats.totalViews || 0) + 1;
+        analyticsData.featureUsage.library = (analyticsData.featureUsage.library || 0) + 1;
         saveAnalytics();
     } else if (type === 'book_view') {
         analyticsData.libraryStats.bookViews = (analyticsData.libraryStats.bookViews || 0) + 1;
+        analyticsData.featureUsage.library = (analyticsData.featureUsage.library || 0) + 1;
         if (bookTitle) {
             analyticsData.libraryStats.popularBooks[bookTitle] = (analyticsData.libraryStats.popularBooks[bookTitle] || 0) + 1;
         }
@@ -10068,9 +10209,13 @@ app.post('/api/track-event', (req, res) => {
             }
         }
         analyticsData.routineStats.totalInteractions = (analyticsData.routineStats.totalInteractions || 0) + 1;
+        analyticsData.featureUsage.routine = (analyticsData.featureUsage.routine || 0) + 1;
         if (isCheckoff) {
             analyticsData.routineStats.totalHabitCheckoffs = (analyticsData.routineStats.totalHabitCheckoffs || 0) + 1;
         }
+        saveAnalytics();
+    } else if (type === 'compass_interaction' || feature === 'compass') {
+        analyticsData.featureUsage.compass = (analyticsData.featureUsage.compass || 0) + 1;
         saveAnalytics();
     }
 
@@ -10084,7 +10229,7 @@ app.post('/api/track-event', (req, res) => {
 // User Registration
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { name, email, username, password } = req.body || {};
+        const { name, email, username, password, mobile } = req.body || {};
 
         if (!name || !email || !password) {
             return res.status(400).json({ error: "Name, email, and password are required." });
@@ -10111,6 +10256,7 @@ app.post('/api/auth/register', async (req, res) => {
             id: userId,
             name: name.trim(),
             email: normalizedEmail,
+            mobile: mobile ? mobile.trim() : '',
             username: finalUsername,
             passwordHash,
             avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name.trim())}`,
@@ -10243,7 +10389,7 @@ app.post('/api/auth/login', async (req, res) => {
 // Google Auth Sync & Telemetry Endpoint
 app.post('/api/auth/google', async (req, res) => {
     try {
-        const { email, name, photoURL, uid } = req.body || {};
+        const { email, name, photoURL, uid, mobile } = req.body || {};
         if (!email) {
             return res.status(400).json({ error: "Google email is required." });
         }
@@ -10260,6 +10406,7 @@ app.post('/api/auth/google', async (req, res) => {
                 id: userId,
                 name: name || normalizedEmail.split('@')[0],
                 email: normalizedEmail,
+                mobile: mobile || '',
                 username: normalizedEmail.split('@')[0],
                 passwordHash: '',
                 avatar: photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name || email)}`,
@@ -10276,6 +10423,7 @@ app.post('/api/auth/google', async (req, res) => {
             user.lastLoginIp = clientIp;
             if (photoURL) user.avatar = photoURL;
             if (name) user.name = name;
+            if (mobile && !user.mobile) user.mobile = mobile;
         }
 
         usersData.loginLogs.unshift({
@@ -10335,7 +10483,7 @@ app.get('/api/auth/me', (req, res) => {
 // Cross-Device Data Synchronization Endpoint (Save Roadmap & Routine per User/Gmail)
 app.post('/api/user/sync', (req, res) => {
     try {
-        const { userId, email, roadmap, routineTracker } = req.body || {};
+        const { userId, email, mobile, roadmap, routineTracker } = req.body || {};
         const authHeader = req.headers.authorization;
         let authUserId = null;
 
@@ -10356,11 +10504,11 @@ app.post('/api/user/sync', (req, res) => {
         );
 
         if (!user && (queryEmail || queryId)) {
-            // Automatically upsert user profile so Google Auth / cross-device users are saved properly
             user = {
                 id: queryId || ("usr_g_" + Date.now()),
                 name: queryEmail ? queryEmail.split('@')[0] : "Synced User",
                 email: queryEmail || "unknown@device",
+                mobile: mobile || '',
                 createdAt: new Date().toISOString(),
                 roadmap: null,
                 routineTracker: null
@@ -10372,10 +10520,10 @@ app.post('/api/user/sync', (req, res) => {
             return res.status(400).json({ error: "User identity (email or userId) required for data sync." });
         }
 
+        if (typeof mobile === 'string' && mobile.trim()) user.mobile = mobile.trim();
         if (roadmap) user.roadmap = roadmap;
         if (routineTracker) {
             user.routineTracker = routineTracker;
-            // Also sync latest habits to any active push subscriptions for this user
             if (Array.isArray(routineTracker.habits)) {
                 pushSubscriptions.forEach(sub => {
                     if ((queryEmail && sub.email && sub.email.toLowerCase() === queryEmail) || (queryId && sub.userId === queryId)) {
@@ -10457,7 +10605,6 @@ try {
     console.error("⚠️ Web Push VAPID initialization warning:", vErr.message);
 }
 
-const SUBSCRIPTIONS_FILE = path.join(__dirname, 'subscriptions.json');
 let pushSubscriptions = [];
 
 function loadPushSubscriptions() {
@@ -10466,10 +10613,10 @@ function loadPushSubscriptions() {
             const raw = fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf8');
             const parsed = JSON.parse(raw);
             pushSubscriptions = Array.isArray(parsed.subscriptions) ? parsed.subscriptions : (Array.isArray(parsed) ? parsed : []);
-            console.log(`🔔 Loaded ${pushSubscriptions.length} Web Push subscriptions from subscriptions.json`);
+            console.log(`🔔 Loaded ${pushSubscriptions.length} Web Push subscriptions from ${SUBSCRIPTIONS_FILE}`);
         } else {
             savePushSubscriptions();
-            console.log("🔔 Initialized new subscriptions.json file");
+            console.log(`🔔 Initialized new subscriptions.json file at ${SUBSCRIPTIONS_FILE}`);
         }
     } catch (err) {
         console.error("⚠️ Failed to load subscriptions.json:", err.message);
@@ -10479,7 +10626,11 @@ function loadPushSubscriptions() {
 
 function savePushSubscriptions() {
     try {
-        fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify({ subscriptions: pushSubscriptions }, null, 2), 'utf8');
+        const jsonStr = JSON.stringify({ subscriptions: pushSubscriptions }, null, 2);
+        fs.writeFileSync(SUBSCRIPTIONS_FILE, jsonStr, 'utf8');
+        if (DB_DIR !== __dirname) {
+            try { fs.writeFileSync(path.join(__dirname, 'subscriptions.json'), jsonStr, 'utf8'); } catch(e){}
+        }
     } catch (err) {
         console.error("⚠️ Failed to write to subscriptions.json:", err.message);
     }
@@ -10991,16 +11142,76 @@ app.get('/api/admin/users', (req, res) => {
     res.json({
         success: true,
         totalUsers: usersData.users.length,
-        users: usersData.users.map(({ passwordHash, ...u }) => u),
-        loginLogs: usersData.loginLogs
+        users: usersData.users.map(({ passwordHash, ...u }) => ({
+            ...u,
+            mobile: u.mobile || '',
+            isGmail: (u.email || '').toLowerCase().endsWith('@gmail.com'),
+            hasRoadmap: !!(u.roadmap && (u.roadmap.title || u.roadmap.careerTitle)),
+            roadmapTitle: u.roadmap ? (u.roadmap.title || u.roadmap.careerTitle || 'Custom Path') : null,
+            roadmapIcon: u.roadmap ? (u.roadmap.icon || '🧭') : null,
+            habitCount: (u.routineTracker && Array.isArray(u.routineTracker.habits)) ? u.routineTracker.habits.length : 0,
+            habits: (u.routineTracker && Array.isArray(u.routineTracker.habits)) ? u.routineTracker.habits : []
+        })),
+        loginLogs: usersData.loginLogs,
+        databaseLocation: DB_DIR
     });
+});
+
+// Admin Update User Profile Details (e.g., Mobile Number, Name, Email)
+app.post('/api/admin/user/update', (req, res) => {
+    const providedPass = req.headers['x-admin-password'] || req.body.adminPassword;
+    if (providedPass !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
+    }
+
+    const { userId, name, email, mobile, username } = req.body || {};
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const user = usersData.users.find(u => u.id === userId);
+    if (!user) {
+        return res.status(404).json({ error: "User not found" });
+    }
+
+    if (name) user.name = name.trim();
+    if (email) user.email = email.trim().toLowerCase();
+    if (typeof mobile !== 'undefined') user.mobile = mobile.trim();
+    if (username) user.username = username.trim().toLowerCase();
+    user.updatedAt = new Date().toISOString();
+
+    saveUsersData();
+    res.json({ success: true, message: "User profile updated successfully.", user });
+});
+
+// Admin Delete User Account
+app.post('/api/admin/user/delete', (req, res) => {
+    const providedPass = req.headers['x-admin-password'] || req.body.adminPassword;
+    if (providedPass !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
+    }
+
+    const { userId } = req.body || {};
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const initialLen = usersData.users.length;
+    usersData.users = usersData.users.filter(u => u.id !== userId);
+
+    if (usersData.users.length === initialLen) {
+        return res.status(404).json({ error: "User not found" });
+    }
+
+    saveUsersData();
+    res.json({ success: true, message: "User deleted permanently from database." });
 });
 
 // Admin login verification route
 app.post('/api/admin/login', (req, res) => {
     const { password } = req.body || {};
     if (password === ADMIN_PASSWORD) {
-        return res.json({ success: true, message: "Authentication successful" });
+        return res.json({ success: true, message: "Authentication successful", databaseLocation: DB_DIR });
     }
     return res.status(401).json({ success: false, message: "Invalid admin password" });
 });
@@ -11021,13 +11232,34 @@ app.get('/api/admin/stats', (req, res) => {
         ? analyticsData.routineStats.dailyUsers[todayStr].length 
         : 0;
 
+    const uniqueVisitorsCount = Object.keys(analyticsData.uniqueVisitors || {}).length;
+    const uniqueUsersTillToday = Math.max(uniqueVisitorsCount, usersData.users.length, totalVisitors > 0 ? totalVisitors : 0);
+
+    // Feature Usage Breakdown
+    const compassUsage = analyticsData.featureUsage?.compass || 0;
+    const libraryUsage = analyticsData.featureUsage?.library || 0;
+    const routineUsage = analyticsData.featureUsage?.routine || 0;
+    const totalFeatureActions = (compassUsage + libraryUsage + routineUsage) || 1;
+
     res.json({
         activeUsers: getActiveUserCount(),
+        uniqueUsersTillToday: uniqueUsersTillToday,
         totalVisitors: totalVisitors,
         totalQuizzesCompleted: totalQuizzes,
         conversionRate: `${conversionRate}%`,
         totalRegisteredUsers: usersData.users.length,
         totalLoginsRecorded: usersData.loginLogs.length,
+        featureUsage: {
+            compass: compassUsage,
+            library: libraryUsage,
+            routine: routineUsage,
+            total: compassUsage + libraryUsage + routineUsage,
+            percentages: {
+                compass: Math.round((compassUsage / totalFeatureActions) * 100),
+                library: Math.round((libraryUsage / totalFeatureActions) * 100),
+                routine: Math.round((routineUsage / totalFeatureActions) * 100)
+            }
+        },
         domainStats: analyticsData.domainStats || {},
         careerStats: analyticsData.careerStats || {},
         libraryStats: {
@@ -11041,6 +11273,7 @@ app.get('/api/admin/stats', (req, res) => {
             totalInteractions: analyticsData.routineStats?.totalInteractions || 0,
             totalHabitCheckoffs: analyticsData.routineStats?.totalHabitCheckoffs || 0
         },
+        databaseLocation: DB_DIR,
         timestamp: new Date().toISOString()
     });
 });

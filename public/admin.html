@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRAXiS Admin Studio | Live Telemetry</title>
+    <title>PRAXiS Admin Studio | Live Telemetry & Database Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -235,18 +236,23 @@
             </div>
 
             <h2 class="text-2xl font-bold text-slate-800 mb-1">PRAXiS Admin Studio</h2>
-            <p class="text-xs text-slate-500 mb-6 font-medium">Live User & Visitor Telemetry Dashboard</p>
+            <p class="text-xs text-slate-500 mb-4 font-medium">Permanent Telemetry & User Database Server</p>
+
+            <div class="mb-5 p-2.5 neo-inset text-left text-[11px] text-slate-600 font-mono flex items-center gap-2">
+                <span>💾</span>
+                <span class="truncate">Master DB: <strong>F:\Praxis Admin server</strong></span>
+            </div>
 
             <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
                 <div>
-                    <input type="password" id="admin-password-input" placeholder="Security Password" required
+                    <input type="password" id="admin-password-input" placeholder="Security Password (default: admin123)" required
                         class="neo-input w-full px-4 py-3 text-slate-800 placeholder-slate-400 text-center font-medium text-sm">
                 </div>
                 
                 <p id="login-error" class="text-xs text-rose-500 font-medium hidden"></p>
 
                 <button type="submit" class="w-full py-3 px-4 neo-btn-primary font-bold text-sm tracking-wide">
-                    Unlock Studio
+                    Unlock Admin Studio
                 </button>
             </form>
             <div class="mt-6">
@@ -258,29 +264,32 @@
     </div>
 
     <!-- MAIN ADMIN STUDIO DASHBOARD -->
-    <div id="admin-dashboard" class="max-w-4xl mx-auto hidden space-y-6">
+    <div id="admin-dashboard" class="max-w-6xl mx-auto hidden space-y-6">
         
         <!-- HEADER BAR -->
-        <header class="neo-card p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <header class="neo-card p-4 sm:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
             
             <!-- BRANDING & TITLE -->
-            <div class="flex items-center gap-4 w-full sm:w-auto">
+            <div class="flex items-center gap-4 w-full md:w-auto">
                 <div class="w-12 h-12 neo-icon flex items-center justify-center font-extrabold text-xl bg-gradient-to-br from-softLavender-400 to-softBlue-500 text-white shrink-0 shadow-inner">
                     P
                 </div>
                 <div>
                     <div class="flex items-center gap-2.5 flex-wrap">
-                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Admin Dashboard</h1>
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Admin Studio & Database</h1>
                         <span class="neo-pill px-3 py-1 text-xs font-semibold text-slate-600 flex items-center gap-2">
                             <span class="live-dot"></span> Live Sync
                         </span>
                     </div>
-                    <p class="text-xs text-slate-500 font-medium">Real-time Traffic & Visitor Telemetry</p>
+                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5">
+                        <span>Permanent DB:</span>
+                        <span id="db-location-tag" class="font-mono text-[11px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">F:\Praxis Admin server</span>
+                    </div>
                 </div>
             </div>
 
             <!-- ACTION BUTTONS -->
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+            <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end flex-wrap">
                 <span id="last-updated-tag" class="text-[11px] sm:text-xs text-slate-500 font-medium">Syncing...</span>
                 
                 <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
@@ -298,8 +307,8 @@
                         <span>📚 Library</span>
                     </a>
 
-                    <a href="/routine.html" class="neo-btn px-2.5 py-1.5 text-xs font-semibold text-slate-700 flex items-center gap-1 hover:text-amber-600">
-                        <span>🔥 Routine</span>
+                    <a href="/routine.html" class="neo-btn px-2.5 py-1.5 text-xs font-semibold text-slate-700 flex items-center gap-1 hover:text-emerald-600">
+                        <span>🔥 Habit Tracker</span>
                     </a>
 
                     <button onclick="handleLogout()" class="neo-btn px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50/50 cursor-pointer">
@@ -309,35 +318,35 @@
             </div>
         </header>
 
-        <!-- HERO METRICS GRID (4 CARDS) -->
+        <!-- TOP METRICS GRID (4 CARDS) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             
-            <!-- CARD 1: LIVE USERS -->
+            <!-- CARD 1: LIVE ACTIVE USERS -->
             <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-2 mb-1.5">
                         <span class="live-dot"></span>
                         <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Live Active Users</span>
                     </div>
-                    <span id="stat-active-users" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Active site sessions</p>
+                    <span id="stat-active-users" class="text-3xl sm:text-4xl font-extrabold text-emerald-600">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Live site sessions now</p>
                 </div>
-                <div class="w-12 h-12 neo-icon text-emerald-500 flex items-center justify-center font-bold text-xl shrink-0">
+                <div class="w-12 h-12 neo-icon text-emerald-500 flex items-center justify-center font-bold text-2xl shrink-0">
                     🟢
                 </div>
             </div>
 
-            <!-- CARD 2: TOTAL VISITORS -->
+            <!-- CARD 2: UNIQUE USERS TILL TODAY -->
             <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Visitors</span>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Unique Users Till Today</span>
                     </div>
-                    <span id="stat-total-visitors" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Total page hits</p>
+                    <span id="stat-unique-users" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Total permanent unique users</p>
                 </div>
-                <div class="w-12 h-12 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-xl shrink-0">
-                    👁️
+                <div class="w-12 h-12 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-2xl shrink-0">
+                    🌐
                 </div>
             </div>
 
@@ -345,114 +354,338 @@
             <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registered Users</span>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registered Accounts</span>
                     </div>
-                    <span id="stat-total-users" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Verified user accounts</p>
+                    <span id="stat-total-users" class="text-3xl sm:text-4xl font-extrabold text-indigo-600">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Verified user records</p>
                 </div>
-                <div class="w-12 h-12 neo-icon text-softLavender-500 flex items-center justify-center font-bold text-xl shrink-0">
+                <div class="w-12 h-12 neo-icon text-softLavender-500 flex items-center justify-center font-bold text-2xl shrink-0">
                     👥
                 </div>
             </div>
 
-            <!-- CARD 4: TOTAL LOGINS -->
+            <!-- CARD 4: TOTAL VISITS & LOGINS -->
             <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Logins</span>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Platform Traffic Hits</span>
                     </div>
-                    <span id="stat-total-logins" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Auth audit events</p>
+                    <span id="stat-total-visitors" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Total page views recorded</p>
                 </div>
-                <div class="w-12 h-12 neo-icon text-amber-500 flex items-center justify-center font-bold text-xl shrink-0">
-                    🔑
+                <div class="w-12 h-12 neo-icon text-amber-500 flex items-center justify-center font-bold text-2xl shrink-0">
+                    📊
                 </div>
             </div>
 
         </div>
 
-        <!-- USER MANAGEMENT & LOGIN TELEMETRY STUDIO SECTION -->
+        <!-- ===================================================================== -->
+        <!-- FEATURE USAGE ANALYTICS & INTERACTIVE PIE CHART SECTION -->
+        <!-- ===================================================================== -->
         <div class="neo-card p-5 sm:p-7 space-y-6">
             
-            <!-- SECTION HEADER & TABS -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-300/60 pb-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-300/60 pb-4">
                 <div>
-                    <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">Users & Auth Telemetry</h2>
-                    <p class="text-xs text-slate-500 font-medium mt-0.5">Real-time database of registered user accounts and login activity logs</p>
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">🥧</span>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">Feature Adoption & Usage Intelligence</h2>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Real-time comparison showing which feature users are utilizing most</p>
                 </div>
-
-                <div class="flex items-center gap-2 bg-slate-200/60 p-1 rounded-xl shrink-0">
-                    <button onclick="switchAdminTab('users')" id="admin-tab-users-btn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">
-                        Registered Users (<span id="user-count-badge">0</span>)
-                    </button>
-                    <button onclick="switchAdminTab('logs')" id="admin-tab-logs-btn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900">
-                        Login Activity Logs (<span id="log-count-badge">0</span>)
-                    </button>
+                <div id="top-feature-badge" class="neo-pill px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 flex items-center gap-1.5">
+                    <span>👑 Most Used Feature:</span>
+                    <span id="top-feature-name" class="font-extrabold text-indigo-900">Calculating...</span>
                 </div>
             </div>
 
-            <!-- TAB 1: REGISTERED USERS TABLE -->
-            <div id="admin-view-users" class="space-y-4">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
-                                <th class="py-3 px-3">User</th>
-                                <th class="py-3 px-3">Contact Email</th>
-                                <th class="py-3 px-3">Mobile Number</th>
-                                <th class="py-3 px-3">Status</th>
-                                <th class="py-3 px-3">Joined Date</th>
-                                <th class="py-3 px-3 text-center">Logins</th>
-                                <th class="py-3 px-3">Last Active & IP</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table-body" class="divide-y divide-slate-200 text-slate-700 font-medium">
-                            <tr>
-                                <td colspan="7" class="py-8 text-center text-slate-400 font-semibold">Loading registered users...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <!-- GRID: PIE CHART + FEATURE BREAKDOWN STAT CARDS -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                
+                <!-- LEFT: INTERACTIVE PIE CHART CONTAINER (5 COLS) -->
+                <div class="lg:col-span-5 flex flex-col items-center justify-center p-4 neo-inset rounded-2xl relative min-h-[300px]">
+                    <div class="w-full max-w-[280px] h-[280px] relative flex items-center justify-center">
+                        <canvas id="featureUsagePieChart"></canvas>
+                    </div>
+                    <p class="text-[11px] text-slate-500 font-medium mt-3 text-center">Interactive Telemetry Pie Chart &bull; Auto-Synced</p>
                 </div>
-            </div>
 
-            <!-- TAB 2: LOGIN ACTIVITY LOGS TABLE -->
-            <div id="admin-view-logs" class="space-y-4 hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
-                                <th class="py-3 px-3">Timestamp</th>
-                                <th class="py-3 px-3">User / Identifier</th>
-                                <th class="py-3 px-3">Email Address</th>
-                                <th class="py-3 px-3">IP Address</th>
-                                <th class="py-3 px-3">Device / User-Agent</th>
-                                <th class="py-3 px-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-table-body" class="divide-y divide-slate-200 text-slate-700 font-medium">
-                            <tr>
-                                <td colspan="6" class="py-8 text-center text-slate-400 font-semibold">Loading login activity logs...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- RIGHT: FEATURE BREAKDOWN CARDS (7 COLS) -->
+                <div class="lg:col-span-7 space-y-4">
+                    
+                    <!-- FEATURE 1: CAREER COMPASS -->
+                    <div class="neo-card-sm p-4 hover:border-blue-500 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg border border-blue-300">
+                                    🧭
+                                </div>
+                                <div>
+                                    <h3 class="font-extrabold text-slate-800 text-sm">Career Compass & Assessments</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">Domain quizzes & customized career roadmap generation</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span id="usage-compass-count" class="text-base font-extrabold text-blue-600">0</span>
+                                <span class="text-xs text-slate-400 block font-semibold" id="usage-compass-pct">0%</span>
+                            </div>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="usage-compass-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- FEATURE 2: MODERN LIBRARY -->
+                    <div class="neo-card-sm p-4 hover:border-indigo-500 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg border border-indigo-300">
+                                    📚
+                                </div>
+                                <div>
+                                    <h3 class="font-extrabold text-slate-800 text-sm">Modern Library</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">Full public-domain books, Gutenberg texts & digital reader</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span id="usage-library-count" class="text-base font-extrabold text-indigo-600">0</span>
+                                <span class="text-xs text-slate-400 block font-semibold" id="usage-library-pct">0%</span>
+                            </div>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="usage-library-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- FEATURE 3: HABITAT / ROUTINE TRACKER -->
+                    <div class="neo-card-sm p-4 hover:border-emerald-500 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg border border-emerald-300">
+                                    🔥
+                                </div>
+                                <div>
+                                    <h3 class="font-extrabold text-slate-800 text-sm">Habitat / Routine Tracker</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">Daily habit check-offs, spreadsheet grid & 24/7 push reminders</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span id="usage-routine-count" class="text-base font-extrabold text-emerald-600">0</span>
+                                <span class="text-xs text-slate-400 block font-semibold" id="usage-routine-pct">0%</span>
+                            </div>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="usage-routine-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
                 </div>
+
             </div>
 
         </div>
+
+        <!-- ===================================================================== -->
+        <!-- SEPARATE DEDICATED USER SECTION (PROFILES, GMAIL, MOBILE NUMBERS) -->
+        <!-- ===================================================================== -->
+        <section id="user-management-section" class="neo-card p-5 sm:p-7 space-y-6">
+            
+            <!-- SECTION HEADER & TOOLBAR -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-300/60 pb-4">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">👤</span>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">Registered Users & Profiles Database</h2>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Permanent records of user names, Gmail addresses, mobile numbers, and active routines</p>
+                </div>
+
+                <!-- RIGHT ACTIONS: SEARCH & CSV EXPORT -->
+                <div class="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
+                    <div class="relative flex-grow md:flex-grow-0">
+                        <input type="text" id="user-search-input" oninput="filterUsersTable()" placeholder="Search Name, Gmail, Mobile..."
+                            class="neo-input px-3.5 py-2 text-xs w-full md:w-64 placeholder-slate-400 font-medium">
+                        <span class="absolute right-3 top-2.5 text-slate-400 text-xs">🔍</span>
+                    </div>
+
+                    <button onclick="exportUsersToCSV()" class="neo-btn px-3 py-2 text-xs font-bold text-slate-700 flex items-center gap-1.5 hover:text-blue-600">
+                        <span>📥 Export CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- QUICK FILTER CHIPS -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold">
+                <button onclick="setUserFilter('all')" id="filter-btn-all" class="px-3 py-1.5 neo-pill text-blue-600 font-bold bg-white shadow-sm">
+                    All Users (<span id="count-chip-all">0</span>)
+                </button>
+                <button onclick="setUserFilter('gmail')" id="filter-btn-gmail" class="px-3 py-1.5 neo-btn text-slate-600">
+                    📧 Gmail Users (<span id="count-chip-gmail">0</span>)
+                </button>
+                <button onclick="setUserFilter('mobile')" id="filter-btn-mobile" class="px-3 py-1.5 neo-btn text-slate-600">
+                    📱 Phone Linked (<span id="count-chip-mobile">0</span>)
+                </button>
+                <button onclick="setUserFilter('roadmap')" id="filter-btn-roadmap" class="px-3 py-1.5 neo-btn text-slate-600">
+                    🧭 Has Roadmap (<span id="count-chip-roadmap">0</span>)
+                </button>
+                <button onclick="setUserFilter('habits')" id="filter-btn-habits" class="px-3 py-1.5 neo-btn text-slate-600">
+                    🔥 Has Habits (<span id="count-chip-habits">0</span>)
+                </button>
+            </div>
+
+            <!-- USERS TABLE CONTAINER -->
+            <div class="overflow-x-auto neo-inset p-3 rounded-2xl">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-300/80 text-slate-500 font-extrabold uppercase tracking-wider">
+                            <th class="py-3 px-3">User Profile</th>
+                            <th class="py-3 px-3">Gmail / Contact</th>
+                            <th class="py-3 px-3">Mobile Number</th>
+                            <th class="py-3 px-3">Career Roadmap</th>
+                            <th class="py-3 px-3 text-center">Habits Active</th>
+                            <th class="py-3 px-3">Joined Date</th>
+                            <th class="py-3 px-3 text-center">Logins</th>
+                            <th class="py-3 px-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
+                        <tr>
+                            <td colspan="8" class="py-8 text-center text-slate-400 font-semibold">Loading permanent user records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- LOGIN ACTIVITY AUDIT LOGS SECTION -->
+        <!-- ===================================================================== -->
+        <section class="neo-card p-5 sm:p-7 space-y-4">
+            
+            <div class="flex items-center justify-between border-b border-slate-300/60 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🔐</span>
+                    <h2 class="text-base sm:text-lg font-extrabold text-slate-800">Security & Authentication Audit Trail</h2>
+                </div>
+                <span class="text-xs font-bold text-slate-500">Total Audits: <span id="log-count-badge">0</span></span>
+            </div>
+
+            <div class="overflow-x-auto neo-inset p-3 rounded-2xl max-h-80 overflow-y-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
+                            <th class="py-2.5 px-3">Timestamp</th>
+                            <th class="py-2.5 px-3">User / Identity</th>
+                            <th class="py-2.5 px-3">Email Address</th>
+                            <th class="py-2.5 px-3">IP Address</th>
+                            <th class="py-2.5 px-3">Device / User-Agent</th>
+                            <th class="py-2.5 px-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
+                        <tr>
+                            <td colspan="6" class="py-6 text-center text-slate-400 font-semibold">Loading login telemetry logs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
 
         <!-- FOOTER -->
         <footer class="text-center text-xs text-slate-400 py-4 font-medium flex items-center justify-center gap-2">
-            <span>PRAXiS Admin Dashboard</span>
+            <span>PRAXiS Admin Studio</span>
             <span>&bull;</span>
-            <span>Live Telemetry Engine</span>
+            <span>Permanent Database: F:\Praxis Admin server</span>
         </footer>
 
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- USER DETAILS & EDIT MODAL -->
+    <!-- ===================================================================== -->
+    <div id="user-inspect-modal" class="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4 hidden">
+        <div class="neo-card p-6 max-w-2xl w-full relative max-h-[90vh] overflow-y-auto space-y-5">
+            
+            <div class="flex items-center justify-between border-b border-slate-300 pb-3">
+                <div class="flex items-center gap-3">
+                    <img id="modal-user-avatar" src="" class="w-12 h-12 rounded-full border border-slate-300 bg-slate-200 object-cover">
+                    <div>
+                        <h3 id="modal-user-name" class="text-lg font-extrabold text-slate-800">User Details</h3>
+                        <p id="modal-user-username" class="text-xs text-blue-600 font-bold">@username</p>
+                    </div>
+                </div>
+                <button onclick="closeUserModal()" class="neo-btn w-8 h-8 flex items-center justify-center text-slate-600 font-bold text-base hover:text-rose-600">✕</button>
+            </div>
+
+            <!-- USER INFORMATION EDIT FORM -->
+            <form id="edit-user-form" onsubmit="saveUserModalChanges(event)" class="space-y-4">
+                <input type="hidden" id="modal-user-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
+                        <input type="text" id="modal-input-name" required class="neo-input w-full px-3.5 py-2 text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Gmail / Email</label>
+                        <input type="email" id="modal-input-email" required class="neo-input w-full px-3.5 py-2 text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mobile / WhatsApp Number</label>
+                        <input type="tel" id="modal-input-mobile" placeholder="+91 98765 43210" class="neo-input w-full px-3.5 py-2 text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Username</label>
+                        <input type="text" id="modal-input-username" class="neo-input w-full px-3.5 py-2 text-xs font-medium">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <span id="modal-save-status" class="text-xs font-semibold text-emerald-600 hidden">✓ Saved permanently to F:\Praxis Admin server</span>
+                    <button type="submit" class="neo-btn-primary px-4 py-2 text-xs font-bold ml-auto">
+                        💾 Save Changes Permanently
+                    </button>
+                </div>
+            </form>
+
+            <!-- ROADMAP & HABIT TELEMETRY FOR THIS USER -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-300">
+                <!-- User Roadmap -->
+                <div class="neo-inset p-3.5 rounded-xl">
+                    <h4 class="text-xs font-extrabold text-slate-800 mb-2 flex items-center gap-1.5">
+                        <span>🧭</span> Career Focus / Roadmap
+                    </h4>
+                    <div id="modal-roadmap-content" class="text-xs text-slate-600 font-medium">
+                        No roadmap saved yet.
+                    </div>
+                </div>
+
+                <!-- User Active Habits -->
+                <div class="neo-inset p-3.5 rounded-xl">
+                    <h4 class="text-xs font-extrabold text-slate-800 mb-2 flex items-center gap-1.5">
+                        <span>🔥</span> Habitat Tracker Habits (<span id="modal-habits-count">0</span>)
+                    </h4>
+                    <div id="modal-habits-content" class="text-xs text-slate-600 font-medium max-h-32 overflow-y-auto space-y-1">
+                        No active habits tracked.
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <!-- MAIN DASHBOARD SCRIPT -->
     <script>
         let adminPassword = sessionStorage.getItem('praxis_admin_pwd') || '';
         let statsInterval = null;
+        let featureChartInstance = null;
+        let allUsersList = [];
+        let currentFilterType = 'all';
 
         document.addEventListener('DOMContentLoaded', () => {
             if (adminPassword) {
@@ -480,6 +713,10 @@
                     adminPassword = pwd;
                     sessionStorage.setItem('praxis_admin_pwd', pwd);
                     errorEl.classList.add('hidden');
+                    if (data.databaseLocation) {
+                        const dbTag = document.getElementById('db-location-tag');
+                        if (dbTag) dbTag.innerText = data.databaseLocation;
+                    }
                     verifyAndShowDashboard();
                 } else {
                     errorEl.innerText = data.message || "Invalid Security Password";
@@ -498,7 +735,7 @@
             fetchAdminStats();
 
             if (!statsInterval) {
-                statsInterval = setInterval(fetchAdminStats, 5000);
+                statsInterval = setInterval(fetchAdminStats, 4000);
             }
         }
 
@@ -532,6 +769,7 @@
 
                 const data = await res.json();
                 renderStats(data);
+                renderFeatureUsagePieChart(data.featureUsage);
 
                 // Fetch registered users & login telemetry
                 fetchAdminUsersData();
@@ -543,7 +781,7 @@
                 document.getElementById('last-updated-tag').innerText = "Sync Failed";
             } finally {
                 if (refreshIcon) {
-                    setTimeout(() => refreshIcon.classList.remove('spinning'), 400);
+                    setTimeout(() => refreshIcon.classList.remove('spinning'), 350);
                 }
             }
         }
@@ -555,22 +793,90 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    renderUsersTable(data.users || []);
+                    allUsersList = data.users || [];
+                    
+                    updateUserFilterChips(allUsersList);
+                    filterUsersTable();
                     renderLogsTable(data.loginLogs || []);
                     
-                    const uBadge = document.getElementById('user-count-badge');
                     const lBadge = document.getElementById('log-count-badge');
-                    if (uBadge) uBadge.innerText = (data.users || []).length;
                     if (lBadge) lBadge.innerText = (data.loginLogs || []).length;
 
                     const statUsers = document.getElementById('stat-total-users');
-                    const statLogins = document.getElementById('stat-total-logins');
-                    if (statUsers) statUsers.innerText = (data.users || []).length;
-                    if (statLogins) statLogins.innerText = (data.loginLogs || []).length;
+                    if (statUsers) statUsers.innerText = allUsersList.length;
+
+                    if (data.databaseLocation) {
+                        const dbTag = document.getElementById('db-location-tag');
+                        if (dbTag) dbTag.innerText = data.databaseLocation;
+                    }
                 }
             } catch (err) {
                 console.warn("Failed to fetch admin users data:", err);
             }
+        }
+
+        function updateUserFilterChips(users) {
+            const countAll = users.length;
+            const countGmail = users.filter(u => u.isGmail || (u.email && u.email.toLowerCase().endsWith('@gmail.com'))).length;
+            const countMobile = users.filter(u => u.mobile && u.mobile.trim() !== '').length;
+            const countRoadmap = users.filter(u => u.hasRoadmap || (u.roadmap && u.roadmap.title)).length;
+            const countHabits = users.filter(u => u.habitCount > 0).length;
+
+            const elAll = document.getElementById('count-chip-all');
+            const elGmail = document.getElementById('count-chip-gmail');
+            const elMobile = document.getElementById('count-chip-mobile');
+            const elRoadmap = document.getElementById('count-chip-roadmap');
+            const elHabits = document.getElementById('count-chip-habits');
+
+            if (elAll) elAll.innerText = countAll;
+            if (elGmail) elGmail.innerText = countGmail;
+            if (elMobile) elMobile.innerText = countMobile;
+            if (elRoadmap) elRoadmap.innerText = countRoadmap;
+            if (elHabits) elHabits.innerText = countHabits;
+        }
+
+        function setUserFilter(type) {
+            currentFilterType = type;
+            const buttons = ['all', 'gmail', 'mobile', 'roadmap', 'habits'];
+            buttons.forEach(b => {
+                const btn = document.getElementById(`filter-btn-${b}`);
+                if (btn) {
+                    if (b === type) {
+                        btn.className = "px-3 py-1.5 neo-pill text-blue-600 font-bold bg-white shadow-sm";
+                    } else {
+                        btn.className = "px-3 py-1.5 neo-btn text-slate-600";
+                    }
+                }
+            });
+            filterUsersTable();
+        }
+
+        function filterUsersTable() {
+            const searchInput = document.getElementById('user-search-input');
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+            let filtered = allUsersList.slice();
+
+            if (currentFilterType === 'gmail') {
+                filtered = filtered.filter(u => u.isGmail || (u.email && u.email.toLowerCase().endsWith('@gmail.com')));
+            } else if (currentFilterType === 'mobile') {
+                filtered = filtered.filter(u => u.mobile && u.mobile.trim() !== '');
+            } else if (currentFilterType === 'roadmap') {
+                filtered = filtered.filter(u => u.hasRoadmap || (u.roadmap && u.roadmap.title));
+            } else if (currentFilterType === 'habits') {
+                filtered = filtered.filter(u => u.habitCount > 0);
+            }
+
+            if (query) {
+                filtered = filtered.filter(u => 
+                    (u.name && u.name.toLowerCase().includes(query)) ||
+                    (u.email && u.email.toLowerCase().includes(query)) ||
+                    (u.mobile && u.mobile.toLowerCase().includes(query)) ||
+                    (u.username && u.username.toLowerCase().includes(query))
+                );
+            }
+
+            renderUsersTable(filtered);
         }
 
         function renderUsersTable(users) {
@@ -578,38 +884,69 @@
             if (!tbody) return;
 
             if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-semibold">No registered users yet. Sign up on the main website to see records here!</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400 font-semibold">No users match the search filter.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = users.map(u => `
-                <tr class="hover:bg-slate-100/60 transition-colors">
-                    <td class="py-3 px-3">
-                        <div class="flex items-center gap-2.5">
-                            <img src="${u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.username)}`}" class="w-8 h-8 rounded-full object-cover border border-slate-300 bg-slate-200">
-                            <div>
-                                <span class="font-extrabold text-slate-800 block">${escapeHtml(u.name || 'User')}</span>
-                                <span class="text-[11px] text-blue-600 font-bold">@${escapeHtml(u.username)}</span>
+            tbody.innerHTML = users.map(u => {
+                const isGmail = (u.email && u.email.toLowerCase().endsWith('@gmail.com'));
+                const emailDisplay = isGmail 
+                    ? `<div class="flex items-center gap-1.5">
+                         <span class="font-mono text-slate-800 font-bold text-[11px]">${escapeHtml(u.email)}</span>
+                         <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-red-100 text-red-700 border border-red-200">Gmail</span>
+                       </div>`
+                    : `<span class="font-mono text-slate-700 text-[11px]">${escapeHtml(u.email || 'N/A')}</span>`;
+
+                const mobileDisplay = u.mobile && u.mobile.trim() !== ''
+                    ? `<div class="flex items-center gap-1.5">
+                         <span class="font-bold text-slate-800">${escapeHtml(u.mobile)}</span>
+                         <a href="https://wa.me/${escapeHtml(u.mobile.replace(/[^0-9]/g, ''))}" target="_blank" title="WhatsApp Message" class="text-[11px] text-emerald-600 hover:underline">💬</a>
+                       </div>`
+                    : `<button onclick="openUserModal('${u.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 hover:bg-blue-100">+ Add Mobile</button>`;
+
+                const roadmapDisplay = u.roadmapTitle || (u.roadmap && u.roadmap.title)
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                         <span>${u.roadmapIcon || (u.roadmap && u.roadmap.icon) || '🧭'}</span>
+                         <span class="truncate max-w-[120px]">${escapeHtml(u.roadmapTitle || u.roadmap.title)}</span>
+                       </span>`
+                    : `<span class="text-slate-400 text-[11px] italic">Not selected</span>`;
+
+                const habitsDisplay = u.habitCount > 0
+                    ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold rounded-md text-[11px]">${u.habitCount} active</span>`
+                    : `<span class="text-slate-400 text-[11px]">0</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-100/70 transition-colors">
+                        <td class="py-3 px-3">
+                            <div class="flex items-center gap-2.5">
+                                <img src="${u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.username || u.name)}`}" class="w-8 h-8 rounded-full object-cover border border-slate-300 bg-slate-200">
+                                <div>
+                                    <span class="font-extrabold text-slate-800 block text-xs">${escapeHtml(u.name || 'User')}</span>
+                                    <span class="text-[10px] text-blue-600 font-bold">@${escapeHtml(u.username || 'user')}</span>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-3 text-slate-700 font-mono text-[11px]">${escapeHtml(u.email)}</td>
-                    <td class="py-3 px-3 text-slate-600 font-medium">${escapeHtml(u.mobile || 'N/A')}</td>
-                    <td class="py-3 px-3">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                            ✓ Verified
-                        </span>
-                    </td>
-                    <td class="py-3 px-3 text-slate-500 font-medium">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
-                    <td class="py-3 px-3 text-center">
-                        <span class="px-2 py-1 bg-slate-200/70 font-extrabold text-slate-800 rounded-md text-xs">${u.loginCount || 1}</span>
-                    </td>
-                    <td class="py-3 px-3">
-                        <span class="block text-slate-700 font-semibold">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'N/A'}</span>
-                        <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(u.lastLoginIp || '127.0.0.1')}</span>
-                    </td>
-                </tr>
-            `).join('');
+                        </td>
+                        <td class="py-3 px-3">${emailDisplay}</td>
+                        <td class="py-3 px-3">${mobileDisplay}</td>
+                        <td class="py-3 px-3">${roadmapDisplay}</td>
+                        <td class="py-3 px-3 text-center">${habitsDisplay}</td>
+                        <td class="py-3 px-3 text-slate-500 font-medium">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="px-2 py-0.5 bg-slate-200/80 font-extrabold text-slate-800 rounded text-xs">${u.loginCount || 1}</span>
+                        </td>
+                        <td class="py-3 px-3 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="openUserModal('${u.id}')" title="Inspect & Edit Profile" class="neo-btn px-2 py-1 text-[11px] font-bold text-slate-700 hover:text-blue-600">
+                                    👁️ Details
+                                </button>
+                                <button onclick="deleteUserAccount('${u.id}', '${escapeHtml(u.name)}')" title="Delete User" class="neo-btn px-2 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-100">
+                                    🗑️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderLogsTable(logs) {
@@ -622,44 +959,277 @@
             }
 
             tbody.innerHTML = logs.map(l => {
-                const isSuccess = l.status === 'SUCCESS';
+                const isSuccess = l.status && l.status.startsWith('SUCCESS');
                 const statusBadge = isSuccess
                     ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-300">SUCCESS</span>`
                     : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-300">${escapeHtml(l.status)}</span>`;
 
                 return `
                     <tr class="hover:bg-slate-100/60 transition-colors">
-                        <td class="py-3 px-3 text-slate-500 font-mono text-[11px]">${l.timestamp ? new Date(l.timestamp).toLocaleString() : 'N/A'}</td>
-                        <td class="py-3 px-3 font-bold text-slate-800">
+                        <td class="py-2.5 px-3 text-slate-500 font-mono text-[11px]">${l.timestamp ? new Date(l.timestamp).toLocaleString() : 'N/A'}</td>
+                        <td class="py-2.5 px-3 font-bold text-slate-800 text-xs">
                             ${escapeHtml(l.name || l.username || 'Unknown')}
                             ${l.username ? `<span class="block text-[10px] text-blue-600 font-semibold">@${escapeHtml(l.username)}</span>` : ''}
                         </td>
-                        <td class="py-3 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.email || 'N/A')}</td>
-                        <td class="py-3 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.ip || '127.0.0.1')}</td>
-                        <td class="py-3 px-3 text-slate-500 text-[11px] max-w-[200px] truncate" title="${escapeHtml(l.userAgent || '')}">${escapeHtml(l.userAgent || 'Browser')}</td>
-                        <td class="py-3 px-3">${statusBadge}</td>
+                        <td class="py-2.5 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.email || 'N/A')}</td>
+                        <td class="py-2.5 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.ip || '127.0.0.1')}</td>
+                        <td class="py-2.5 px-3 text-slate-500 text-[11px] max-w-[180px] truncate" title="${escapeHtml(l.userAgent || '')}">${escapeHtml(l.userAgent || 'Browser')}</td>
+                        <td class="py-2.5 px-3">${statusBadge}</td>
                     </tr>
                 `;
             }).join('');
         }
 
-        function switchAdminTab(tabName) {
-            const uView = document.getElementById('admin-view-users');
-            const lView = document.getElementById('admin-view-logs');
-            const uBtn = document.getElementById('admin-tab-users-btn');
-            const lBtn = document.getElementById('admin-tab-logs-btn');
+        // =====================================================================
+        // FEATURE USAGE PIE CHART RENDERING (Chart.js)
+        // =====================================================================
+        function renderFeatureUsagePieChart(featureUsage) {
+            const compass = (featureUsage && featureUsage.compass) || 0;
+            const library = (featureUsage && featureUsage.library) || 0;
+            const routine = (featureUsage && featureUsage.routine) || 0;
+            const total = compass + library + routine || 1;
 
-            if (tabName === 'users') {
-                if (uView) uView.classList.remove('hidden');
-                if (lView) lView.classList.add('hidden');
-                if (uBtn) uBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
-                if (lBtn) lBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900";
-            } else {
-                if (uView) uView.classList.add('hidden');
-                if (lView) lView.classList.remove('hidden');
-                if (uBtn) uBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900";
-                if (lBtn) lBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm";
+            const compassPct = Math.round((compass / total) * 100);
+            const libraryPct = Math.round((library / total) * 100);
+            const routinePct = Math.round((routine / total) * 100);
+
+            // Update Counts and Progress Bars
+            const elCompassCount = document.getElementById('usage-compass-count');
+            const elCompassPct = document.getElementById('usage-compass-pct');
+            const elCompassBar = document.getElementById('usage-compass-bar');
+            if (elCompassCount) elCompassCount.innerText = `${compass} visits`;
+            if (elCompassPct) elCompassPct.innerText = `${compassPct}%`;
+            if (elCompassBar) elCompassBar.style.width = `${compassPct}%`;
+
+            const elLibraryCount = document.getElementById('usage-library-count');
+            const elLibraryPct = document.getElementById('usage-library-pct');
+            const elLibraryBar = document.getElementById('usage-library-bar');
+            if (elLibraryCount) elLibraryCount.innerText = `${library} views`;
+            if (elLibraryPct) elLibraryPct.innerText = `${libraryPct}%`;
+            if (elLibraryBar) elLibraryBar.style.width = `${libraryPct}%`;
+
+            const elRoutineCount = document.getElementById('usage-routine-count');
+            const elRoutinePct = document.getElementById('usage-routine-pct');
+            const elRoutineBar = document.getElementById('usage-routine-bar');
+            if (elRoutineCount) elRoutineCount.innerText = `${routine} check-offs`;
+            if (elRoutinePct) elRoutinePct.innerText = `${routinePct}%`;
+            if (elRoutineBar) elRoutineBar.style.width = `${routinePct}%`;
+
+            // Determine Crown Winner
+            const topFeatureEl = document.getElementById('top-feature-name');
+            if (topFeatureEl) {
+                if (compass >= library && compass >= routine && compass > 0) {
+                    topFeatureEl.innerText = `🧭 Compass (${compassPct}%)`;
+                } else if (library >= compass && library >= routine && library > 0) {
+                    topFeatureEl.innerText = `📚 Library (${libraryPct}%)`;
+                } else if (routine >= compass && routine >= library && routine > 0) {
+                    topFeatureEl.innerText = `🔥 Habitat Tracker (${routinePct}%)`;
+                } else {
+                    topFeatureEl.innerText = `🧭 Compass (Active)`;
+                }
             }
+
+            // Render Chart.js Canvas
+            const ctx = document.getElementById('featureUsagePieChart');
+            if (!ctx) return;
+
+            const chartData = {
+                labels: ['🧭 Compass', '📚 Modern Library', '🔥 Habitat Tracker'],
+                datasets: [{
+                    data: [compass || 1, library || 1, routine || 1],
+                    backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            };
+
+            if (featureChartInstance) {
+                featureChartInstance.data.datasets[0].data = [compass, library, routine];
+                featureChartInstance.update();
+            } else {
+                featureChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '62%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { family: 'Inter', size: 11, weight: '600' },
+                                    color: '#334155',
+                                    padding: 14
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.raw || 0;
+                                        const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                                        return ` ${context.label}: ${val} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // =====================================================================
+        // USER INSPECTOR & DETAILS MODAL
+        // =====================================================================
+        function openUserModal(userId) {
+            const user = allUsersList.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('modal-user-id').value = user.id;
+            document.getElementById('modal-user-avatar').src = user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username || user.name)}`;
+            document.getElementById('modal-user-name').innerText = user.name || 'User Profile';
+            document.getElementById('modal-user-username').innerText = `@${user.username || 'user'}`;
+
+            document.getElementById('modal-input-name').value = user.name || '';
+            document.getElementById('modal-input-email').value = user.email || '';
+            document.getElementById('modal-input-mobile').value = user.mobile || '';
+            document.getElementById('modal-input-username').value = user.username || '';
+
+            // User Roadmap Details
+            const roadmapContent = document.getElementById('modal-roadmap-content');
+            if (user.roadmap && (user.roadmap.title || user.roadmap.careerTitle)) {
+                const title = user.roadmap.title || user.roadmap.careerTitle;
+                const icon = user.roadmap.icon || '🧭';
+                roadmapContent.innerHTML = `
+                    <div class="p-2 bg-white rounded-lg border border-slate-200">
+                        <div class="font-extrabold text-indigo-700 text-sm flex items-center gap-1.5">
+                            <span>${icon}</span>
+                            <span>${escapeHtml(title)}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">Saved roadmap in Compass Assessment</p>
+                    </div>
+                `;
+            } else {
+                roadmapContent.innerHTML = `<span class="text-slate-400 italic">No career roadmap generated yet.</span>`;
+            }
+
+            // User Habits List
+            const habitsCountEl = document.getElementById('modal-habits-count');
+            const habitsContentEl = document.getElementById('modal-habits-content');
+            const habitsList = Array.isArray(user.habits) ? user.habits : (user.routineTracker && Array.isArray(user.routineTracker.habits) ? user.routineTracker.habits : []);
+
+            if (habitsCountEl) habitsCountEl.innerText = habitsList.length;
+            if (habitsList.length > 0) {
+                habitsContentEl.innerHTML = habitsList.map(h => `
+                    <div class="p-1.5 bg-white rounded border border-slate-200 flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-800">🔥 ${escapeHtml(h.name || 'Habit')}</span>
+                        <span class="text-[10px] text-emerald-600 font-semibold">${h.scheduledTime || 'Scheduled'}</span>
+                    </div>
+                `).join('');
+            } else {
+                habitsContentEl.innerHTML = `<span class="text-slate-400 italic">No active habits tracked.</span>`;
+            }
+
+            document.getElementById('modal-save-status').classList.add('hidden');
+            document.getElementById('user-inspect-modal').classList.remove('hidden');
+        }
+
+        function closeUserModal() {
+            document.getElementById('user-inspect-modal').classList.add('hidden');
+        }
+
+        async function saveUserModalChanges(event) {
+            event.preventDefault();
+            const userId = document.getElementById('modal-user-id').value;
+            const name = document.getElementById('modal-input-name').value.trim();
+            const email = document.getElementById('modal-input-email').value.trim();
+            const mobile = document.getElementById('modal-input-mobile').value.trim();
+            const username = document.getElementById('modal-input-username').value.trim();
+
+            const statusEl = document.getElementById('modal-save-status');
+
+            try {
+                const res = await fetch('/api/admin/user/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-password': adminPassword
+                    },
+                    body: JSON.stringify({ userId, name, email, mobile, username })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    statusEl.classList.remove('hidden');
+                    setTimeout(() => {
+                        statusEl.classList.add('hidden');
+                        closeUserModal();
+                        fetchAdminUsersData();
+                    }, 1200);
+                } else {
+                    alert(data.error || "Failed to save user changes.");
+                }
+            } catch (err) {
+                alert("Connection error saving user.");
+            }
+        }
+
+        async function deleteUserAccount(userId, name) {
+            if (!confirm(`Are you sure you want to permanently delete user account "${name}" from F:\\Praxis Admin server database?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/user/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-password': adminPassword
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    fetchAdminUsersData();
+                } else {
+                    alert(data.error || "Failed to delete user.");
+                }
+            } catch (err) {
+                alert("Connection error deleting user.");
+            }
+        }
+
+        // =====================================================================
+        // CSV EXPORT LOGIC (Download User Database)
+        // =====================================================================
+        function exportUsersToCSV() {
+            if (!allUsersList || allUsersList.length === 0) {
+                alert("No users to export.");
+                return;
+            }
+
+            const headers = ["User ID", "Full Name", "Username", "Gmail / Email", "Mobile Number", "Joined Date", "Logins", "Last Active IP", "Career Roadmap", "Habits Active"];
+            const rows = allUsersList.map(u => [
+                `"${u.id || ''}"`,
+                `"${(u.name || '').replace(/"/g, '""')}"`,
+                `"${(u.username || '').replace(/"/g, '""')}"`,
+                `"${(u.email || '').replace(/"/g, '""')}"`,
+                `"${(u.mobile || '').replace(/"/g, '""')}"`,
+                `"${u.createdAt ? new Date(u.createdAt).toISOString() : ''}"`,
+                `"${u.loginCount || 1}"`,
+                `"${u.lastLoginIp || ''}"`,
+                `"${(u.roadmapTitle || (u.roadmap && u.roadmap.title) || '').replace(/"/g, '""')}"`,
+                `"${u.habitCount || 0}"`
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `praxis_users_export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function escapeHtml(str) {
@@ -669,10 +1239,17 @@
 
         function renderStats(data) {
             const activeUsersEl = document.getElementById('stat-active-users');
+            const uniqueUsersEl = document.getElementById('stat-unique-users');
             const totalVisitorsEl = document.getElementById('stat-total-visitors');
             
             if (activeUsersEl) activeUsersEl.innerText = data.activeUsers || 0;
+            if (uniqueUsersEl) uniqueUsersEl.innerText = data.uniqueUsersTillToday || 0;
             if (totalVisitorsEl) totalVisitorsEl.innerText = data.totalVisitors || 0;
+
+            if (data.databaseLocation) {
+                const dbTag = document.getElementById('db-location-tag');
+                if (dbTag) dbTag.innerText = data.databaseLocation;
+            }
         }
     </script>
 </body>

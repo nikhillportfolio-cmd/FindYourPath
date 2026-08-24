@@ -39,12 +39,45 @@
             "scheduledTime": "08:00",
             "remindedDates": {},
             "missedNotifiedDates": {},
-            "days": ["done", "done", false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+            "days": [
+              "done",
+              "done",
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false
+            ],
             "createdAt": 1785856512734
           }
         ]
       },
-      "dataUpdatedAt": "2026-08-04T15:21:37.637Z"
+      "dataUpdatedAt": "2026-08-04T15:21:37.637Z",
+      "mobile": "+919876500000",
+      "updatedAt": "2026-08-24T03:55:11.025Z"
     }
   ],
   "loginLogs": [
