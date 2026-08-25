@@ -43,25 +43,33 @@ if (DB_DIR !== __dirname) {
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 }
 
-// Data Migration from workspace to F:\Praxis Admin server if files don't exist in F: drive yet
-function migrateWorkspaceDataIfNeeded() {
+// Robust JSON file writer for permanent storage in F:\Praxis Admin server & mirrored workspace
+function safeWriteJsonFile(filePath, dataObj, backupPath = null) {
+    try {
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        const jsonStr = JSON.stringify(dataObj, null, 2);
+        fs.writeFileSync(filePath, jsonStr, 'utf8');
+        if (backupPath && backupPath !== filePath) {
+            try {
+                const bDir = path.dirname(backupPath);
+                if (!fs.existsSync(bDir)) fs.mkdirSync(bDir, { recursive: true });
+                fs.writeFileSync(backupPath, jsonStr, 'utf8');
+            } catch(be){}
+        }
+        return true;
+    } catch (err) {
+        console.error(`⚠️ Failed to write JSON to ${filePath}:`, err.message);
+        return false;
+    }
+}
+
+// Initial Data Migration & Synchronization to F:\Praxis Admin server
+function syncInitialDataToStorage() {
     try {
         if (DB_DIR !== __dirname) {
-            const localUsers = path.join(__dirname, 'users.json');
-            if (fs.existsSync(localUsers) && !fs.existsSync(USERS_FILE)) {
-                fs.copyFileSync(localUsers, USERS_FILE);
-                console.log(`📦 Migrated users.json to ${USERS_FILE}`);
-            }
-            const localAnalytics = path.join(__dirname, 'analytics.json');
-            if (fs.existsSync(localAnalytics) && !fs.existsSync(ANALYTICS_FILE)) {
-                fs.copyFileSync(localAnalytics, ANALYTICS_FILE);
-                console.log(`📦 Migrated analytics.json to ${ANALYTICS_FILE}`);
-            }
-            const localSubs = path.join(__dirname, 'subscriptions.json');
-            if (fs.existsSync(localSubs) && !fs.existsSync(SUBSCRIPTIONS_FILE)) {
-                fs.copyFileSync(localSubs, SUBSCRIPTIONS_FILE);
-                console.log(`📦 Migrated subscriptions.json to ${SUBSCRIPTIONS_FILE}`);
-            }
             const localUploads = path.join(__dirname, 'uploads');
             if (fs.existsSync(localUploads)) {
                 const files = fs.readdirSync(localUploads);
@@ -76,10 +84,10 @@ function migrateWorkspaceDataIfNeeded() {
             }
         }
     } catch (mErr) {
-        console.warn("⚠️ Data migration warning:", mErr.message);
+        console.warn("⚠️ Data synchronization warning:", mErr.message);
     }
 }
-migrateWorkspaceDataIfNeeded();
+syncInitialDataToStorage();
 
 // =====================================================================
 // USER DATABASE & AUTHENTICATION ENGINE (users.json)
@@ -95,33 +103,57 @@ let usersData = {
 
 function loadUsersData() {
     try {
+        let loadedUsers = [];
+        let loadedLogs = [];
+
         if (fs.existsSync(USERS_FILE)) {
-            const raw = fs.readFileSync(USERS_FILE, 'utf8');
-            const parsed = JSON.parse(raw);
-            usersData = {
-                users: Array.isArray(parsed.users) ? parsed.users : [],
-                loginLogs: Array.isArray(parsed.loginLogs) ? parsed.loginLogs : []
-            };
-            console.log(`👤 Loaded ${usersData.users.length} users and ${usersData.loginLogs.length} login logs from ${USERS_FILE}`);
-        } else {
-            saveUsersData();
-            console.log(`👤 Initialized new users.json file at ${USERS_FILE}`);
+            try {
+                const raw = fs.readFileSync(USERS_FILE, 'utf8');
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed.users)) loadedUsers = parsed.users;
+                if (Array.isArray(parsed.loginLogs)) loadedLogs = parsed.loginLogs;
+            } catch (pErr) {
+                console.error("⚠️ Error parsing USERS_FILE:", pErr.message);
+            }
         }
+
+        // Merge from workspace backup if present so no user accounts are lost
+        if (DB_DIR !== __dirname) {
+            const localUsersFile = path.join(__dirname, 'users.json');
+            if (fs.existsSync(localUsersFile)) {
+                try {
+                    const localParsed = JSON.parse(fs.readFileSync(localUsersFile, 'utf8'));
+                    const localUsers = Array.isArray(localParsed.users) ? localParsed.users : [];
+                    localUsers.forEach(lu => {
+                        if (!loadedUsers.some(u => u.id === lu.id || (u.email && lu.email && u.email.toLowerCase() === lu.email.toLowerCase()))) {
+                            loadedUsers.push(lu);
+                        }
+                    });
+                    const localLogs = Array.isArray(localParsed.loginLogs) ? localParsed.loginLogs : [];
+                    localLogs.forEach(ll => {
+                        if (!loadedLogs.some(l => l.id === ll.id)) {
+                            loadedLogs.push(ll);
+                        }
+                    });
+                } catch (e) {}
+            }
+        }
+
+        usersData = {
+            users: loadedUsers,
+            loginLogs: loadedLogs
+        };
+
+        console.log(`👤 Permanent User DB: Loaded ${usersData.users.length} registered users and ${usersData.loginLogs.length} audit logs at ${USERS_FILE}`);
+        saveUsersData();
     } catch (err) {
         console.error("⚠️ Failed to load/initialize users.json:", err.message);
     }
 }
 
 function saveUsersData() {
-    try {
-        const jsonStr = JSON.stringify(usersData, null, 2);
-        fs.writeFileSync(USERS_FILE, jsonStr, 'utf8');
-        if (DB_DIR !== __dirname) {
-            try { fs.writeFileSync(path.join(__dirname, 'users.json'), jsonStr, 'utf8'); } catch(e){}
-        }
-    } catch (err) {
-        console.error("⚠️ Failed to write to users.json:", err.message);
-    }
+    const localUsersFile = (DB_DIR !== __dirname) ? path.join(__dirname, 'users.json') : null;
+    safeWriteJsonFile(USERS_FILE, usersData, localUsersFile);
 }
 
 loadUsersData();
@@ -157,56 +189,84 @@ let analyticsData = {
     }
 };
 
-// Load existing analytics from JSON file on server startup
-try {
-    if (fs.existsSync(ANALYTICS_FILE)) {
-        const fileData = fs.readFileSync(ANALYTICS_FILE, 'utf8');
-        const parsed = JSON.parse(fileData);
+function loadAnalytics() {
+    try {
+        let parsed = {};
+        if (fs.existsSync(ANALYTICS_FILE)) {
+            try {
+                parsed = JSON.parse(fs.readFileSync(ANALYTICS_FILE, 'utf8')) || {};
+            } catch(e){}
+        }
+
+        // Merge from local backup if present to ensure 0 telemetry data loss
+        if (DB_DIR !== __dirname) {
+            const localAnalyticsFile = path.join(__dirname, 'analytics.json');
+            if (fs.existsSync(localAnalyticsFile)) {
+                try {
+                    const localParsed = JSON.parse(fs.readFileSync(localAnalyticsFile, 'utf8')) || {};
+                    parsed.totalVisitors = Math.max(parsed.totalVisitors || 0, localParsed.totalVisitors || 0);
+                    parsed.totalQuizzesCompleted = Math.max(parsed.totalQuizzesCompleted || 0, localParsed.totalQuizzesCompleted || 0);
+                    parsed.uniqueVisitors = { ...(localParsed.uniqueVisitors || {}), ...(parsed.uniqueVisitors || {}) };
+                    parsed.domainStats = { ...(localParsed.domainStats || {}), ...(parsed.domainStats || {}) };
+                    parsed.careerStats = { ...(localParsed.careerStats || {}), ...(parsed.careerStats || {}) };
+                    if (localParsed.featureUsage) {
+                        parsed.featureUsage = {
+                            compass: Math.max(parsed.featureUsage?.compass || 0, localParsed.featureUsage.compass || 0),
+                            library: Math.max(parsed.featureUsage?.library || 0, localParsed.featureUsage.library || 0),
+                            routine: Math.max(parsed.featureUsage?.routine || 0, localParsed.featureUsage.routine || 0),
+                        };
+                    }
+                } catch(e) {}
+            }
+        }
+
+        const compassCount = (parsed.featureUsage && typeof parsed.featureUsage.compass === 'number')
+            ? parsed.featureUsage.compass
+            : (parsed.domainStats ? Object.values(parsed.domainStats).reduce((a, b) => a + b, 0) : 0);
+        const libraryCount = (parsed.featureUsage && typeof parsed.featureUsage.library === 'number')
+            ? parsed.featureUsage.library
+            : (parsed.libraryStats?.totalViews || 0);
+        const routineCount = (parsed.featureUsage && typeof parsed.featureUsage.routine === 'number')
+            ? parsed.featureUsage.routine
+            : (parsed.routineStats?.totalInteractions || 0);
+
         analyticsData = {
             totalVisitors: parsed.totalVisitors || 0,
             uniqueVisitors: parsed.uniqueVisitors || {},
             totalQuizzesCompleted: parsed.totalQuizzesCompleted || 0,
             featureUsage: {
-                compass: (parsed.featureUsage && parsed.featureUsage.compass) || (parsed.domainStats ? Object.values(parsed.domainStats).reduce((a, b) => a + b, 0) : 0) || 0,
-                library: (parsed.featureUsage && parsed.featureUsage.library) || (parsed.libraryStats?.totalViews || 0) || 0,
-                routine: (parsed.featureUsage && parsed.featureUsage.routine) || (parsed.routineStats?.totalInteractions || 0) || 0,
+                compass: compassCount || 0,
+                library: libraryCount || 0,
+                routine: routineCount || 0,
                 ...(parsed.featureUsage || {})
             },
             domainStats: parsed.domainStats || {},
             careerStats: parsed.careerStats || {},
             libraryStats: {
-                totalViews: 0,
-                bookViews: 0,
-                popularBooks: {},
-                ...(parsed.libraryStats || {})
+                totalViews: parsed.libraryStats?.totalViews || 0,
+                bookViews: parsed.libraryStats?.bookViews || 0,
+                popularBooks: parsed.libraryStats?.popularBooks || {}
             },
             routineStats: {
-                totalInteractions: 0,
-                totalHabitCheckoffs: 0,
-                dailyUsers: {},
-                ...(parsed.routineStats || {})
+                totalInteractions: parsed.routineStats?.totalInteractions || 0,
+                totalHabitCheckoffs: parsed.routineStats?.totalHabitCheckoffs || 0,
+                dailyUsers: parsed.routineStats?.dailyUsers || {}
             }
         };
-        console.log(`📊 Loaded existing analytics data from ${ANALYTICS_FILE}`);
-    } else {
+
         saveAnalytics();
-        console.log(`📊 Initialized new analytics.json file at ${ANALYTICS_FILE}`);
+        console.log(`📊 Permanent Telemetry & Analytics: Loaded and saved at ${ANALYTICS_FILE}`);
+    } catch (err) {
+        console.error("⚠️ Failed to load/initialize analytics.json:", err.message);
     }
-} catch (err) {
-    console.error("⚠️ Failed to load/initialize analytics.json:", err.message);
 }
 
 function saveAnalytics() {
-    try {
-        const jsonStr = JSON.stringify(analyticsData, null, 2);
-        fs.writeFileSync(ANALYTICS_FILE, jsonStr, 'utf8');
-        if (DB_DIR !== __dirname) {
-            try { fs.writeFileSync(path.join(__dirname, 'analytics.json'), jsonStr, 'utf8'); } catch(e){}
-        }
-    } catch (err) {
-        console.error("⚠️ Failed to write to analytics.json:", err.message);
-    }
+    const localAnalyticsFile = (DB_DIR !== __dirname) ? path.join(__dirname, 'analytics.json') : null;
+    safeWriteJsonFile(ANALYTICS_FILE, analyticsData, localAnalyticsFile);
 }
+
+loadAnalytics();
 
 function getActiveUserCount() {
     const now = Date.now();
@@ -10625,15 +10685,8 @@ function loadPushSubscriptions() {
 }
 
 function savePushSubscriptions() {
-    try {
-        const jsonStr = JSON.stringify({ subscriptions: pushSubscriptions }, null, 2);
-        fs.writeFileSync(SUBSCRIPTIONS_FILE, jsonStr, 'utf8');
-        if (DB_DIR !== __dirname) {
-            try { fs.writeFileSync(path.join(__dirname, 'subscriptions.json'), jsonStr, 'utf8'); } catch(e){}
-        }
-    } catch (err) {
-        console.error("⚠️ Failed to write to subscriptions.json:", err.message);
-    }
+    const localSubsFile = (DB_DIR !== __dirname) ? path.join(__dirname, 'subscriptions.json') : null;
+    safeWriteJsonFile(SUBSCRIPTIONS_FILE, { subscriptions: pushSubscriptions }, localSubsFile);
 }
 
 loadPushSubscriptions();

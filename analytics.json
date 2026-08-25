@@ -1,6 +1,20 @@
 {
-  "totalVisitors": 3,
+  "totalVisitors": 4,
+  "uniqueVisitors": {
+    "client_live_test_999": {
+      "firstSeen": "2026-08-25T13:51:25.373Z",
+      "lastSeen": "2026-08-25T13:51:25.373Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "visitCount": 1
+    }
+  },
   "totalQuizzesCompleted": 2,
+  "featureUsage": {
+    "compass": 2,
+    "library": 1,
+    "routine": 2
+  },
   "domainStats": {
     "TechAI": 2
   },
@@ -21,6 +35,9 @@
     "dailyUsers": {
       "2026-07-29": [
         "routine_user_1"
+      ],
+      "2026-08-25": [
+        "client_live_test_999"
       ]
     }
   }

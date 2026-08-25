@@ -681,7 +681,7 @@
 
     <!-- MAIN DASHBOARD SCRIPT -->
     <script>
-        let adminPassword = sessionStorage.getItem('praxis_admin_pwd') || '';
+        let adminPassword = localStorage.getItem('praxis_admin_pwd') || sessionStorage.getItem('praxis_admin_pwd') || '';
         let statsInterval = null;
         let featureChartInstance = null;
         let allUsersList = [];
@@ -711,6 +711,7 @@
 
                 if (res.ok && data.success) {
                     adminPassword = pwd;
+                    localStorage.setItem('praxis_admin_pwd', pwd);
                     sessionStorage.setItem('praxis_admin_pwd', pwd);
                     errorEl.classList.add('hidden');
                     if (data.databaseLocation) {
@@ -740,6 +741,7 @@
         }
 
         function handleLogout() {
+            localStorage.removeItem('praxis_admin_pwd');
             sessionStorage.removeItem('praxis_admin_pwd');
             adminPassword = '';
             if (statsInterval) {
@@ -1240,10 +1242,12 @@
         function renderStats(data) {
             const activeUsersEl = document.getElementById('stat-active-users');
             const uniqueUsersEl = document.getElementById('stat-unique-users');
+            const totalUsersEl = document.getElementById('stat-total-users');
             const totalVisitorsEl = document.getElementById('stat-total-visitors');
             
             if (activeUsersEl) activeUsersEl.innerText = data.activeUsers || 0;
             if (uniqueUsersEl) uniqueUsersEl.innerText = data.uniqueUsersTillToday || 0;
+            if (totalUsersEl && data.totalRegisteredUsers !== undefined) totalUsersEl.innerText = data.totalRegisteredUsers;
             if (totalVisitorsEl) totalVisitorsEl.innerText = data.totalVisitors || 0;
 
             if (data.databaseLocation) {
