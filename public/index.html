@@ -996,27 +996,30 @@
 
             <!-- DESKTOP NAV LINKS -->
             <nav class="hidden md:flex items-center gap-2 ml-2">
-                <a href="/praxis" class="neu-btn pressed px-3.5 py-1.5 text-xs font-extrabold text-blue-600 flex items-center gap-1.5 border border-blue-200 shadow-inner">
+                <button type="button" onclick="openCompassFeature()" class="neu-btn px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all cursor-pointer">
                     <span>🧭</span> Compass
-                </a>
+                </button>
                 <a href="/library.html" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center gap-1.5 transition-all">
                     <span>📚</span> Modern Library
                 </a>
-                <a href="/routine.html" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all">
+                <button type="button" onclick="openTrackerModal()" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all cursor-pointer">
                     <span>🔥</span> Routine Tracker
-                </a>
+                </button>
             </nav>
         </div>
 
         <div class="ml-auto flex items-center gap-2 sm:gap-2.5 shrink-0">
             <!-- MOBILE TOP NAV ICONS -->
             <div class="flex md:hidden items-center gap-1.5">
+                <button type="button" onclick="openCompassFeature()" title="Career Compass" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-blue-600 cursor-pointer">
+                    🧭
+                </button>
                 <a href="/library.html" title="Modern Library" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-indigo-600">
                     📚
                 </a>
-                <a href="/routine.html" title="Routine Tracker" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-amber-500">
+                <button type="button" onclick="openTrackerModal()" title="Routine Tracker" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-amber-500 cursor-pointer">
                     🔥
-                </a>
+                </button>
             </div>
 
             <!-- AUTH & PROFILE CONTAINER -->
@@ -1249,25 +1252,25 @@
 
                 <!-- ECOSYSTEM QUICK JUMP ANCHORS (4 CORE MODULE PILLS) -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 w-full max-w-3xl mb-10 relative z-10">
-                    <a href="#showcase-compass" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
+                    <button type="button" onclick="openCompassFeature()" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
                         <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🧭</span>
                         <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-blue-600 transition-colors">Career Compass</span>
                         <span class="text-[9px] text-slate-400 font-semibold mt-0.5">AI Trait Roadmaps</span>
-                    </a>
-                    <a href="#showcase-library" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
+                    </button>
+                    <a href="/library.html" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
                         <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">📚</span>
                         <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-indigo-600 transition-colors">Modern Library</span>
                         <span class="text-[9px] text-slate-400 font-semibold mt-0.5">120 Curated Works</span>
                     </a>
-                    <a href="#showcase-routine" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
+                    <button type="button" onclick="openTrackerModal()" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
                         <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🔥</span>
                         <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-amber-600 transition-colors">Routine Tracker</span>
                         <span class="text-[9px] text-slate-400 font-semibold mt-0.5">30-Day Heatmap</span>
-                    </a>
-                    <button type="button" onclick="scrollToCompassDomains()" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer bg-gradient-to-br from-indigo-50/60 to-blue-50/60 border border-blue-200">
+                    </button>
+                    <button type="button" onclick="openCompassFeature()" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer bg-gradient-to-br from-indigo-50/60 to-blue-50/60 border border-blue-200">
                         <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🎯</span>
                         <span class="text-[11px] sm:text-xs font-black text-blue-600 group-hover:text-blue-700 transition-colors">Start Assessment</span>
-                        <span class="text-[9px] text-blue-500 font-semibold mt-0.5">Select Domain &darr;</span>
+                        <span class="text-[9px] text-blue-500 font-semibold mt-0.5">Launch Compass &rarr;</span>
                     </button>
                 </div>
 
@@ -1345,9 +1348,9 @@
 
                         <!-- CTA BUTTON -->
                         <div class="pt-2 flex flex-wrap items-center gap-3">
-                            <button type="button" onclick="scrollToCompassDomains()" class="neu-btn px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                            <button type="button" onclick="openCompassFeature()" class="neu-btn px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
                                 <span>🧭</span>
-                                <span>Select Career Domain Below &darr;</span>
+                                <span>Launch Career Compass &rarr;</span>
                             </button>
                             <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1">
                                 <span class="text-emerald-500">●</span> 3-5 min assessment
@@ -1776,30 +1779,86 @@
             </section>
 
             <!-- ============================================================== -->
-            <!-- TRANSITION PROMPT TO DOMAIN SELECTION -->
+            <!-- BOTTOM CALL-TO-ACTION: EXPLORE THE 3 PILLARS -->
             <!-- ============================================================== -->
-            <div class="w-full pt-12 pb-6 flex flex-col items-center justify-center text-center reveal border-t border-slate-300/60">
-                <div class="w-12 h-12 sm:w-14 sm:h-14 neu-circle flex items-center justify-center text-2xl mb-3 text-indigo-600 shrink-0">
-                    🎯
+            <div class="w-full pt-12 pb-10 flex flex-col items-center justify-center text-center reveal border-t border-slate-300/60">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 neu-circle flex items-center justify-center text-2xl mb-3 text-indigo-600 shrink-0 shadow-inner">
+                    🚀
                 </div>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 mb-2 font-outfit">
-                    Ready to Find Your Path?
+                    Choose Your Path & Get Started
                 </h2>
-                <p class="text-xs sm:text-base text-slate-600 font-medium max-w-lg mb-6 leading-relaxed">
-                    Select your primary interest below to generate your tailored AI Career Roadmap.
+                <p class="text-xs sm:text-base text-slate-600 font-medium max-w-xl mb-8 leading-relaxed">
+                    Click any feature below to launch your tailored career assessment, browse the curated library, or track your daily routine.
                 </p>
-                <div class="flex items-center gap-2 text-blue-600 font-extrabold text-xs uppercase tracking-widest animate-bounce-slow">
-                    <span>Select Your Domain Below</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                    </svg>
+
+                <!-- 3 FEATURE LAUNCH CARDS -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 w-full max-w-4xl text-left">
+                    <!-- Feature 1 Launch Card -->
+                    <button type="button" onclick="openCompassFeature()" class="neu-card-sm p-4 sm:p-5 flex flex-col justify-between hover:scale-[1.02] active:scale-95 transition-all group cursor-pointer border border-blue-200/70 bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/50">
+                        <div>
+                            <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-blue-600 mb-3 group-hover:scale-110 transition-transform">
+                                🧭
+                            </div>
+                            <span class="neu-badge text-[9px] font-black text-blue-600 uppercase px-2 py-0.5 mb-2 inline-block">Module 01</span>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit group-hover:text-blue-600 transition-colors">The Career Compass</h3>
+                            <p class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">Psychometric trait testing & custom roadmaps.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-blue-600 text-xs font-bold">
+                            <span>Launch Compass</span>
+                            <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                        </div>
+                    </button>
+
+                    <!-- Feature 2 Launch Card -->
+                    <a href="/library.html" class="neu-card-sm p-4 sm:p-5 flex flex-col justify-between hover:scale-[1.02] active:scale-95 transition-all group cursor-pointer border border-indigo-200/70 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50">
+                        <div>
+                            <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-indigo-600 mb-3 group-hover:scale-110 transition-transform">
+                                📚
+                            </div>
+                            <span class="neu-badge text-[9px] font-black text-indigo-600 uppercase px-2 py-0.5 mb-2 inline-block">Module 02</span>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit group-hover:text-indigo-600 transition-colors">Modern Library</h3>
+                            <p class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">120+ Curated books & digital e-reader.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-indigo-600 text-xs font-bold">
+                            <span>Open Library</span>
+                            <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                        </div>
+                    </a>
+
+                    <!-- Feature 3 Launch Card -->
+                    <button type="button" onclick="openTrackerModal()" class="neu-card-sm p-4 sm:p-5 flex flex-col justify-between hover:scale-[1.02] active:scale-95 transition-all group cursor-pointer border border-amber-200/70 bg-gradient-to-br from-amber-50/70 via-white to-rose-50/50">
+                        <div>
+                            <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-amber-600 mb-3 group-hover:scale-110 transition-transform">
+                                🔥
+                            </div>
+                            <span class="neu-badge text-[9px] font-black text-amber-600 uppercase px-2 py-0.5 mb-2 inline-block">Module 03</span>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit group-hover:text-amber-600 transition-colors">Routine & Habits</h3>
+                            <p class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">30-day heatmap & Jarvis voice focus timer.</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-amber-600 text-xs font-bold">
+                            <span>Open Tracker</span>
+                            <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                        </div>
+                    </button>
                 </div>
             </div>
         </div>
 
-    <!-- MAIN APP CONTAINER -->
-    <div id="app-wrapper" class="w-full flex justify-center pb-16 sm:pb-20 px-3 sm:px-4 reveal relative z-10 max-w-4xl">
+    <!-- MAIN APP CONTAINER (CAREER COMPASS VIEW - OPENS ON CLICK) -->
+    <div id="app-wrapper" class="w-full flex justify-center pb-16 sm:pb-20 px-3 sm:px-4 relative z-10 max-w-4xl hidden">
         <div class="neu-card p-4 sm:p-8 md:p-12 w-full transition-all duration-500">
+
+            <!-- BACK TO SHOWCASE NAV BAR -->
+            <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-200/80">
+                <button type="button" onclick="backToShowcase()" class="neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all cursor-pointer">
+                    <span>&larr;</span>
+                    <span>Back to Platform Showcase</span>
+                </button>
+                <div class="neu-badge text-[10px] font-black text-blue-600 uppercase px-2.5 py-1">
+                    🧭 Career Compass
+                </div>
+            </div>
 
             <!-- PHASE 1: INTEREST SELECTION -->
             <div id="interest-section">

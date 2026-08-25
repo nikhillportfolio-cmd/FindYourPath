@@ -73,15 +73,62 @@ function animateBookOnScroll() {
 }
 window.animateBookOnScroll = animateBookOnScroll;
 
-// Smooth scroll helper to navigate directly to the Career Compass Assessment Domains
-function scrollToCompassDomains() {
-    const appWrapperEl = document.getElementById("app-wrapper") || document.getElementById("interest-section");
-    if (appWrapperEl) {
-        const topPos = appWrapperEl.getBoundingClientRect().top + window.pageYOffset - 40;
-        window.scrollTo({ top: topPos, behavior: 'smooth' });
+// Open Career Compass assessment view on click
+function openCompassFeature() {
+    if (window.praxisAuth && !window.praxisAuth.getUser()) {
+        if (typeof window.openAuthModal === "function") {
+            window.openAuthModal('login');
+        }
+        return;
+    }
+    const landingIntro = document.getElementById("landing-intro");
+    const appWrapper = document.getElementById("app-wrapper");
+    const interestSection = document.getElementById("interest-section");
+    const quizSection = document.getElementById("quiz-section");
+    const resultSection = document.getElementById("result-section");
+
+    if (landingIntro) {
+        landingIntro.classList.add("fade-out");
+        setTimeout(() => {
+            landingIntro.style.display = "none";
+            landingIntro.classList.remove("fade-out");
+        }, 300);
+    }
+
+    if (appWrapper) {
+        appWrapper.classList.remove("hidden");
+        appWrapper.classList.add("fade-in");
+        if (interestSection && (!quizSection || quizSection.classList.contains("hidden")) && (!resultSection || resultSection.classList.contains("hidden"))) {
+            interestSection.classList.remove("hidden", "fade-out");
+        }
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.openCompassFeature = openCompassFeature;
+
+// Return back to Platform Showcase view
+function backToShowcase() {
+    const landingIntro = document.getElementById("landing-intro");
+    const appWrapper = document.getElementById("app-wrapper");
+
+    if (appWrapper) {
+        appWrapper.classList.add("hidden");
+        appWrapper.classList.remove("fade-in");
+    }
+
+    if (landingIntro) {
+        landingIntro.style.display = "flex";
+        landingIntro.classList.remove("fade-out");
+        landingIntro.classList.add("fade-in");
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof reveal === "function") {
+        setTimeout(reveal, 100);
     }
 }
-window.scrollToCompassDomains = scrollToCompassDomains;
+window.backToShowcase = backToShowcase;
 
 // Interactive mini habit checkbox toggle for showcase routine preview
 function toggleShowcaseHabit(cardEl) {
