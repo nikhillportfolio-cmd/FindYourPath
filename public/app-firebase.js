@@ -227,6 +227,7 @@ function updateProfileUI(user) {
   const authGate = document.getElementById("auth-gate-landing");
   const mainAppContent = document.getElementById("main-app-content");
   const adminStudioBtn = document.getElementById("admin-studio-btn");
+  const showcaseUserName = document.getElementById("showcase-user-name");
 
   if (user) {
     // Logged In: Reveal full application, hide Auth Gate Landing
@@ -239,8 +240,22 @@ function updateProfileUI(user) {
     if (userAvatar) userAvatar.src = user.photoURL || user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.name || user.displayName || "user")}`;
     if (userName) userName.textContent = user.displayName || user.name || "Student";
     if (userEmail) userEmail.textContent = user.email || "";
+    if (showcaseUserName) showcaseUserName.textContent = user.displayName || user.name || "Explorer";
+
+    if (typeof window.updateShowcaseGreeting === "function") {
+      window.updateShowcaseGreeting();
+    }
 
     window.closeAuthModal();
+
+    // Trigger reveal recalculation once content is visible
+    if (typeof window.reveal === "function") {
+      setTimeout(window.reveal, 50);
+      setTimeout(window.reveal, 250);
+    }
+    if (typeof window.animateBookOnScroll === "function") {
+      setTimeout(window.animateBookOnScroll, 50);
+    }
 
     // Fetch and sync user data across devices on login
     fetchUserDataOnLogin(user.id || user.uid);

@@ -622,15 +622,125 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         .reveal {
             opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(35px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
         }
 
         .reveal.active {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+
+        .reveal-left.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+
+        .reveal-right.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.94) translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+
+        .reveal-scale.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .delay-100 { transition-delay: 100ms; }
+        .delay-150 { transition-delay: 150ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+        .delay-400 { transition-delay: 400ms; }
+
+        /* Showcase Neumorphic Cards & Interactive Elements */
+        .showcase-feature-card {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .showcase-feature-card:hover {
+            transform: translateY(-3px) scale(1.015);
+            box-shadow: 10px 10px 20px var(--shadow-dark-deep), -10px -10px 20px var(--shadow-light), var(--shadow-minor);
+        }
+
+        .showcase-hero-pill {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            transition: all 0.25s ease;
+        }
+        .showcase-hero-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 14px var(--shadow-dark-deep), -6px -6px 14px var(--shadow-light);
+        }
+
+        .showcase-step-badge {
+            background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        }
+
+        .showcase-tilt-box {
+            perspective: 1000px;
+        }
+
+        .showcase-interactive-panel {
+            background: #e0e5ec;
+            border-radius: 1.5rem;
+            box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light), var(--shadow-minor);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+        }
+        .showcase-interactive-panel:hover {
+            box-shadow: 12px 12px 24px var(--shadow-dark-deep), -12px -12px 24px var(--shadow-light), var(--shadow-minor);
+        }
+
+        .mini-book-spine {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 8px;
+            background: linear-gradient(90deg, rgba(0,0,0,0.35), rgba(255,255,255,0.25));
+            border-radius: 4px 0 0 4px;
+        }
+
+        .pulse-soft {
+            animation: pulseSoft 2.5s infinite ease-in-out;
+        }
+        @keyframes pulseSoft {
+            0%, 100% { opacity: 0.85; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.03); }
         }
 
         @keyframes bounceSlow {
@@ -1109,124 +1219,583 @@
 
     <!-- MAIN APPLICATION CONTENT (LOCKED / HIDDEN UNTIL LOGGED IN) -->
     <div id="main-app-content" class="w-full flex flex-col items-center hidden">
-        <!-- INTRODUCTORY SCROLL SECTION -->
-        <div id="landing-intro" class="w-full max-w-4xl px-3 sm:px-6 flex flex-col items-center transition-all duration-700 relative z-10">
+        <!-- INTRODUCTORY SHOWCASE & ECOSYSTEM SCROLL SECTION -->
+        <div id="landing-intro" class="w-full max-w-5xl px-3 sm:px-6 flex flex-col items-center transition-all duration-700 relative z-10">
         
-        <!-- HERO SECTION -->
-        <div class="min-h-[80vh] sm:min-h-[85vh] flex flex-col items-center justify-center text-center reveal active pt-2 sm:pt-4">
-            <div class="neu-badge text-blue-600 font-semibold px-3.5 py-1.5 sm:px-5 sm:py-2 text-[10px] sm:text-xs uppercase tracking-wider mb-6 sm:mb-8 inline-flex items-center gap-1.5 sm:gap-2 text-center max-w-full">
-                <span>✨</span> Behavioral Science & Career Compass
-            </div>
+            <!-- SHOWCASE HERO: WELCOME & PLATFORM OVERVIEW -->
+            <div class="min-h-[85vh] sm:min-h-[90vh] flex flex-col items-center justify-center text-center reveal active pt-4 sm:pt-8 pb-10 w-full relative">
+                
+                <!-- Ambient Decorative Glow Spheres -->
+                <div class="absolute top-10 left-1/2 -translate-x-1/2 w-80 h-80 sm:w-96 sm:h-96 bg-gradient-to-tr from-indigo-500/15 via-blue-500/15 to-cyan-400/10 rounded-full blur-3xl pointer-events-none brand-glow-pulse"></div>
 
-            <h1 class="text-3xl xs:text-4xl sm:text-5xl md:text-7xl font-black text-slate-800 mb-4 sm:mb-6 leading-tight tracking-tight font-outfit">
-                Design Your <br><span class="text-gradient">Future.</span>
-            </h1>
+                <!-- PERSONALIZED WELCOME PILL -->
+                <div class="showcase-hero-pill px-4 py-2 sm:px-5 sm:py-2.5 mb-6 inline-flex items-center gap-2.5 text-slate-800 text-xs sm:text-sm font-bold shadow-sm relative z-10">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0"></span>
+                    <span class="text-indigo-600 font-black uppercase tracking-wider text-[11px] sm:text-xs">Logged In</span>
+                    <span class="text-slate-300">|</span>
+                    <span id="showcase-user-greeting" class="text-slate-700 font-medium">Welcome back, <span id="showcase-user-name" class="font-extrabold text-indigo-600">Explorer</span>! ✨</span>
+                </div>
 
-            <p class="text-xs sm:text-base md:text-lg text-slate-600 mb-6 sm:mb-8 font-medium max-w-2xl leading-relaxed px-2 sm:px-0">
-                Stop guessing your path. We map your unique psychological traits to real-world careers and generate a step-by-step roadmap tailored to you.
-            </p>
+                <!-- GRAND TITLE -->
+                <h1 class="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-800 mb-5 leading-tight tracking-tight font-outfit relative z-10 max-w-4xl">
+                    The Complete Ecosystem For <br>
+                    <span class="praxis-shimmer-text">Your Life & Career.</span>
+                </h1>
 
-            <!-- 3D SCROLL-DRIVEN BOOK ANIMATION CONTAINER -->
-            <div class="book-viewport my-4 sm:my-6">
-                <div class="book-container" id="book-container">
-                    <div class="book-shadow"></div>
-                    <div class="book" id="3d-book">
-                        <div class="book-cover back-cover"></div>
-                        
-                        <!-- PAGE 3 -->
-                        <div class="book-page page-3" id="book-page-3">
-                            <div>
-                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600">Phase 3</span>
-                                <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Custom Roadmap</h4>
-                                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Actionable steps, skill targets & recommended readings.</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs font-bold text-indigo-600">03/03</span>
-                            </div>
-                        </div>
+                <!-- SUBTITLE -->
+                <p class="text-xs sm:text-base md:text-lg text-slate-600 mb-8 sm:mb-10 font-medium max-w-2xl leading-relaxed px-2 sm:px-0 relative z-10">
+                    Stop guessing your path. PRAXiS combines <strong>AI-Driven Psychometrics</strong>, <strong>120+ Curated Masterworks</strong>, and <strong>30-Day Routine & Habit Discipline</strong> into one unified operating system.
+                </p>
 
-                        <!-- PAGE 2 -->
-                        <div class="book-page page-2" id="book-page-2">
-                            <div>
-                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-sky-600">Phase 2</span>
-                                <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Trait Assessment</h4>
-                                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Analyze problem-solving styles & psychological drivers.</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs font-bold text-sky-600">02/03</span>
-                            </div>
-                        </div>
+                <!-- ECOSYSTEM QUICK JUMP ANCHORS (4 CORE MODULE PILLS) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 w-full max-w-3xl mb-10 relative z-10">
+                    <a href="#showcase-compass" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
+                        <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🧭</span>
+                        <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-blue-600 transition-colors">Career Compass</span>
+                        <span class="text-[9px] text-slate-400 font-semibold mt-0.5">AI Trait Roadmaps</span>
+                    </a>
+                    <a href="#showcase-library" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
+                        <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">📚</span>
+                        <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-indigo-600 transition-colors">Modern Library</span>
+                        <span class="text-[9px] text-slate-400 font-semibold mt-0.5">120 Curated Works</span>
+                    </a>
+                    <a href="#showcase-routine" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
+                        <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🔥</span>
+                        <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-amber-600 transition-colors">Routine Tracker</span>
+                        <span class="text-[9px] text-slate-400 font-semibold mt-0.5">30-Day Heatmap</span>
+                    </a>
+                    <button type="button" onclick="scrollToCompassDomains()" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer bg-gradient-to-br from-indigo-50/60 to-blue-50/60 border border-blue-200">
+                        <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🎯</span>
+                        <span class="text-[11px] sm:text-xs font-black text-blue-600 group-hover:text-blue-700 transition-colors">Start Assessment</span>
+                        <span class="text-[9px] text-blue-500 font-semibold mt-0.5">Select Domain &darr;</span>
+                    </button>
+                </div>
 
-                        <!-- PAGE 1 -->
-                        <div class="book-page page-1" id="book-page-1">
-                            <div>
-                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-600">Phase 1</span>
-                                <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Domain Selection</h4>
-                                <p class="text-xs text-slate-500 mt-2 leading-relaxed">Select what excites you: Tech, Art, Health, Law & more.</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs font-bold text-blue-600">01/03</span>
-                            </div>
-                        </div>
-
-                        <!-- FRONT COVER -->
-                        <div class="book-cover front-cover" id="book-front-cover">
-                            <div class="flex flex-col items-center justify-center h-full p-4 text-center">
-                                <div class="w-14 h-14 neu-circle flex items-center justify-center mb-4 text-amber-400">
-                                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-cover)" stroke="#fbbf24" stroke-width="1" stroke-linejoin="round"/>
-                                        <defs>
-                                            <linearGradient id="star-grad-cover" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                                                <stop stop-color="#fbbf24"/>
-                                                <stop offset="1" stop-color="#f59e0b"/>
-                                            </linearGradient>
-                                        </defs>
-                                    </svg>
-                                </div>
-                                <h3 class="font-black text-white text-xl tracking-wide font-outfit">PRAXiS</h3>
-                                <span class="text-[11px] font-bold text-slate-300 mt-1 uppercase tracking-widest">oi! Scroll🤔</span>
-                            </div>
-                        </div>
-                    </div>
+                <!-- SCROLL PROMPT -->
+                <div class="text-indigo-600 flex flex-col items-center gap-2 animate-bounce-slow mt-2 relative z-10">
+                    <span class="text-[10px] sm:text-xs font-extrabold tracking-widest uppercase">Scroll Down to Explore Platform</span>
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
                 </div>
             </div>
 
-            <!-- SCROLL PROMPT -->
-            <div class="text-blue-600 flex flex-col items-center gap-2 animate-bounce-slow mt-4 sm:mt-6">
-                <span class="text-[10px] sm:text-xs font-bold tracking-widest uppercase">Scroll Down to Explore</span>
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                </svg>
-            </div>
-        </div>
+            <!-- ============================================================== -->
+            <!-- SHOWCASE PILLAR 01: THE CAREER COMPASS -->
+            <!-- ============================================================== -->
+            <section id="showcase-compass" class="w-full py-12 sm:py-20 border-t border-slate-300/60 relative">
+                
+                <!-- SECTION BADGE & HEADER -->
+                <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14 reveal">
+                    <div class="neu-badge text-blue-600 font-black px-3.5 py-1 text-[10px] sm:text-xs uppercase tracking-widest mb-3 inline-flex items-center gap-1.5 shadow-sm">
+                        <span>🧭</span> MODULE 01 · CAREER COMPASS
+                    </div>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-4 font-outfit tracking-tight leading-tight">
+                        Map Your Mind to <br><span class="text-gradient">Your Dream Career.</span>
+                    </h2>
+                    <p class="text-xs sm:text-base text-slate-600 font-medium leading-relaxed">
+                        Forget confusing, generic questionnaires. Our behavioral algorithm translates your psychological problem-solving style into concrete, actionable milestones.
+                    </p>
+                </div>
 
-        <!-- EXPLANATION SECTION -->
-        <div class="min-h-[50vh] sm:min-h-[60vh] flex flex-col items-center justify-center text-center reveal py-10 sm:py-16">
-            <div class="w-12 h-12 sm:w-16 sm:h-16 neu-circle flex items-center justify-center text-2xl sm:text-3xl mb-4 sm:mb-6 text-indigo-600 shrink-0">
-                🎯
-            </div>
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 mb-4 sm:mb-6 font-outfit">
-                Stop guessing. Start building.
-            </h2>
-            <div class="neu-card p-5 sm:p-8 md:p-10 max-w-3xl text-left">
-                <p class="text-xs sm:text-base text-slate-600 font-medium leading-relaxed mb-3 sm:mb-4">
-                    We've combined behavioral science with real-world industry requirements. Forget rigid hours-long quizzes that leave you confused.
-                </p>
-                <p class="text-xs sm:text-base text-slate-600 font-medium leading-relaxed">
-                    Answer a series of quick, intuitive questions about how your mind operates, what you build, and how you solve problems. We compile your profile and generate a hyper-focused career roadmap.
-                </p>
-            </div>
-        </div>
+                <!-- 2-COLUMN SHOWCASE GRID -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center">
+                    
+                    <!-- LEFT COLUMN: FEATURE HIGHLIGHTS -->
+                    <div class="lg:col-span-7 space-y-4 sm:space-y-5 reveal-left">
+                        
+                        <!-- Feature 1 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-blue-600 shrink-0">
+                                🧠
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Behavioral Psychometric Synthesis</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Measures analytical inclination, creative impulse, leadership drivers, and execution grit through quick intuitive scenarios.
+                                </p>
+                            </div>
+                        </div>
 
-        <div class="h-[10vh] sm:h-[12vh] flex items-center justify-center reveal">
-            <h3 class="text-xs sm:text-sm font-extrabold text-blue-600 tracking-widest uppercase flex items-center gap-1.5 sm:gap-2">
-                <span>Select Your Domain Below</span>
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </h3>
+                        <!-- Feature 2 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-indigo-600 shrink-0">
+                                🗺️
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Phase-by-Phase Custom Roadmap</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Generates clear progression phases with core technical skills, required portfolio projects, and curated book recommendations.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 3 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-sky-600 shrink-0">
+                                🎯
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">6 Multi-Disciplinary Career Tracks</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Deep tailored tracks: <strong>Tech & AI</strong>, <strong>Art & Creative</strong>, <strong>Healthcare</strong>, <strong>Gov & Policy</strong>, <strong>Entrepreneurship</strong>, and <strong>Law</strong>.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- CTA BUTTON -->
+                        <div class="pt-2 flex flex-wrap items-center gap-3">
+                            <button type="button" onclick="scrollToCompassDomains()" class="neu-btn px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                                <span>🧭</span>
+                                <span>Select Career Domain Below &darr;</span>
+                            </button>
+                            <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                                <span class="text-emerald-500">●</span> 3-5 min assessment
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: 3D SCROLL-DRIVEN BOOK & TRAIT HUD PREVIEW -->
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center reveal-right">
+                        
+                        <!-- 3D SCROLL-DRIVEN BOOK ANIMATION CONTAINER (PRESERVED) -->
+                        <div class="book-viewport my-2">
+                            <div class="book-container" id="book-container">
+                                <div class="book-shadow"></div>
+                                <div class="book" id="3d-book">
+                                    <div class="book-cover back-cover"></div>
+                                    
+                                    <!-- PAGE 3 -->
+                                    <div class="book-page page-3" id="book-page-3">
+                                        <div>
+                                            <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600">Phase 3</span>
+                                            <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Custom Roadmap</h4>
+                                            <p class="text-xs text-slate-500 mt-2 leading-relaxed">Actionable steps, skill targets & recommended readings.</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-xs font-bold text-indigo-600">03/03</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- PAGE 2 -->
+                                    <div class="book-page page-2" id="book-page-2">
+                                        <div>
+                                            <span class="text-[10px] font-extrabold uppercase tracking-widest text-sky-600">Phase 2</span>
+                                            <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Trait Assessment</h4>
+                                            <p class="text-xs text-slate-500 mt-2 leading-relaxed">Analyze problem-solving styles & psychological drivers.</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-xs font-bold text-sky-600">02/03</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- PAGE 1 -->
+                                    <div class="book-page page-1" id="book-page-1">
+                                        <div>
+                                            <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-600">Phase 1</span>
+                                            <h4 class="font-extrabold text-slate-800 text-sm mt-1 font-outfit">Domain Selection</h4>
+                                            <p class="text-xs text-slate-500 mt-2 leading-relaxed">Select what excites you: Tech, Art, Health, Law & more.</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-xs font-bold text-blue-600">01/03</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- FRONT COVER -->
+                                    <div class="book-cover front-cover" id="book-front-cover">
+                                        <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                                            <div class="w-14 h-14 neu-circle flex items-center justify-center mb-4 text-amber-400">
+                                                <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-cover)" stroke="#fbbf24" stroke-width="1" stroke-linejoin="round"/>
+                                                    <defs>
+                                                        <linearGradient id="star-grad-cover" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                                            <stop stop-color="#fbbf24"/>
+                                                            <stop offset="1" stop-color="#f59e0b"/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                </svg>
+                                            </div>
+                                            <h3 class="font-black text-white text-xl tracking-wide font-outfit">PRAXiS</h3>
+                                            <span class="text-[11px] font-bold text-slate-300 mt-1 uppercase tracking-widest">oi! Scroll🤔</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TRAIT RADAR HUD PREVIEW CARD -->
+                        <div class="neu-card-sm p-4 w-full max-w-sm mt-4 text-left border border-white/60">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-blue-600">Sample Trait Analysis</span>
+                                <span class="neu-badge text-[9px] font-bold text-emerald-600 px-1.5 py-0.5">98% Match Precision</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div>
+                                    <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-0.5">
+                                        <span>Analytical & Logic</span>
+                                        <span>94%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-blue-600 rounded-full" style="width: 94%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-0.5">
+                                        <span>Creative Problem Solving</span>
+                                        <span>88%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-indigo-600 rounded-full" style="width: 88%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-0.5">
+                                        <span>Execution & Discipline</span>
+                                        <span>92%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-cyan-600 rounded-full" style="width: 92%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- SHOWCASE PILLAR 02: MODERN LIBRARY -->
+            <!-- ============================================================== -->
+            <section id="showcase-library" class="w-full py-12 sm:py-20 border-t border-slate-300/60 relative">
+                
+                <!-- SECTION BADGE & HEADER -->
+                <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14 reveal">
+                    <div class="neu-badge text-indigo-600 font-black px-3.5 py-1 text-[10px] sm:text-xs uppercase tracking-widest mb-3 inline-flex items-center gap-1.5 shadow-sm">
+                        <span>📚</span> MODULE 02 · MODERN LIBRARY
+                    </div>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-4 font-outfit tracking-tight leading-tight">
+                        120+ Curated Masterworks <br><span class="text-gradient">For High Performers.</span>
+                    </h2>
+                    <p class="text-xs sm:text-base text-slate-600 font-medium leading-relaxed">
+                        Knowledge is your unfair advantage. Explore our meticulously curated library spanning engineering, business, psychology, philosophy, design, and health with built-in reading tools.
+                    </p>
+                </div>
+
+                <!-- 2-COLUMN SHOWCASE GRID -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center">
+                    
+                    <!-- LEFT COLUMN: 3D FLOATING BOOKSHELF PREVIEW -->
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center reveal-left order-2 lg:order-1">
+                        <div class="showcase-interactive-panel p-5 sm:p-6 w-full max-w-md relative overflow-hidden bg-gradient-to-br from-indigo-50/40 via-white to-purple-50/40">
+                            
+                            <!-- Ambient Light -->
+                            <div class="absolute -top-10 -left-10 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-xs font-black text-indigo-600 font-outfit uppercase tracking-wider">Curated Highlights</span>
+                                <span class="neu-badge text-[9px] font-extrabold text-indigo-600 px-2 py-0.5">120 Volumes</span>
+                            </div>
+
+                            <!-- 3D Mini Book Grid Preview -->
+                            <div class="grid grid-cols-3 gap-3 my-2">
+                                <!-- Mini Book 1 -->
+                                <div class="book-3d-card relative aspect-[2/3] rounded-lg p-2 flex flex-col justify-between shadow-md group cursor-pointer" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
+                                    <div class="mini-book-spine"></div>
+                                    <span class="text-[8px] font-black text-amber-400 pl-2">#01 BESTSELLER</span>
+                                    <div class="pl-2">
+                                        <p class="text-[10px] font-black text-white leading-tight">Atomic Habits</p>
+                                        <p class="text-[8px] text-slate-300">James Clear</p>
+                                    </div>
+                                    <div class="text-[8px] text-amber-400 pl-2">★ 4.9</div>
+                                </div>
+
+                                <!-- Mini Book 2 -->
+                                <div class="book-3d-card relative aspect-[2/3] rounded-lg p-2 flex flex-col justify-between shadow-md group cursor-pointer" style="background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);">
+                                    <div class="mini-book-spine"></div>
+                                    <span class="text-[8px] font-black text-sky-300 pl-2">TECH & AI</span>
+                                    <div class="pl-2">
+                                        <p class="text-[10px] font-black text-white leading-tight">Clean Code</p>
+                                        <p class="text-[8px] text-indigo-200">Robert Martin</p>
+                                    </div>
+                                    <div class="text-[8px] text-amber-400 pl-2">★ 4.8</div>
+                                </div>
+
+                                <!-- Mini Book 3 -->
+                                <div class="book-3d-card relative aspect-[2/3] rounded-lg p-2 flex flex-col justify-between shadow-md group cursor-pointer" style="background: linear-gradient(135deg, #065f46 0%, #047857 100%);">
+                                    <div class="mini-book-spine"></div>
+                                    <span class="text-[8px] font-black text-emerald-300 pl-2">BUSINESS</span>
+                                    <div class="pl-2">
+                                        <p class="text-[10px] font-black text-white leading-tight">Zero to One</p>
+                                        <p class="text-[8px] text-emerald-200">Peter Thiel</p>
+                                    </div>
+                                    <div class="text-[8px] text-amber-400 pl-2">★ 4.7</div>
+                                </div>
+                            </div>
+
+                            <!-- Built-in Reader Badges -->
+                            <div class="mt-4 pt-3 border-t border-slate-200/80 grid grid-cols-3 gap-1.5 text-center">
+                                <div class="p-1.5 neu-trench rounded-lg">
+                                    <span class="text-[10px] block">📖</span>
+                                    <span class="text-[9px] font-bold text-slate-700">Digital Reader</span>
+                                </div>
+                                <div class="p-1.5 neu-trench rounded-lg">
+                                    <span class="text-[10px] block">⏱️</span>
+                                    <span class="text-[9px] font-bold text-slate-700">Study Timer</span>
+                                </div>
+                                <div class="p-1.5 neu-trench rounded-lg">
+                                    <span class="text-[10px] block">🔖</span>
+                                    <span class="text-[9px] font-bold text-slate-700">Smart Notes</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: FEATURE HIGHLIGHTS -->
+                    <div class="lg:col-span-7 space-y-4 sm:space-y-5 reveal-right order-1 lg:order-2">
+                        
+                        <!-- Feature 1 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-indigo-600 shrink-0">
+                                📖
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Integrated Distraction-Free E-Reader</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Read directly in your browser with full dark mode, customizable typography, text scaling, and automatic reading progress tracking.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 2 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-purple-600 shrink-0">
+                                ⏱️
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Deep Study Focus Timer & Audio Immersion</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Built-in Pomodoro sprint clock with ambient white noise and study bells to help you lock into unbroken flow state.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 3 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-pink-600 shrink-0">
+                                🔖
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Smart Bookmarking, Notes & Highlights</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Extract high-leverage mental models, bookmark essential chapters, and maintain a centralized archive of your reading insights.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- CTA BUTTONS -->
+                        <div class="pt-2 flex flex-wrap items-center gap-3">
+                            <a href="/library.html" class="neu-btn px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                                <span>📚</span>
+                                <span>Explore Modern Library (120 Books) &rarr;</span>
+                            </a>
+                            <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                                <span class="text-indigo-500">●</span> 100% Free & Open Access
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- SHOWCASE PILLAR 03: ROUTINE & HABIT TRACKER -->
+            <!-- ============================================================== -->
+            <section id="showcase-routine" class="w-full py-12 sm:py-20 border-t border-slate-300/60 relative">
+                
+                <!-- SECTION BADGE & HEADER -->
+                <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14 reveal">
+                    <div class="neu-badge text-amber-600 font-black px-3.5 py-1 text-[10px] sm:text-xs uppercase tracking-widest mb-3 inline-flex items-center gap-1.5 shadow-sm">
+                        <span>🔥</span> MODULE 03 · ROUTINE & HABIT TRACKER
+                    </div>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-4 font-outfit tracking-tight leading-tight">
+                        Build Unshakeable Discipline & <br><span class="text-gradient">30-Day Momentum.</span>
+                    </h2>
+                    <p class="text-xs sm:text-base text-slate-600 font-medium leading-relaxed">
+                        Consistency creates mastery. Track your daily habits on a visual 30-day heatmap, time your deep work sprints with Jarvis voice alerts, and sync progress across all your devices.
+                    </p>
+                </div>
+
+                <!-- 2-COLUMN SHOWCASE GRID -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center">
+                    
+                    <!-- LEFT COLUMN: FEATURE HIGHLIGHTS -->
+                    <div class="lg:col-span-7 space-y-4 sm:space-y-5 reveal-left">
+                        
+                        <!-- Feature 1 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-amber-600 shrink-0">
+                                📊
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">GitHub-Style 30-Day Activity Heatmap</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Visual color-coded grid illuminating your daily habit streak, consistency percentage, and completion velocity over time.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 2 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-blue-600 shrink-0">
+                                ⏱️
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Retro Split-Flap Focus Stopwatch & Sprints</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    High-precision stopwatch with lap counter and customizable focus timers designed for time-blocking your highest-priority routines.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 3 -->
+                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-emerald-600 shrink-0">
+                                🤖
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Jarvis Audio Voice Alerts & Cloud Sync</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                                    Auditory cues ("Time's up, Sir/Ma'am") keep you focused, while live Google Cloud sync mirrors your progress on mobile & desktop.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- CTA BUTTONS -->
+                        <div class="pt-2 flex flex-wrap items-center gap-3">
+                            <button type="button" onclick="openTrackerModal()" class="neu-btn px-6 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                                <span>🔥</span>
+                                <span>Open Routine Tracker Modal</span>
+                            </button>
+                            <a href="/routine.html" class="neu-btn px-4 py-3.5 text-slate-700 font-bold text-xs sm:text-sm rounded-xl flex items-center gap-1.5 hover:text-amber-600 transition-colors">
+                                <span>📊</span> Full Analytics Page &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: INTERACTIVE HABIT & HEATMAP DEMO -->
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center reveal-right">
+                        <div class="showcase-interactive-panel p-5 sm:p-6 w-full max-w-md relative overflow-hidden bg-gradient-to-br from-amber-50/40 via-white to-blue-50/40">
+                            
+                            <!-- Header & Streak Pill -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-black text-slate-800 font-outfit uppercase tracking-wider">Interactive Preview</span>
+                                </div>
+                                <span class="neu-badge text-[10px] font-black text-amber-600 px-2.5 py-0.5 flex items-center gap-1">
+                                    <span>🔥</span> 18-Day Streak Active
+                                </span>
+                            </div>
+
+                            <!-- Mini Interactive Habits Checklist Demo -->
+                            <div class="space-y-2.5 mb-4 text-left">
+                                <div onclick="toggleShowcaseHabit(this)" class="p-2.5 neu-card-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition group">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="showcase-check-box w-5 h-5 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-sm">
+                                            ✓
+                                        </div>
+                                        <span class="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Morning Deep Work (90m)</span>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-400">08:00 AM</span>
+                                </div>
+
+                                <div onclick="toggleShowcaseHabit(this)" class="p-2.5 neu-card-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition group">
+                                    <div class="showcase-check-box w-5 h-5 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-sm">
+                                        ✓
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Read 20 Pages from Library</span>
+                                    <span class="text-[10px] font-bold text-slate-400">02:00 PM</span>
+                                </div>
+
+                                <div onclick="toggleShowcaseHabit(this)" class="p-2.5 neu-card-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition group">
+                                    <div class="showcase-check-box w-5 h-5 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-sm">
+                                        ✓
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Career Roadmap Practice</span>
+                                    <span class="text-[10px] font-bold text-slate-400">06:30 PM</span>
+                                </div>
+                            </div>
+
+                            <!-- Mini 30-Day Heatmap Grid Matrix Demo -->
+                            <div class="neu-trench p-3 rounded-xl">
+                                <div class="flex items-center justify-between mb-1.5 text-[9px] font-bold text-slate-500">
+                                    <span>30-DAY HABIT INTENSITY</span>
+                                    <span class="text-emerald-600 font-extrabold">96% CONSISTENCY</span>
+                                </div>
+                                <div class="grid grid-cols-10 gap-1">
+                                    <div class="h-3 rounded-sm bg-emerald-500/90" title="Day 1"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 2"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-400" title="Day 3"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 4"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-500" title="Day 5"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 6"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-400" title="Day 7"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 8"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-500" title="Day 9"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 10"></div>
+                                    
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 11"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-500" title="Day 12"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 13"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-400" title="Day 14"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 15"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-500" title="Day 16"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 17"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 18"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-400" title="Day 19"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 20"></div>
+
+                                    <div class="h-3 rounded-sm bg-emerald-500" title="Day 21"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 22"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 23"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-400" title="Day 24"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 25"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-500" title="Day 26"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 27"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-600" title="Day 28"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-400" title="Day 29"></div>
+                                    <div class="h-3 rounded-sm bg-emerald-500" title="Day 30"></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ============================================================== -->
+            <!-- TRANSITION PROMPT TO DOMAIN SELECTION -->
+            <!-- ============================================================== -->
+            <div class="w-full pt-12 pb-6 flex flex-col items-center justify-center text-center reveal border-t border-slate-300/60">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 neu-circle flex items-center justify-center text-2xl mb-3 text-indigo-600 shrink-0">
+                    🎯
+                </div>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 mb-2 font-outfit">
+                    Ready to Find Your Path?
+                </h2>
+                <p class="text-xs sm:text-base text-slate-600 font-medium max-w-lg mb-6 leading-relaxed">
+                    Select your primary interest below to generate your tailored AI Career Roadmap.
+                </p>
+                <div class="flex items-center gap-2 text-blue-600 font-extrabold text-xs uppercase tracking-widest animate-bounce-slow">
+                    <span>Select Your Domain Below</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                </div>
+            </div>
         </div>
-    </div>
 
     <!-- MAIN APP CONTAINER -->
     <div id="app-wrapper" class="w-full flex justify-center pb-16 sm:pb-20 px-3 sm:px-4 reveal relative z-10 max-w-4xl">

@@ -24,19 +24,20 @@ const matchesOverview = document.getElementById("matches-overview");
 const careerDetails = document.getElementById("career-details");
 
 // -------------------------------------------------------------
-// 2. SCROLL REVEAL & 3D BOOK SCROLL ANIMATION
+// 2. SCROLL REVEAL, 3D BOOK & SHOWCASE INTERACTIONS
 // -------------------------------------------------------------
 function reveal() {
-    const reveals = document.querySelectorAll(".reveal");
+    const reveals = document.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale");
+    const windowHeight = window.innerHeight;
     for (let i = 0; i < reveals.length; i++) {
-        const windowHeight = window.innerHeight;
         const elementTop = reveals[i].getBoundingClientRect().top;
-        const elementVisible = 120; 
+        const elementVisible = 100; 
         if (elementTop < windowHeight - elementVisible) {
             reveals[i].classList.add("active");
         }
     }
 }
+window.reveal = reveal;
 
 function animateBookOnScroll() {
     const bookFrontCover = document.getElementById("book-front-cover");
@@ -46,9 +47,13 @@ function animateBookOnScroll() {
 
     if (!bookFrontCover || !landingIntro || landingIntro.style.display === "none") return;
 
-    const scrollY = window.scrollY;
-    const heroHeight = landingIntro.offsetHeight || window.innerHeight;
-    const progress = Math.min(1, Math.max(0, scrollY / (heroHeight * 0.6)));
+    // Calculate scroll progress relative to showcase compass section
+    const compassSection = document.getElementById("showcase-compass") || landingIntro;
+    const rect = compassSection.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    
+    // Progress is active when compass section enters viewport
+    const progress = Math.min(1, Math.max(0, (windowHeight - rect.top) / (windowHeight + rect.height * 0.5)));
 
     // Smooth page flip calculations
     const coverRot = progress * -160;
@@ -66,10 +71,83 @@ function animateBookOnScroll() {
     const tiltX = 20 - (progress * 8);
     bookContainer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
 }
+window.animateBookOnScroll = animateBookOnScroll;
+
+// Smooth scroll helper to navigate directly to the Career Compass Assessment Domains
+function scrollToCompassDomains() {
+    const appWrapperEl = document.getElementById("app-wrapper") || document.getElementById("interest-section");
+    if (appWrapperEl) {
+        const topPos = appWrapperEl.getBoundingClientRect().top + window.pageYOffset - 40;
+        window.scrollTo({ top: topPos, behavior: 'smooth' });
+    }
+}
+window.scrollToCompassDomains = scrollToCompassDomains;
+
+// Interactive mini habit checkbox toggle for showcase routine preview
+function toggleShowcaseHabit(cardEl) {
+    if (!cardEl) return;
+    const box = cardEl.querySelector(".showcase-check-box");
+    if (!box) return;
+    
+    const isChecked = box.textContent.trim() === "✓";
+    if (isChecked) {
+        box.textContent = "";
+        box.className = "showcase-check-box w-5 h-5 rounded-md border-2 border-slate-300 bg-white flex items-center justify-center text-xs font-black transition-all";
+        cardEl.style.opacity = "0.65";
+    } else {
+        box.textContent = "✓";
+        box.className = "showcase-check-box w-5 h-5 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-sm transition-all";
+        cardEl.style.opacity = "1";
+    }
+}
+window.toggleShowcaseHabit = toggleShowcaseHabit;
+
+// Initialize Showcase Card 3D Tilt Micro-Interactions on Desktop
+function initShowcase3DTilts() {
+    const cards = document.querySelectorAll(".showcase-interactive-panel, .showcase-feature-card");
+    cards.forEach(card => {
+        card.addEventListener("mousemove", (e) => {
+            if (window.innerWidth < 768) return; // Skip on mobile for performance
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
+        });
+        card.addEventListener("mouseleave", () => {
+            card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+        });
+    });
+}
+
+// Update time-based greeting for showcase user banner
+function updateShowcaseGreeting() {
+    const greetingEl = document.getElementById("showcase-user-greeting");
+    const nameEl = document.getElementById("showcase-user-name");
+    if (!greetingEl) return;
+    
+    const hour = new Date().getHours();
+    let timeGreeting = "Good day";
+    if (hour < 12) timeGreeting = "Good morning";
+    else if (hour < 17) timeGreeting = "Good afternoon";
+    else timeGreeting = "Good evening";
+
+    const currentName = (nameEl && nameEl.textContent && nameEl.textContent !== "Explorer") ? nameEl.textContent : "Explorer";
+    greetingEl.innerHTML = `${timeGreeting}, <span id="showcase-user-name" class="font-extrabold text-indigo-600">${currentName}</span>! ✨`;
+}
 
 window.addEventListener("scroll", () => {
     reveal();
     requestAnimationFrame(animateBookOnScroll);
+});
+document.addEventListener("DOMContentLoaded", () => {
+    reveal();
+    animateBookOnScroll();
+    initShowcase3DTilts();
+    updateShowcaseGreeting();
 });
 reveal();
 animateBookOnScroll();
