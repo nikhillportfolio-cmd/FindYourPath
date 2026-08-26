@@ -74,7 +74,7 @@ function animateBookOnScroll() {
 window.animateBookOnScroll = animateBookOnScroll;
 
 // Open Career Compass assessment view on click
-function openCompassFeature() {
+function openCompassFeature(fromPopstate = false) {
     if (window.praxisAuth && !window.praxisAuth.getUser()) {
         if (typeof window.openAuthModal === "function") {
             window.openAuthModal('login');
@@ -92,7 +92,7 @@ function openCompassFeature() {
         setTimeout(() => {
             landingIntro.style.display = "none";
             landingIntro.classList.remove("fade-out");
-        }, 300);
+        }, 200);
     }
 
     if (appWrapper) {
@@ -103,12 +103,16 @@ function openCompassFeature() {
         }
     }
 
+    if (!fromPopstate && typeof pushModalState === "function") {
+        pushModalState("app-wrapper", "#compass");
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 window.openCompassFeature = openCompassFeature;
 
 // Return back to Platform Showcase view
-function backToShowcase() {
+function backToShowcase(fromPopstate = false) {
     const landingIntro = document.getElementById("landing-intro");
     const appWrapper = document.getElementById("app-wrapper");
 
@@ -121,6 +125,10 @@ function backToShowcase() {
         landingIntro.style.display = "flex";
         landingIntro.classList.remove("fade-out");
         landingIntro.classList.add("fade-in");
+    }
+
+    if (!fromPopstate && window.location.hash === '#compass') {
+        window.history.replaceState({ praxisRoot: true, view: 'home' }, '', '/praxis');
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3435,6 +3443,13 @@ function handlePopState(event) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
     }
+
+    // 3. Check if Career Compass app-wrapper is active
+    const appWrapper = document.getElementById("app-wrapper");
+    if (appWrapper && !appWrapper.classList.contains("hidden")) {
+        backToShowcase(true);
+        return;
+    }
 }
 
 window.addEventListener("popstate", handlePopState);
@@ -3485,10 +3500,17 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-// INITIALIZE TRACKER & LIBRARY ON LOAD & ATTACH FORM LISTENERS
+// INITIALIZE TRACKER & PLATFORM ON LOAD & ATTACH FORM LISTENERS
 document.addEventListener("DOMContentLoaded", () => {
     loadHabitsFromStorage();
     if (typeof initRoutineStopwatch === "function") initRoutineStopwatch();
+
+    // Auto-launch Career Compass if #compass in URL
+    if (window.location.hash === '#compass' || window.location.search.includes('compass')) {
+        setTimeout(() => {
+            openCompassFeature(true);
+        }, 100);
+    }
 
     // Standalone Routine Tracker page initialization
     const isRoutinePage = window.location.pathname.includes('routine') || window.location.pathname.includes('habits') || window.location.pathname.includes('tracker');
