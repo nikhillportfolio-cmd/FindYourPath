@@ -11339,12 +11339,9 @@ app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Serve Modern Library Dedicated Web Page
-app.get('/library', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'library.html'));
-});
-app.get('/library.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'library.html'));
+// Redirect legacy library route to homepage
+app.get(['/library', '/library.html'], (req, res) => {
+    res.redirect('/');
 });
 
 // Serve Routine & Habit Tracker Dedicated Web Page
@@ -11552,7 +11549,7 @@ app.get('/api/book-fulltext', async (req, res) => {
         chapters: [
             {
                 title: "Overview & Essential Reading Notes",
-                content: `📖 "${cleanTitle}" by ${cleanAuthor || "the author"} is a contemporary copyrighted work.\n\nUnder international copyright laws, full copyrighted texts cannot be distributed freely without publisher licensing. However, you can read and inspect this book through the following methods right inside Modern Library:\n\n1. Use our Interactive Internet Archive / Open Library Digital Viewer below to borrow or read digitised pages.\n2. Review the structured chapter breakdown, core concepts, and key actionable principles summarized below.\n\nCore Focus:\nThis work provides transformative insights into personal development, strategy, and mental frameworks designed to accelerate career growth and deep decision-making.`
+                content: `📖 "${cleanTitle}" by ${cleanAuthor || "the author"} is a contemporary copyrighted work.\n\nUnder international copyright laws, full copyrighted texts cannot be distributed freely without publisher licensing. However, you can read and inspect this book through the following methods right inside PRAXiS:\n\n1. Use our Interactive Internet Archive / Open Library Digital Viewer below to borrow or read digitised pages.\n2. Review the structured chapter breakdown, core concepts, and key actionable principles summarized below.\n\nCore Focus:\nThis work provides transformative insights into personal development, strategy, and mental frameworks designed to accelerate career growth and deep decision-making.`
             },
             {
                 title: "Key Takeaways & Core Frameworks",

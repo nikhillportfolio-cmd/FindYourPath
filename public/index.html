@@ -945,7 +945,6 @@
 
             /* Mobile Modal Adjustments */
             #tracker-modal > div,
-            #library-modal > div,
             #book-detail-modal > div,
             #ebook-reader-modal > div,
             #auth-modal > div {
@@ -999,9 +998,6 @@
                 <button type="button" onclick="openCompassFeature()" class="neu-btn px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all cursor-pointer">
                     <span>🧭</span> Compass
                 </button>
-                <a href="/library.html" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 flex items-center gap-1.5 transition-all">
-                    <span>📚</span> Modern Library
-                </a>
                 <a href="/routine.html" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all">
                     <span>🔥</span> Routine Tracker
                 </a>
@@ -1014,9 +1010,6 @@
                 <button type="button" onclick="openCompassFeature()" title="Career Compass" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-blue-600 cursor-pointer">
                     🧭
                 </button>
-                <a href="/library.html" title="Modern Library" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-indigo-600">
-                    📚
-                </a>
                 <a href="/routine.html" title="Routine Tracker" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-amber-500">
                     🔥
                 </a>
@@ -1247,21 +1240,16 @@
 
                 <!-- SUBTITLE -->
                 <p class="text-xs sm:text-base md:text-lg text-slate-600 mb-8 sm:mb-10 font-medium max-w-2xl leading-relaxed px-2 sm:px-0 relative z-10">
-                    Stop guessing your path. PRAXiS combines <strong>AI-Driven Psychometrics</strong>, <strong>120+ Curated Masterworks</strong>, and <strong>30-Day Routine & Habit Discipline</strong> into one unified operating system.
+                    Stop guessing your path. PRAXiS combines <strong>AI-Driven Psychometrics</strong>, <strong>Phase-by-Phase Career Roadmaps</strong>, and <strong>30-Day Routine & Habit Discipline</strong> into one unified operating system.
                 </p>
 
-                <!-- ECOSYSTEM QUICK JUMP ANCHORS (4 CORE MODULE PILLS) -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 w-full max-w-3xl mb-10 relative z-10">
+                <!-- ECOSYSTEM QUICK JUMP ANCHORS (3 CORE MODULE PILLS) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3.5 w-full max-w-2xl mb-10 relative z-10">
                     <button type="button" onclick="openCompassFeature()" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
                         <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🧭</span>
                         <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-blue-600 transition-colors">Career Compass</span>
                         <span class="text-[9px] text-slate-400 font-semibold mt-0.5">AI Trait Roadmaps</span>
                     </button>
-                    <a href="/library.html" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
-                        <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">📚</span>
-                        <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-indigo-600 transition-colors">Modern Library</span>
-                        <span class="text-[9px] text-slate-400 font-semibold mt-0.5">120 Curated Works</span>
-                    </a>
                     <a href="/routine.html" class="showcase-hero-pill p-3 sm:p-3.5 flex flex-col items-center justify-center text-center group cursor-pointer">
                         <span class="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform">🔥</span>
                         <span class="text-[11px] sm:text-xs font-black text-slate-800 group-hover:text-amber-600 transition-colors">Routine Tracker</span>
@@ -1468,159 +1456,14 @@
             </section>
 
             <!-- ============================================================== -->
-            <!-- SHOWCASE PILLAR 02: MODERN LIBRARY -->
-            <!-- ============================================================== -->
-            <section id="showcase-library" class="w-full py-12 sm:py-20 border-t border-slate-300/60 relative">
-                
-                <!-- SECTION BADGE & HEADER -->
-                <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14 reveal">
-                    <div class="neu-badge text-indigo-600 font-black px-3.5 py-1 text-[10px] sm:text-xs uppercase tracking-widest mb-3 inline-flex items-center gap-1.5 shadow-sm">
-                        <span>📚</span> MODULE 02 · MODERN LIBRARY
-                    </div>
-                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-4 font-outfit tracking-tight leading-tight">
-                        120+ Curated Masterworks <br><span class="text-gradient">For High Performers.</span>
-                    </h2>
-                    <p class="text-xs sm:text-base text-slate-600 font-medium leading-relaxed">
-                        Knowledge is your unfair advantage. Explore our meticulously curated library spanning engineering, business, psychology, philosophy, design, and health with built-in reading tools.
-                    </p>
-                </div>
-
-                <!-- 2-COLUMN SHOWCASE GRID -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center">
-                    
-                    <!-- LEFT COLUMN: 3D FLOATING BOOKSHELF PREVIEW -->
-                    <div class="lg:col-span-5 flex flex-col items-center justify-center reveal-left order-2 lg:order-1">
-                        <div class="showcase-interactive-panel p-5 sm:p-6 w-full max-w-md relative overflow-hidden bg-gradient-to-br from-indigo-50/40 via-white to-purple-50/40">
-                            
-                            <!-- Ambient Light -->
-                            <div class="absolute -top-10 -left-10 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
-
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-xs font-black text-indigo-600 font-outfit uppercase tracking-wider">Curated Highlights</span>
-                                <span class="neu-badge text-[9px] font-extrabold text-indigo-600 px-2 py-0.5">120 Volumes</span>
-                            </div>
-
-                            <!-- 3D Mini Book Grid Preview -->
-                            <div class="grid grid-cols-3 gap-3 my-2">
-                                <!-- Mini Book 1 -->
-                                <div class="book-3d-card relative aspect-[2/3] rounded-lg p-2 flex flex-col justify-between shadow-md group cursor-pointer" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
-                                    <div class="mini-book-spine"></div>
-                                    <span class="text-[8px] font-black text-amber-400 pl-2">#01 BESTSELLER</span>
-                                    <div class="pl-2">
-                                        <p class="text-[10px] font-black text-white leading-tight">Atomic Habits</p>
-                                        <p class="text-[8px] text-slate-300">James Clear</p>
-                                    </div>
-                                    <div class="text-[8px] text-amber-400 pl-2">★ 4.9</div>
-                                </div>
-
-                                <!-- Mini Book 2 -->
-                                <div class="book-3d-card relative aspect-[2/3] rounded-lg p-2 flex flex-col justify-between shadow-md group cursor-pointer" style="background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);">
-                                    <div class="mini-book-spine"></div>
-                                    <span class="text-[8px] font-black text-sky-300 pl-2">TECH & AI</span>
-                                    <div class="pl-2">
-                                        <p class="text-[10px] font-black text-white leading-tight">Clean Code</p>
-                                        <p class="text-[8px] text-indigo-200">Robert Martin</p>
-                                    </div>
-                                    <div class="text-[8px] text-amber-400 pl-2">★ 4.8</div>
-                                </div>
-
-                                <!-- Mini Book 3 -->
-                                <div class="book-3d-card relative aspect-[2/3] rounded-lg p-2 flex flex-col justify-between shadow-md group cursor-pointer" style="background: linear-gradient(135deg, #065f46 0%, #047857 100%);">
-                                    <div class="mini-book-spine"></div>
-                                    <span class="text-[8px] font-black text-emerald-300 pl-2">BUSINESS</span>
-                                    <div class="pl-2">
-                                        <p class="text-[10px] font-black text-white leading-tight">Zero to One</p>
-                                        <p class="text-[8px] text-emerald-200">Peter Thiel</p>
-                                    </div>
-                                    <div class="text-[8px] text-amber-400 pl-2">★ 4.7</div>
-                                </div>
-                            </div>
-
-                            <!-- Built-in Reader Badges -->
-                            <div class="mt-4 pt-3 border-t border-slate-200/80 grid grid-cols-3 gap-1.5 text-center">
-                                <div class="p-1.5 neu-trench rounded-lg">
-                                    <span class="text-[10px] block">📖</span>
-                                    <span class="text-[9px] font-bold text-slate-700">Digital Reader</span>
-                                </div>
-                                <div class="p-1.5 neu-trench rounded-lg">
-                                    <span class="text-[10px] block">⏱️</span>
-                                    <span class="text-[9px] font-bold text-slate-700">Study Timer</span>
-                                </div>
-                                <div class="p-1.5 neu-trench rounded-lg">
-                                    <span class="text-[10px] block">🔖</span>
-                                    <span class="text-[9px] font-bold text-slate-700">Smart Notes</span>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <!-- RIGHT COLUMN: FEATURE HIGHLIGHTS -->
-                    <div class="lg:col-span-7 space-y-4 sm:space-y-5 reveal-right order-1 lg:order-2">
-                        
-                        <!-- Feature 1 -->
-                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-indigo-600 shrink-0">
-                                📖
-                            </div>
-                            <div>
-                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Integrated Distraction-Free E-Reader</h3>
-                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
-                                    Read directly in your browser with full dark mode, customizable typography, text scaling, and automatic reading progress tracking.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Feature 2 -->
-                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-purple-600 shrink-0">
-                                ⏱️
-                            </div>
-                            <div>
-                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Deep Study Focus Timer & Audio Immersion</h3>
-                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
-                                    Built-in Pomodoro sprint clock with ambient white noise and study bells to help you lock into unbroken flow state.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Feature 3 -->
-                        <div class="showcase-feature-card p-4 sm:p-5 flex items-start gap-3.5 sm:gap-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-pink-600 shrink-0">
-                                🔖
-                            </div>
-                            <div>
-                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Smart Bookmarking, Notes & Highlights</h3>
-                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
-                                    Extract high-leverage mental models, bookmark essential chapters, and maintain a centralized archive of your reading insights.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- CTA BUTTONS -->
-                        <div class="pt-2 flex flex-wrap items-center gap-3">
-                            <a href="/library.html" class="neu-btn px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
-                                <span>📚</span>
-                                <span>Explore Modern Library (120 Books) &rarr;</span>
-                            </a>
-                            <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                                <span class="text-indigo-500">●</span> 100% Free & Open Access
-                            </span>
-                        </div>
-                    </div>
-
-                </div>
-            </section>
-
-            <!-- ============================================================== -->
-            <!-- SHOWCASE PILLAR 03: ROUTINE & HABIT TRACKER -->
+            <!-- SHOWCASE PILLAR 02: ROUTINE & HABIT TRACKER -->
             <!-- ============================================================== -->
             <section id="showcase-routine" class="w-full py-12 sm:py-20 border-t border-slate-300/60 relative">
                 
                 <!-- SECTION BADGE & HEADER -->
                 <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14 reveal">
                     <div class="neu-badge text-amber-600 font-black px-3.5 py-1 text-[10px] sm:text-xs uppercase tracking-widest mb-3 inline-flex items-center gap-1.5 shadow-sm">
-                        <span>🔥</span> MODULE 03 · ROUTINE & HABIT TRACKER
+                        <span>🔥</span> MODULE 02 · ROUTINE & HABIT TRACKER
                     </div>
                     <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-4 font-outfit tracking-tight leading-tight">
                         Build Unshakeable Discipline & <br><span class="text-gradient">30-Day Momentum.</span>
@@ -1714,7 +1557,8 @@
                                     <div class="showcase-check-box w-5 h-5 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-sm">
                                         ✓
                                     </div>
-                                    <span class="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Read 20 Pages from Library</span>
+                                    <span class="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Read 20 Pages (Recommended Reading)</span>
+                                </div>
                                     <span class="text-[10px] font-bold text-slate-400">02:00 PM</span>
                                 </div>
 
@@ -1776,7 +1620,7 @@
             </section>
 
             <!-- ============================================================== -->
-            <!-- BOTTOM CALL-TO-ACTION: EXPLORE THE 3 PILLARS -->
+            <!-- BOTTOM CALL-TO-ACTION: EXPLORE THE 2 PILLARS -->
             <!-- ============================================================== -->
             <div class="w-full pt-12 pb-10 flex flex-col items-center justify-center text-center reveal border-t border-slate-300/60">
                 <div class="w-12 h-12 sm:w-14 sm:h-14 neu-circle flex items-center justify-center text-2xl mb-3 text-indigo-600 shrink-0 shadow-inner">
@@ -1786,11 +1630,11 @@
                     Choose Your Path & Get Started
                 </h2>
                 <p class="text-xs sm:text-base text-slate-600 font-medium max-w-xl mb-8 leading-relaxed">
-                    Click any feature below to launch your tailored career assessment, browse the curated library, or track your daily routine.
+                    Click any feature below to launch your tailored career assessment or track your daily routine.
                 </p>
 
-                <!-- 3 FEATURE LAUNCH CARDS -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 w-full max-w-4xl text-left">
+                <!-- 2 FEATURE LAUNCH CARDS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full max-w-2xl text-left">
                     <!-- Feature 1 Launch Card -->
                     <button type="button" onclick="openCompassFeature()" class="neu-card-sm p-4 sm:p-5 flex flex-col justify-between hover:scale-[1.02] active:scale-95 transition-all group cursor-pointer border border-blue-200/70 bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/50">
                         <div>
@@ -1799,7 +1643,7 @@
                             </div>
                             <span class="neu-badge text-[9px] font-black text-blue-600 uppercase px-2 py-0.5 mb-2 inline-block">Module 01</span>
                             <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit group-hover:text-blue-600 transition-colors">The Career Compass</h3>
-                            <p class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">Psychometric trait testing & custom roadmaps.</p>
+                            <p class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">Psychometric trait testing, phase-by-phase roadmaps & recommended books.</p>
                         </div>
                         <div class="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-blue-600 text-xs font-bold">
                             <span>Launch Compass</span>
@@ -1808,28 +1652,12 @@
                     </button>
 
                     <!-- Feature 2 Launch Card -->
-                    <a href="/library.html" class="neu-card-sm p-4 sm:p-5 flex flex-col justify-between hover:scale-[1.02] active:scale-95 transition-all group cursor-pointer border border-indigo-200/70 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50">
-                        <div>
-                            <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-indigo-600 mb-3 group-hover:scale-110 transition-transform">
-                                📚
-                            </div>
-                            <span class="neu-badge text-[9px] font-black text-indigo-600 uppercase px-2 py-0.5 mb-2 inline-block">Module 02</span>
-                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit group-hover:text-indigo-600 transition-colors">Modern Library</h3>
-                            <p class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">120+ Curated books & digital e-reader.</p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-indigo-600 text-xs font-bold">
-                            <span>Open Library</span>
-                            <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
-                        </div>
-                    </a>
-
-                    <!-- Feature 3 Launch Card -->
                     <a href="/routine.html" class="neu-card-sm p-4 sm:p-5 flex flex-col justify-between hover:scale-[1.02] active:scale-95 transition-all group cursor-pointer border border-amber-200/70 bg-gradient-to-br from-amber-50/70 via-white to-rose-50/50">
                         <div>
                             <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-amber-600 mb-3 group-hover:scale-110 transition-transform">
                                 🔥
                             </div>
-                            <span class="neu-badge text-[9px] font-black text-amber-600 uppercase px-2 py-0.5 mb-2 inline-block">Module 03</span>
+                            <span class="neu-badge text-[9px] font-black text-amber-600 uppercase px-2 py-0.5 mb-2 inline-block">Module 02</span>
                             <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit group-hover:text-amber-600 transition-colors">Routine & Habits</h3>
                             <p class="text-[11px] text-slate-500 font-medium mt-1 leading-snug">30-day heatmap & Jarvis voice focus timer.</p>
                         </div>
@@ -2020,32 +1848,19 @@
                     </div>
 
                     <div class="pt-6 sm:pt-8 border-t border-slate-300">
-                        <h3 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-slate-800 font-outfit flex items-center gap-2.5 sm:gap-3">
-                            <span class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-indigo-600 text-xs sm:text-sm shrink-0">📚</span>
-                            Recommended Reading
-                        </h3>
-                        <ul id="detail-books" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                            <!-- Books injected here -->
-                        </ul>
+                        <div class="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
+                            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-outfit flex items-center gap-2.5 sm:gap-3">
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-indigo-600 text-xs sm:text-sm shrink-0">📚</span>
+                                Recommended Books
+                            </h3>
+                            <span class="neu-badge text-[10px] font-extrabold text-indigo-600 uppercase px-2.5 py-1">Roadmap Essential Reading</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium mb-5 sm:mb-6 leading-relaxed">
+                            Handpicked foundational books tailored specifically to your chosen roadmap. Click any book to inspect details, key concepts, or read digital preview.
+                        </p>
 
-                        <!-- EXPLORE IN MODERN LIBRARY PROMINENT NEUMORPHIC BUTTON -->
-                        <div class="mt-6">
-                            <a id="explore-library-results-btn" href="/library.html?genre=recommendations" onclick="if(typeof openLibraryWithRecommendations==='function'){openLibraryWithRecommendations();}" 
-                                class="w-full neu-btn p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-800 font-extrabold shadow-xl hover:scale-[1.015] active:scale-[0.995] transition-all duration-300 group border border-indigo-200/80 bg-gradient-to-r from-indigo-50/90 via-white to-blue-50/90">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 sm:w-11 sm:h-11 neu-circle flex items-center justify-center text-xl sm:text-2xl text-indigo-600 group-hover:scale-110 group-hover:rotate-12 transition-all shrink-0">
-                                        🚀
-                                    </div>
-                                    <div class="flex flex-col text-left">
-                                        <span class="text-sm sm:text-base font-black text-indigo-600 font-outfit tracking-wide">Explore in Modern Library 🚀</span>
-                                        <span class="text-[11px] sm:text-xs font-semibold text-slate-500 mt-0.5">Open dedicated Modern Library for your recommended books</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-center gap-2 text-indigo-600 font-black text-xs uppercase tracking-wider shrink-0 bg-indigo-100/60 px-3 py-2 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                    <span>Open Library Page</span>
-                                    <span class="text-sm group-hover:translate-x-1 transition-transform">&rarr;</span>
-                                </div>
-                            </a>
+                        <div id="detail-books" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                            <!-- Books injected dynamically -->
                         </div>
                     </div>
                 </div>
@@ -2719,86 +2534,6 @@
         </div>
     </div>
 
-    <!-- MODERN LIBRARY OVERLAY MODAL -->
-    <div id="library-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-2 sm:p-5 md:p-8 bg-slate-900/45 backdrop-blur-md transition-opacity duration-300 opacity-0">
-        <div class="neu-card w-full max-w-6xl max-h-[95vh] sm:max-h-[94vh] flex flex-col overflow-hidden relative shadow-2xl border border-white/70">
-            
-            <!-- MODAL HEADER -->
-            <div class="p-4 sm:p-6 md:p-8 pb-4 sm:pb-5 border-b border-slate-300/60 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 shrink-0 bg-slate-200/40">
-                <div class="flex items-center gap-3 sm:gap-4">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-indigo-600 shrink-0">
-                        📚
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <h2 class="text-lg sm:text-2xl md:text-3xl font-black text-slate-800 font-outfit tracking-tight">Modern Library</h2>
-                            <span class="neu-badge text-[9px] sm:text-[10px] font-bold text-indigo-600 uppercase px-2 py-0.5 sm:px-2.5">120 Books Catalog</span>
-                        </div>
-                        <p class="text-[11px] sm:text-xs md:text-sm text-slate-500 font-medium mt-0.5">Curated landmark books across 6 key genres with 3D display cases</p>
-                    </div>
-                </div>
-
-                <!-- SEARCH BAR & CLOSE BUTTON -->
-                <div class="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
-                    <div class="relative flex-1 md:w-64">
-                        <input id="library-search-input" type="text" oninput="handleLibrarySearch()" placeholder="Search title or author..." 
-                            class="neu-input w-full pl-8 sm:pl-9 pr-3 sm:pr-4 py-2 sm:py-2.5 rounded-xl text-slate-700 text-xs font-semibold focus:outline-none placeholder-slate-400 bg-[#e0e5ec]" />
-                        <span class="absolute left-2.5 top-2 sm:top-2.5 text-slate-400 text-xs">🔍</span>
-                    </div>
-                    <button onclick="closeLibraryModal()" title="Close Library" class="neu-circle w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-slate-600 hover:text-red-500 transition-colors font-black text-base sm:text-lg shrink-0">
-                        ✕
-                    </button>
-                </div>
-            </div>
-
-            <!-- GENRE NAVIGATION TABS (HORIZONTALLY SCROLLABLE) -->
-            <div class="px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 bg-slate-200/20 border-b border-slate-300/40 shrink-0">
-                <div id="library-genre-tabs" class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 custom-scrollbar no-scrollbar">
-                    <button type="button" onclick="setLibraryGenre('all')" id="genre-tab-all" class="genre-tab-btn neu-btn pressed px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-600 shrink-0">
-                        ✨ All Genres (120)
-                    </button>
-                    <button type="button" onclick="setLibraryGenre('Fantasy')" id="genre-tab-fantasy" class="genre-tab-btn neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-600 shrink-0">
-                        🐉 Fantasy (20)
-                    </button>
-                    <button type="button" onclick="setLibraryGenre('Sci-Fi')" id="genre-tab-scifi" class="genre-tab-btn neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-600 shrink-0">
-                        🚀 Sci-Fi (20)
-                    </button>
-                    <button type="button" onclick="setLibraryGenre('Comedy')" id="genre-tab-comedy" class="genre-tab-btn neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-600 shrink-0">
-                        🎭 Comedy (20)
-                    </button>
-                    <button type="button" onclick="setLibraryGenre('Literature')" id="genre-tab-literature" class="genre-tab-btn neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-600 shrink-0">
-                        📖 Literature (20)
-                    </button>
-                    <button type="button" onclick="setLibraryGenre('Business & Startups')" id="genre-tab-business" class="genre-tab-btn neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-600 shrink-0">
-                        💼 Business & Startups (20)
-                    </button>
-                    <button type="button" onclick="setLibraryGenre('Philosophy & Mindset')" id="genre-tab-philosophy" class="genre-tab-btn neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-slate-600 shrink-0">
-                        🧠 Philosophy & Mindset (20)
-                    </button>
-                    <button type="button" onclick="setLibraryGenre('recommendations')" id="genre-tab-recommendations" class="genre-tab-btn neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-indigo-600 shrink-0">
-                        ⭐ Your Recommendations (<span id="recommendations-tab-count">0</span>)
-                    </button>
-                </div>
-            </div>
-
-            <!-- MODAL SCROLLABLE BODY (BOOK CATALOG GRID) -->
-            <div class="p-4 sm:p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
-                <div id="library-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                    <!-- 120 Dynamic 3D Book Display Cases Injected Here -->
-                </div>
-                
-                <div id="library-empty-state" class="hidden neu-card p-6 sm:p-12 text-center flex flex-col items-center justify-center">
-                    <div class="w-12 h-12 sm:w-16 sm:h-16 neu-circle flex items-center justify-center text-2xl sm:text-3xl mb-3 sm:mb-4 text-slate-400">
-                        🔍
-                    </div>
-                    <h4 class="text-base sm:text-lg font-bold text-slate-700 font-outfit mb-1.5 sm:mb-2">No Matching Books Found</h4>
-                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium max-w-md">
-                        Try searching for another title or author, or switch genre categories above.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- BOOK DETAIL INSPECTOR MODAL -->
     <div id="book-detail-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300 opacity-0">

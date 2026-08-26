@@ -411,22 +411,106 @@ function showCareerDetails(index) {
     const booksContainer = document.getElementById("detail-books");
     booksContainer.innerHTML = "";
 
-    if (match.books && match.books.length > 0) {
-        match.books.forEach((book, i) => {
-            const li = document.createElement("li");
-            li.className = "neu-card-sm p-4 flex items-center gap-3 fade-in";
-            li.style.animationDelay = `${(match.phases.length * 100) + (i * 100)}ms`;
-            li.innerHTML = `
-                <div class="w-9 h-9 neu-circle flex items-center justify-center text-indigo-600 font-bold shrink-0 text-sm">
-                    📖
+    const careerBooks = (match.books && match.books.length > 0) ? match.books : [
+        "Atomic Habits by James Clear",
+        "Deep Work by Cal Newport",
+        "Thinking, Fast and Slow by Daniel Kahneman",
+        "Zero to One by Peter Thiel"
+    ];
+
+    recommendationBooks = careerBooks.map((bookItem, idx) => {
+        let title = typeof bookItem === 'string' ? bookItem : (bookItem.title || 'Recommended Book');
+        let author = typeof bookItem === 'string' ? 'Recommended Author' : (bookItem.author || 'Recommended Author');
+        
+        if (typeof bookItem === 'string' && bookItem.includes(" by ")) {
+            const parts = bookItem.split(" by ");
+            title = parts[0].trim();
+            author = parts[1].trim();
+        }
+
+        const matchedLib = libraryBooks.find(b => 
+            b.title.toLowerCase().includes(title.toLowerCase()) || 
+            title.toLowerCase().includes(b.title.toLowerCase())
+        );
+
+        const isbn = matchedLib ? matchedLib.isbn : findIsbnForBookTitle(title);
+        const year = matchedLib ? matchedLib.year : 2023;
+        const rating = matchedLib ? matchedLib.rating : (4.8 + (idx * 0.05) % 0.2).toFixed(1);
+        const desc = matchedLib ? matchedLib.desc : `Foundational literature & practical frameworks curated specifically for your ${match.title} roadmap.`;
+
+        const bId = `rec_career_${idx}_${Date.now()}`;
+
+        if (!isbn) {
+            fetchOpenLibraryCoverDynamic(bId, title, author);
+        }
+
+        return {
+            id: bId,
+            title: title,
+            author: author,
+            genre: `${match.title} Reading`,
+            year: year,
+            rating: rating,
+            isbn: isbn,
+            desc: desc,
+            isRecommendation: true
+        };
+    });
+
+    try {
+        localStorage.setItem("praxis_recommendations", JSON.stringify(recommendationBooks));
+    } catch (e) {}
+
+    recommendationBooks.forEach((book, i) => {
+        const coverUrl = book.isbn ? getOpenLibraryCoverUrl(book.isbn) : (openLibraryCoverCache[`${book.title}_${book.author}`] || `https://covers.openlibrary.org/b/isbn/9780000000000-M.jpg`);
+
+        const card = document.createElement("div");
+        card.className = "neu-card p-4 sm:p-5 flex flex-col justify-between group hover:scale-[1.015] active:scale-[0.99] transition-all duration-300 cursor-pointer fade-in border border-white/60 shadow-lg";
+        card.style.animationDelay = `${(match.phases.length * 100) + (i * 100)}ms`;
+
+        card.innerHTML = `
+            <div>
+                <div class="flex items-start gap-3.5 sm:gap-4 mb-3">
+                    <div class="w-16 sm:w-20 aspect-[2/3] shrink-0 book-3d-wrapper">
+                        <div class="book-3d-card shadow-md">
+                            <div class="book-3d-spine"></div>
+                            <div class="book-3d-shine"></div>
+                            <img src="${coverUrl}" 
+                                 data-book-id="${book.id}"
+                                 alt="${escapeHtml(book.title)}" 
+                                 class="book-cover-img"
+                                 loading="lazy"
+                                 onerror="handleImageError(this, '${escapeHtml(book.title)}', '${escapeHtml(book.author)}', '${escapeHtml(book.genre)}')" />
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-1 mb-1 flex-wrap">
+                            <span class="neu-badge text-[9px] font-black text-indigo-600 uppercase px-2 py-0.5 tracking-tight">Phase Reading</span>
+                            <span class="text-[10px] font-black text-amber-600 flex items-center gap-0.5">★ ${book.rating}</span>
+                        </div>
+                        <h4 class="text-sm sm:text-base font-black text-slate-800 font-outfit line-clamp-2 group-hover:text-indigo-600 transition-colors leading-snug">${escapeHtml(book.title)}</h4>
+                        <p class="text-xs font-semibold text-slate-500 line-clamp-1 mt-0.5">by ${escapeHtml(book.author)}</p>
+                        <span class="text-[10px] font-bold text-slate-400 mt-1 inline-block">${book.year}</span>
+                    </div>
                 </div>
-                <span class="font-bold text-xs text-slate-700 leading-tight">${book}</span>
-            `;
-            booksContainer.appendChild(li);
-        });
-    } else {
-        booksContainer.innerHTML = "<p class='text-slate-500 text-xs col-span-2'>Explore foundational industry literature and project guides.</p>";
-    }
+                <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed font-medium mb-3">${escapeHtml(book.desc)}</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-300/60 flex items-center justify-between gap-2 mt-1">
+                <button type="button" onclick="event.stopPropagation(); openEBookReader('${escapeHtml(book.title)}', '${escapeHtml(book.author)}')" 
+                    class="neu-btn px-3 py-1.5 text-[11px] font-black text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 rounded-xl shadow-sm flex items-center gap-1 transition-transform hover:scale-105 active:scale-95 cursor-pointer">
+                    <span>📖</span> Read / Preview
+                </button>
+                <button type="button" onclick="event.stopPropagation(); openBookDetailModal('${book.id}')"
+                    class="neu-btn px-2.5 py-1.5 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 rounded-xl flex items-center gap-1 transition-all cursor-pointer">
+                    <span>🔍</span> Details
+                </button>
+            </div>
+        `;
+
+        card.onclick = () => openBookDetailModal(book.id);
+        booksContainer.appendChild(card);
+    });
 }
 
 // -------------------------------------------------------------
@@ -3312,7 +3396,6 @@ function pushModalState(modalId, hash) {
 function handlePopState(event) {
     const expandModal = document.getElementById("spreadsheet-expand-modal");
     const trackerModal = document.getElementById("tracker-modal");
-    const libraryModal = document.getElementById("library-modal");
     const bookDetailModal = document.getElementById("book-detail-modal");
     const readerModal = document.getElementById("ebook-reader-modal");
     const authModal = document.getElementById("auth-modal");
@@ -3328,10 +3411,6 @@ function handlePopState(event) {
     }
     if (bookDetailModal && !bookDetailModal.classList.contains("hidden")) {
         closeBookDetailModal(true);
-        return;
-    }
-    if (libraryModal && !libraryModal.classList.contains("hidden")) {
-        closeLibraryModal(true);
         return;
     }
     if (trackerModal && !trackerModal.classList.contains("hidden")) {
@@ -3400,7 +3479,6 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
         closeSpreadsheetExpandModal();
         closeTrackerModal();
-        closeLibraryModal();
         closeBookDetailModal();
         closeEBookReader();
         if (typeof window.closeAuthModal === "function") window.closeAuthModal();
@@ -3460,9 +3538,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     document.getElementById("tracker-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "tracker-modal") closeTrackerModal();
-    });
-    document.getElementById("library-modal")?.addEventListener("click", (e) => {
-        if (e.target.id === "library-modal") closeLibraryModal();
     });
 
     // Window resize & orientation change listeners for smooth fit scaling
@@ -4203,13 +4278,9 @@ function initPingEngine() {
             const hash = window.location.hash.toLowerCase();
             const routineSection = document.getElementById("routine-tracker-section");
             const isRoutineModal = routineSection && !routineSection.classList.contains("hidden");
-            const libraryModal = document.getElementById("library-modal");
-            const isLibraryModal = libraryModal && !libraryModal.classList.contains("hidden");
 
             let currentFeature = 'compass';
-            if (pathName.includes('library') || hash.includes('#library') || isLibraryModal) {
-                currentFeature = 'library';
-            } else if (pathName.includes('routine') || pathName.includes('habit') || pathName.includes('tracker') || hash.includes('#routine') || isRoutineModal) {
+            if (pathName.includes('routine') || pathName.includes('habit') || pathName.includes('tracker') || hash.includes('#routine') || hash.includes('#tracker') || isRoutineModal) {
                 currentFeature = 'routine';
             } else {
                 currentFeature = 'compass';
@@ -4223,7 +4294,6 @@ function initPingEngine() {
                     isNewVisit: isNew,
                     feature: currentFeature,
                     isRoutineActive: currentFeature === 'routine',
-                    isLibraryActive: currentFeature === 'library',
                     isCompassActive: currentFeature === 'compass'
                 })
             });
