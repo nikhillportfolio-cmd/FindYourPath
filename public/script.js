@@ -2571,11 +2571,15 @@ function updateStopwatchDisplay(ms, forceDirect = false) {
     });
 }
 
+let originalPageTitle = document.title || "PRAXiS";
+
 function updateLiveFloatingBadge(ms) {
     const livePill = document.getElementById("tracker-stopwatch-live-pill");
     const liveText = document.getElementById("tracker-live-stopwatch-text");
     const headerPill = document.getElementById("stopwatch-btn-status-pill");
     const headerPillText = document.getElementById("stopwatch-btn-status-text");
+    const navPill = document.getElementById("nav-stopwatch-pill");
+    const mobileDot = document.getElementById("mobile-stopwatch-dot");
 
     const formatted = formatStopwatchTime(ms);
 
@@ -2594,6 +2598,39 @@ function updateLiveFloatingBadge(ms) {
             headerPill.classList.remove("hidden");
         } else {
             headerPill.classList.add("hidden");
+        }
+    }
+
+    if (navPill) {
+        if (swState === 'running' || swState === 'paused') {
+            navPill.innerText = formatted.shortMain;
+            navPill.classList.remove("hidden");
+        } else {
+            navPill.classList.add("hidden");
+        }
+    }
+
+    if (mobileDot) {
+        if (swState === 'running') {
+            mobileDot.classList.remove("hidden");
+        } else {
+            mobileDot.classList.add("hidden");
+        }
+    }
+
+    // Synchronize Floating Mini Window & Desktop Picture-in-Picture
+    updateFloatingStopwatchUI(ms);
+    syncPipUI(ms);
+
+    // Dynamic browser tab title
+    if (swState === 'running') {
+        const icon = swMode === 'timer' ? '⏳' : '⏱️';
+        document.title = `${icon} ${formatted.full} | PRAXiS Focus`;
+    } else if (swState === 'paused') {
+        document.title = `⏸️ ${formatted.full} (Paused) | PRAXiS`;
+    } else {
+        if (originalPageTitle && document.title !== originalPageTitle) {
+            document.title = originalPageTitle;
         }
     }
 }
@@ -3262,10 +3299,27 @@ function toggleStopwatchExpand() {
     }
 }
 
+let pipWindowInstance = null;
+
+function openStopwatchDirectly() {
+    const isRoutinePage = window.location.pathname.includes('routine') || window.location.pathname.includes('habits') || window.location.pathname.includes('tracker');
+    if (isRoutinePage) {
+        toggleStopwatchVisibility(true);
+    } else {
+        // Homepage: open tracker modal and reveal stopwatch
+        if (typeof openTrackerModal === 'function') openTrackerModal();
+        setTimeout(() => {
+            toggleStopwatchVisibility(true);
+        }, 120);
+    }
+}
+
 function toggleStopwatchVisibility(forceState = null) {
     const container = document.getElementById("routine-stopwatch-container");
     const btn = document.getElementById("toggle-stopwatch-view-btn");
     const btnText = document.getElementById("stopwatch-btn-text");
+    const navBtn = document.getElementById("nav-stopwatch-btn");
+    const floatingWidget = document.getElementById("praxis-floating-stopwatch");
     if (!container) return;
 
     const shouldShow = forceState !== null ? forceState : container.classList.contains("hidden");
@@ -3276,8 +3330,15 @@ function toggleStopwatchVisibility(forceState = null) {
             btn.classList.add("bg-blue-600", "text-white", "shadow-md");
             btn.classList.remove("text-slate-700");
         }
+        if (navBtn) {
+            navBtn.classList.add("bg-blue-50", "text-blue-600", "border-blue-300");
+        }
         if (btnText) btnText.innerText = "Hide Stopwatch";
-        // Smoothly scroll to the stopwatch at top of modal
+        
+        // Hide in-page mini floating widget when full stopwatch is expanded
+        if (floatingWidget) floatingWidget.classList.add("hidden");
+        
+        // Smoothly scroll to the stopwatch
         container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else {
         container.classList.add("hidden");
@@ -3285,13 +3346,463 @@ function toggleStopwatchVisibility(forceState = null) {
             btn.classList.remove("bg-blue-600", "text-white", "shadow-md");
             btn.classList.add("text-slate-700");
         }
+        if (navBtn) {
+            navBtn.classList.remove("bg-blue-50", "text-blue-600", "border-blue-300");
+        }
         if (btnText) btnText.innerText = "Focus Stopwatch";
+        
+        // If stopwatch is actively running or paused, show floating mini-window
+        if (swState === 'running' || swState === 'paused') {
+            if (floatingWidget) {
+                floatingWidget.classList.remove("hidden");
+                const curMs = swMode === 'stopwatch' 
+                    ? (swState === 'running' ? (swElapsedMs + (performance.now() - swStartTime)) : swElapsedMs)
+                    : Math.max(0, swTimerDurationMs - (swElapsedMs + (swState === 'running' ? (performance.now() - swStartTime) : 0)));
+                updateFloatingStopwatchUI(curMs);
+            }
+        }
     }
 }
+
+function minimizeStopwatchToFloating() {
+    const container = document.getElementById("routine-stopwatch-container");
+    const floatingWidget = document.getElementById("praxis-floating-stopwatch");
+    if (container) container.classList.add("hidden");
+    
+    const btn = document.getElementById("toggle-stopwatch-view-btn");
+    const btnText = document.getElementById("stopwatch-btn-text");
+    if (btn) {
+        btn.classList.remove("bg-blue-600", "text-white", "shadow-md");
+        btn.classList.add("text-slate-700");
+    }
+    if (btnText) btnText.innerText = "Focus Stopwatch";
+
+    if (floatingWidget) {
+        floatingWidget.classList.remove("hidden");
+        const curMs = swMode === 'stopwatch' 
+            ? (swState === 'running' ? (swElapsedMs + (performance.now() - swStartTime)) : swElapsedMs)
+            : Math.max(0, swTimerDurationMs - (swElapsedMs + (swState === 'running' ? (performance.now() - swStartTime) : 0)));
+        updateFloatingStopwatchUI(curMs);
+    }
+    showInAppToast("🗕 Floating Mini Window", "Stopwatch minimized. Drag anywhere or expand back anytime!", false);
+}
+
+function restoreStopwatchFromFloating() {
+    const floatingWidget = document.getElementById("praxis-floating-stopwatch");
+    if (floatingWidget) floatingWidget.classList.add("hidden");
+
+    const isRoutinePage = window.location.pathname.includes('routine') || window.location.pathname.includes('habits') || window.location.pathname.includes('tracker');
+    if (isRoutinePage) {
+        toggleStopwatchVisibility(true);
+    } else {
+        const trackerModal = document.getElementById("tracker-modal");
+        if (trackerModal && trackerModal.classList.contains("hidden")) {
+            if (typeof openTrackerModal === 'function') openTrackerModal();
+        }
+        toggleStopwatchVisibility(true);
+    }
+}
+
+function closeFloatingStopwatch() {
+    const floatingWidget = document.getElementById("praxis-floating-stopwatch");
+    if (floatingWidget) floatingWidget.classList.add("hidden");
+    if (swState === 'running') {
+        showInAppToast("⏱️ Background Active", "Stopwatch is still running. Reopen anytime from the top bar.", false);
+    }
+}
+
+function handleFloatingLapOrReset() {
+    if (swMode === 'timer') {
+        recordStopwatchLap(); // adds +5 min boost
+    } else {
+        if (swState === 'running') {
+            recordStopwatchLap();
+        } else {
+            resetStopwatch();
+        }
+    }
+}
+
+function updateFloatingStopwatchUI(ms = 0) {
+    const timeEl = document.getElementById("floating-stopwatch-time");
+    const msEl = document.getElementById("floating-stopwatch-ms");
+    const modeEl = document.getElementById("floating-stopwatch-mode-label");
+    const dotEl = document.getElementById("floating-stopwatch-status-dot");
+    const swIcon = document.getElementById("floating-sw-icon");
+    const lapIcon = document.getElementById("floating-sw-lap-icon");
+    const toggleBtn = document.getElementById("floating-sw-btn-toggle");
+
+    const formatted = formatStopwatchTime(ms);
+
+    if (timeEl) timeEl.innerText = formatted.shortMain;
+    if (msEl) msEl.innerText = `.${formatted.msFormatted}`;
+
+    if (modeEl) {
+        modeEl.innerText = swMode === 'stopwatch' ? "⏱️ STOPWATCH" : "⏳ FOCUS TIMER";
+        modeEl.className = swMode === 'stopwatch' 
+            ? "text-[10px] font-black text-blue-400 tracking-wider uppercase" 
+            : "text-[10px] font-black text-emerald-400 tracking-wider uppercase";
+    }
+
+    if (dotEl) {
+        if (swState === 'running') {
+            dotEl.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping";
+        } else if (swState === 'paused') {
+            dotEl.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+        } else {
+            dotEl.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
+        }
+    }
+
+    if (swIcon) {
+        swIcon.innerText = swState === 'running' ? "⏸" : "▶";
+    }
+
+    if (toggleBtn) {
+        if (swState === 'running') {
+            toggleBtn.className = "p-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs shadow-md transition transform active:scale-95 cursor-pointer min-w-[36px] flex items-center justify-center";
+        } else {
+            toggleBtn.className = "p-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-md transition transform active:scale-95 cursor-pointer min-w-[36px] flex items-center justify-center";
+        }
+    }
+
+    if (lapIcon) {
+        if (swMode === 'timer') {
+            lapIcon.innerText = "+5m";
+        } else {
+            lapIcon.innerText = swState === 'running' ? "⏱" : "🔄";
+        }
+    }
+}
+
+async function requestStopwatchPip() {
+    if (!('documentPictureInPicture' in window) || typeof window.documentPictureInPicture.requestWindow !== 'function') {
+        minimizeStopwatchToFloating();
+        showInAppToast("💡 Mini Window Mode", "Picture-in-Picture opened as in-page draggable mini widget.", false);
+        return;
+    }
+
+    try {
+        if (pipWindowInstance && !pipWindowInstance.closed) {
+            pipWindowInstance.close();
+            pipWindowInstance = null;
+            return;
+        }
+
+        const pipWin = await window.documentPictureInPicture.requestWindow({
+            width: 320,
+            height: 185,
+        });
+        pipWindowInstance = pipWin;
+
+        const styleEl = pipWin.document.createElement('style');
+        styleEl.textContent = `
+            * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+            body {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                color: #f8fafc;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                padding: 10px;
+                user-select: none;
+                overflow: hidden;
+            }
+            .badge {
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                color: #60a5fa;
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .pulse-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: #10b981;
+                display: inline-block;
+            }
+            .pulse-dot.running { background: #10b981; box-shadow: 0 0 8px #10b981; }
+            .pulse-dot.paused { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+            .pulse-dot.idle { background: #64748b; }
+            .time-display {
+                font-family: "JetBrains Mono", Monaco, Consolas, monospace;
+                font-size: 32px;
+                font-weight: 900;
+                letter-spacing: -1px;
+                color: #ffffff;
+                text-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
+                margin-bottom: 8px;
+                line-height: 1;
+            }
+            .time-ms {
+                font-size: 16px;
+                color: #93c5fd;
+                font-weight: 700;
+            }
+            .controls {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            button {
+                border: none;
+                outline: none;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 800;
+                border-radius: 8px;
+                padding: 6px 12px;
+                transition: transform 0.1s ease, background 0.15s ease;
+            }
+            button:active { transform: scale(0.95); }
+            .btn-primary {
+                background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+                color: white;
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            }
+            .btn-primary.running {
+                background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            }
+            .btn-secondary {
+                background: #334155;
+                color: #cbd5e1;
+            }
+            .btn-secondary:hover { background: #475569; color: white; }
+            .btn-mode {
+                background: rgba(255, 255, 255, 0.08);
+                color: #94a3b8;
+                font-size: 10px;
+                padding: 5px 8px;
+            }
+            .btn-mode:hover { color: white; background: rgba(255, 255, 255, 0.15); }
+        `;
+        pipWin.document.head.appendChild(styleEl);
+
+        pipWin.document.body.innerHTML = `
+            <div class="badge" id="pip-badge">
+                <span class="pulse-dot idle" id="pip-dot"></span>
+                <span id="pip-mode-text">STOPWATCH</span>
+            </div>
+            <div class="time-display">
+                <span id="pip-main-time">00:00</span><span class="time-ms" id="pip-ms">.00</span>
+            </div>
+            <div class="controls">
+                <button class="btn-primary" id="pip-btn-toggle">▶ START</button>
+                <button class="btn-secondary" id="pip-btn-lap">LAP</button>
+                <button class="btn-secondary" id="pip-btn-reset">RESET</button>
+                <button class="btn-mode" id="pip-btn-mode">TIMER</button>
+            </div>
+        `;
+
+        pipWin.document.getElementById('pip-btn-toggle').onclick = () => {
+            toggleStopwatch();
+            syncPipUI();
+        };
+        pipWin.document.getElementById('pip-btn-lap').onclick = () => {
+            recordStopwatchLap();
+            syncPipUI();
+        };
+        pipWin.document.getElementById('pip-btn-reset').onclick = () => {
+            resetStopwatch();
+            syncPipUI();
+        };
+        pipWin.document.getElementById('pip-btn-mode').onclick = () => {
+            setStopwatchMode(swMode === 'stopwatch' ? 'timer' : 'stopwatch');
+            syncPipUI();
+        };
+
+        pipWin.addEventListener('pagehide', () => {
+            pipWindowInstance = null;
+        });
+
+        syncPipUI();
+        showInAppToast("🗗 Floating Desktop Window", "Stopwatch will stay visible on top even when minimizing browser!", false);
+    } catch (err) {
+        console.error("Doc PiP error:", err);
+        minimizeStopwatchToFloating();
+    }
+}
+
+function syncPipUI(ms = null) {
+    if (!pipWindowInstance || pipWindowInstance.closed) return;
+    try {
+        const pipDoc = pipWindowInstance.document;
+        if (!pipDoc) return;
+
+        const currentMs = ms !== null ? ms : (swMode === 'stopwatch'
+            ? (swState === 'running' ? (swElapsedMs + (performance.now() - swStartTime)) : swElapsedMs)
+            : Math.max(0, swTimerDurationMs - (swElapsedMs + (swState === 'running' ? (performance.now() - swStartTime) : 0))));
+
+        const formatted = formatStopwatchTime(currentMs);
+
+        const mainTime = pipDoc.getElementById("pip-main-time");
+        const msEl = pipDoc.getElementById("pip-ms");
+        const toggleBtn = pipDoc.getElementById("pip-btn-toggle");
+        const dot = pipDoc.getElementById("pip-dot");
+        const modeText = pipDoc.getElementById("pip-mode-text");
+        const modeBtn = pipDoc.getElementById("pip-btn-mode");
+        const lapBtn = pipDoc.getElementById("pip-btn-lap");
+
+        if (mainTime) mainTime.innerText = formatted.shortMain;
+        if (msEl) msEl.innerText = `.${formatted.msFormatted}`;
+
+        if (modeText) modeText.innerText = swMode === 'stopwatch' ? "STOPWATCH" : "FOCUS TIMER";
+        if (modeBtn) modeBtn.innerText = swMode === 'stopwatch' ? "⏳ TIMER" : "⏱️ STOPWATCH";
+
+        if (dot) {
+            dot.className = `pulse-dot ${swState === 'running' ? 'running' : (swState === 'paused' ? 'paused' : 'idle')}`;
+        }
+
+        if (toggleBtn) {
+            if (swState === 'running') {
+                toggleBtn.innerText = "⏸ PAUSE";
+                toggleBtn.className = "btn-primary running";
+            } else if (swState === 'paused') {
+                toggleBtn.innerText = "▶ RESUME";
+                toggleBtn.className = "btn-primary";
+            } else {
+                toggleBtn.innerText = "▶ START";
+                toggleBtn.className = "btn-primary";
+            }
+        }
+
+        if (lapBtn) {
+            lapBtn.innerText = swMode === 'timer' ? "+5M" : "LAP";
+        }
+    } catch (e) {}
+}
+
+function initFloatingStopwatchDraggable() {
+    const floating = document.getElementById("praxis-floating-stopwatch");
+    const handle = document.getElementById("floating-stopwatch-drag-handle");
+    if (!floating || !handle) return;
+
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialTop = 0;
+
+    try {
+        const savedPos = localStorage.getItem("praxis_floating_sw_pos");
+        if (savedPos) {
+            const { x, y } = JSON.parse(savedPos);
+            if (typeof x === 'number' && typeof y === 'number') {
+                const maxX = Math.max(10, window.innerWidth - (floating.offsetWidth || 300) - 10);
+                const maxY = Math.max(10, window.innerHeight - (floating.offsetHeight || 120) - 10);
+                const boundedX = Math.max(10, Math.min(x, maxX));
+                const boundedY = Math.max(10, Math.min(y, maxY));
+                floating.style.left = `${boundedX}px`;
+                floating.style.top = `${boundedY}px`;
+                floating.style.right = 'auto';
+                floating.style.bottom = 'auto';
+            }
+        }
+    } catch (e) {}
+
+    const onPointerDown = (e) => {
+        if (e.target.closest('button')) return; // Ignore clicks on buttons
+        isDragging = true;
+        floating.classList.add("is-dragging");
+
+        const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+        const rect = floating.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        startX = clientX;
+        startY = clientY;
+
+        floating.style.right = 'auto';
+        floating.style.bottom = 'auto';
+        floating.style.left = `${initialLeft}px`;
+        floating.style.top = `${initialTop}px`;
+
+        document.addEventListener("mousemove", onPointerMove);
+        document.addEventListener("mouseup", onPointerUp);
+        document.addEventListener("touchmove", onPointerMove, { passive: false });
+        document.addEventListener("touchend", onPointerUp);
+    };
+
+    const onPointerMove = (e) => {
+        if (!isDragging) return;
+        if (e.cancelable) e.preventDefault();
+
+        const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+        const deltaX = clientX - startX;
+        const deltaY = clientY - startY;
+
+        let newLeft = initialLeft + deltaX;
+        let newTop = initialTop + deltaY;
+
+        const maxLeft = window.innerWidth - floating.offsetWidth - 10;
+        const maxTop = window.innerHeight - floating.offsetHeight - 10;
+
+        newLeft = Math.max(10, Math.min(newLeft, maxLeft));
+        newTop = Math.max(10, Math.min(newTop, maxTop));
+
+        floating.style.left = `${newLeft}px`;
+        floating.style.top = `${newTop}px`;
+    };
+
+    const onPointerUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        floating.classList.remove("is-dragging");
+
+        document.removeEventListener("mousemove", onPointerMove);
+        document.removeEventListener("mouseup", onPointerUp);
+        document.removeEventListener("touchmove", onPointerMove);
+        document.removeEventListener("touchend", onPointerUp);
+
+        try {
+            const rect = floating.getBoundingClientRect();
+            localStorage.setItem("praxis_floating_sw_pos", JSON.stringify({ x: rect.left, y: rect.top }));
+        } catch (e) {}
+    };
+
+    handle.addEventListener("mousedown", onPointerDown);
+    handle.addEventListener("touchstart", onPointerDown, { passive: true });
+}
+
+// Background / Tab Minimize Listener
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+        if (swState === "running") {
+            const curMs = swMode === 'stopwatch'
+                ? (swElapsedMs + (performance.now() - swStartTime))
+                : Math.max(0, swTimerDurationMs - (swElapsedMs + (performance.now() - swStartTime)));
+            const formatted = formatStopwatchTime(curMs);
+            const icon = swMode === 'timer' ? '⏳' : '⏱️';
+            document.title = `${icon} ${formatted.full} | PRAXiS Focus`;
+        }
+    } else {
+        if (swState === "running" || swState === "paused") {
+            const container = document.getElementById("routine-stopwatch-container");
+            const floatingWidget = document.getElementById("praxis-floating-stopwatch");
+            if (container && container.classList.contains("hidden") && floatingWidget) {
+                floatingWidget.classList.remove("hidden");
+                const curMs = swMode === 'stopwatch'
+                    ? (swState === 'running' ? (swElapsedMs + (performance.now() - swStartTime)) : swElapsedMs)
+                    : Math.max(0, swTimerDurationMs - (swElapsedMs + (swState === 'running' ? (performance.now() - swStartTime) : 0)));
+                updateFloatingStopwatchUI(curMs);
+            }
+        }
+    }
+});
 
 function initRoutineStopwatch() {
     renderStopwatchTicks();
     updateStopwatchHabitDropdown();
+    initFloatingStopwatchDraggable();
 
     const soundIcon = document.getElementById("stopwatch-sound-icon");
     if (soundIcon) soundIcon.innerText = swSoundEnabled ? "🔊" : "🔇";
@@ -3335,6 +3846,15 @@ window.toggleSpreadsheetFitMode = toggleSpreadsheetFitMode;
 window.updateExpandedSpreadsheetView = updateExpandedSpreadsheetView;
 
 // Stopwatch & Timer bindings
+window.openStopwatchDirectly = openStopwatchDirectly;
+window.minimizeStopwatchToFloating = minimizeStopwatchToFloating;
+window.restoreStopwatchFromFloating = restoreStopwatchFromFloating;
+window.closeFloatingStopwatch = closeFloatingStopwatch;
+window.handleFloatingLapOrReset = handleFloatingLapOrReset;
+window.requestStopwatchPip = requestStopwatchPip;
+window.syncPipUI = syncPipUI;
+window.updateFloatingStopwatchUI = updateFloatingStopwatchUI;
+window.initFloatingStopwatchDraggable = initFloatingStopwatchDraggable;
 window.toggleStopwatch = toggleStopwatch;
 window.startStopwatch = startStopwatch;
 window.pauseStopwatch = pauseStopwatch;
@@ -3451,6 +3971,18 @@ function closeTrackerModal(fromPopstate = false) {
         modal.classList.add("hidden");
     }, 300);
 
+    // If stopwatch is active when closing tracker modal, show floating mini window
+    if (swState === 'running' || swState === 'paused') {
+        const floatingWidget = document.getElementById("praxis-floating-stopwatch");
+        if (floatingWidget) {
+            floatingWidget.classList.remove("hidden");
+            const curMs = swMode === 'stopwatch' 
+                ? (swState === 'running' ? (swElapsedMs + (performance.now() - swStartTime)) : swElapsedMs)
+                : Math.max(0, swTimerDurationMs - (swElapsedMs + (swState === 'running' ? (performance.now() - swStartTime) : 0)));
+            updateFloatingStopwatchUI(curMs);
+        }
+    }
+
     if (!fromPopstate && window.location.hash === '#tracker') {
         window.history.replaceState({ praxisRoot: true, view: 'home' }, '', '/praxis');
     }
@@ -3482,10 +4014,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Standalone Routine Tracker page initialization
     const isRoutinePage = window.location.pathname.includes('routine') || window.location.pathname.includes('habits') || window.location.pathname.includes('tracker');
     if (isRoutinePage) {
-        const swContainer = document.getElementById("routine-stopwatch-container");
-        if (swContainer) {
-            swContainer.classList.remove("hidden");
-        }
         if (typeof renderHabitsList === "function") renderHabitsList();
         if (typeof updateGrowthCharts === "function") updateGrowthCharts();
         if (typeof updateStats === "function") updateStats();
