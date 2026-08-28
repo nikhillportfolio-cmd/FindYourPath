@@ -39,39 +39,358 @@ function reveal() {
 }
 window.reveal = reveal;
 
-function animateBookOnScroll() {
-    const bookFrontCover = document.getElementById("book-front-cover");
-    const bookPage1 = document.getElementById("book-page-1");
-    const bookPage2 = document.getElementById("book-page-2");
+// -------------------------------------------------------------
+// 2.1 REALISTIC & PRACTICAL 3D BOOK ENGINE (MODULE 01)
+// -------------------------------------------------------------
+let bookCurrentPhase = 0; // 0: Cover, 1: Phase 1 Domains, 2: Phase 2 Traits, 3: Phase 3 Roadmap
+let bookIsManualOverride = false;
+let bookOverrideTimer = null;
+let bookLastScrollY = window.scrollY;
+let bookSoundEnabled = true;
+let bookAudioCtx = null;
+
+// Synthesize subtle realistic paper rustle sound using Web Audio API (zero external assets)
+function playPageFlipSound() {
+    if (!bookSoundEnabled) return;
+    try {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtxClass) return;
+        if (!bookAudioCtx) {
+            bookAudioCtx = new AudioCtxClass();
+        }
+        if (bookAudioCtx.state === "suspended") {
+            bookAudioCtx.resume();
+        }
+
+        const bufferSize = bookAudioCtx.sampleRate * 0.08; // 80ms duration
+        const buffer = bookAudioCtx.createBuffer(1, bufferSize, bookAudioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            // White noise with soft envelope
+            const envelope = 1 - (i / bufferSize);
+            data[i] = (Math.random() * 2 - 1) * Math.pow(envelope, 1.8) * 0.15;
+        }
+
+        const noise = bookAudioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = bookAudioCtx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 1600;
+        filter.Q.value = 1.2;
+
+        const gainNode = bookAudioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.35, bookAudioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, bookAudioCtx.currentTime + 0.08);
+
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(bookAudioCtx.destination);
+
+        noise.start();
+    } catch (e) {
+        // AudioContext silent fallback if browser blocked
+    }
+}
+
+// Toggle Book Sound FX
+function toggleBookSound(e) {
+    if (e) e.stopPropagation();
+    bookSoundEnabled = !bookSoundEnabled;
+    const iconEl = document.getElementById("book-sound-icon");
+    const labelEl = document.getElementById("book-sound-label");
+    if (iconEl) iconEl.textContent = bookSoundEnabled ? "🔊" : "🔇";
+    if (labelEl) labelEl.textContent = bookSoundEnabled ? "Audio On" : "Muted";
+    if (bookSoundEnabled) playPageFlipSound();
+}
+window.toggleBookSound = toggleBookSound;
+
+// Update UI Indicators (Phase pills & Sidebar Tabs)
+function updateBookUIIndicators(phase) {
+    // Update Tabs
+    for (let i = 1; i <= 3; i++) {
+        const tabEl = document.getElementById(`book-tab-${i}`);
+        if (tabEl) {
+            if (i === phase) {
+                tabEl.classList.add("active-tab");
+            } else {
+                tabEl.classList.remove("active-tab");
+            }
+        }
+    }
+
+    // Update Phase Pills
+    const pills = document.querySelectorAll("#book-phase-pills .phase-pill");
+    pills.forEach(pill => {
+        const pillPhase = parseInt(pill.getAttribute("data-phase") || "0", 10);
+        if (pillPhase === phase) {
+            pill.classList.add("active");
+        } else {
+            pill.classList.remove("active");
+        }
+    });
+
+    // Update Prev / Next Buttons State
+    const prevBtn = document.getElementById("book-btn-prev");
+    const nextBtn = document.getElementById("book-btn-next");
+    if (prevBtn) {
+        prevBtn.style.opacity = phase === 0 ? "0.4" : "1";
+        prevBtn.style.pointerEvents = phase === 0 ? "none" : "auto";
+    }
+    if (nextBtn) {
+        nextBtn.style.opacity = phase === 3 ? "0.4" : "1";
+        nextBtn.style.pointerEvents = phase === 3 ? "none" : "auto";
+    }
+}
+
+// Programmatically flip 3D book directly to target phase (0: Cover, 1: P1, 2: P2, 3: P3)
+function flipBookToPhase(targetPhase, e) {
+    if (e) {
+        e.stopPropagation();
+    }
+    const clampedPhase = Math.max(0, Math.min(3, targetPhase));
+    const previousPhase = bookCurrentPhase;
+    bookCurrentPhase = clampedPhase;
+
+    // Enable temporary manual override so scrolling doesn't immediately jerk the page
+    bookIsManualOverride = true;
+    bookLastScrollY = window.scrollY;
+    if (bookOverrideTimer) clearTimeout(bookOverrideTimer);
+    bookOverrideTimer = setTimeout(() => {
+        bookIsManualOverride = false;
+    }, 3500);
+
+    const leafCover = document.getElementById("book-leaf-cover");
+    const leaf1 = document.getElementById("book-leaf-1");
+    const leaf2 = document.getElementById("book-leaf-2");
     const bookContainer = document.getElementById("book-container");
+    const ribbon = document.getElementById("book-ribbon");
+    const shadow = document.getElementById("book-shadow");
 
-    if (!bookFrontCover || !landingIntro || landingIntro.style.display === "none") return;
+    if (!leafCover || !leaf1 || !leaf2 || !bookContainer) return;
 
-    // Calculate scroll progress relative to showcase compass section
+    if (previousPhase !== clampedPhase) {
+        playPageFlipSound();
+    }
+
+    // Configure leaf angles based on phase
+    let coverRot = 0;
+    let leaf1Rot = 0;
+    let leaf2Rot = 0;
+    let tiltX = 16;
+    let tiltY = -22;
+    let shadowScaleX = 1;
+    let shadowTranslateX = 0;
+
+    if (clampedPhase === 0) {
+        coverRot = 0;
+        leaf1Rot = 0;
+        leaf2Rot = 0;
+        tiltX = 16;
+        tiltY = -22;
+        shadowScaleX = 1;
+        shadowTranslateX = 0;
+        if (ribbon) ribbon.style.transform = `translateZ(24px) rotate(-2deg) scaleY(0.9)`;
+    } else if (clampedPhase === 1) {
+        coverRot = -175;
+        leaf1Rot = 0;
+        leaf2Rot = 0;
+        tiltX = 13;
+        tiltY = -12;
+        shadowScaleX = 1.35;
+        shadowTranslateX = -25;
+        if (ribbon) ribbon.style.transform = `translateZ(22px) rotate(-3deg) scaleY(1)`;
+    } else if (clampedPhase === 2) {
+        coverRot = -175;
+        leaf1Rot = -170;
+        leaf2Rot = 0;
+        tiltX = 12;
+        tiltY = -8;
+        shadowScaleX = 1.45;
+        shadowTranslateX = -30;
+        if (ribbon) ribbon.style.transform = `translateZ(20px) rotate(-1deg) scaleY(1.02)`;
+    } else if (clampedPhase === 3) {
+        coverRot = -175;
+        leaf1Rot = -170;
+        leaf2Rot = -165;
+        tiltX = 12;
+        tiltY = -5;
+        shadowScaleX = 1.5;
+        shadowTranslateX = -35;
+        if (ribbon) ribbon.style.transform = `translateZ(18px) rotate(2deg) scaleY(1.05)`;
+    }
+
+    leafCover.style.transform = `translateZ(20px) rotateY(${coverRot}deg)`;
+    leaf1.style.transform = `translateZ(14px) rotateY(${leaf1Rot}deg)`;
+    leaf2.style.transform = `translateZ(8px) rotateY(${leaf2Rot}deg)`;
+    bookContainer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(0deg)`;
+
+    if (shadow) {
+        shadow.style.transform = `rotateX(82deg) translateZ(-15px) translateX(${shadowTranslateX}px) scaleX(${shadowScaleX})`;
+    }
+
+    updateBookUIIndicators(clampedPhase);
+}
+window.flipBookToPhase = flipBookToPhase;
+
+function nextBookPage(e) {
+    if (e) e.stopPropagation();
+    flipBookToPhase(bookCurrentPhase + 1, e);
+}
+window.nextBookPage = nextBookPage;
+
+function prevBookPage(e) {
+    if (e) e.stopPropagation();
+    flipBookToPhase(bookCurrentPhase - 1, e);
+}
+window.prevBookPage = prevBookPage;
+
+function handleBookLeafClick(leafIndex, e) {
+    if (e) e.stopPropagation();
+    if (leafIndex === 0) {
+        // Clicking front cover opens to Phase 1
+        flipBookToPhase(bookCurrentPhase === 0 ? 1 : 0, e);
+    } else if (leafIndex === 1) {
+        // Clicking Leaf 1 flips between Phase 1 and Phase 2
+        flipBookToPhase(bookCurrentPhase <= 1 ? 2 : 1, e);
+    } else if (leafIndex === 2) {
+        // Clicking Leaf 2 flips between Phase 2 and Phase 3
+        flipBookToPhase(bookCurrentPhase <= 2 ? 3 : 2, e);
+    }
+}
+window.handleBookLeafClick = handleBookLeafClick;
+
+// Continuous Scroll-driven book animation synchronized with viewport progression
+function animateBookOnScroll() {
+    const leafCover = document.getElementById("book-leaf-cover");
+    const leaf1 = document.getElementById("book-leaf-1");
+    const leaf2 = document.getElementById("book-leaf-2");
+    const bookContainer = document.getElementById("book-container");
+    const ribbon = document.getElementById("book-ribbon");
+    const shadow = document.getElementById("book-shadow");
+
+    if (!leafCover || !leaf1 || !leaf2 || !bookContainer || !landingIntro || landingIntro.style.display === "none") return;
+
+    // If manual tab was clicked recently, check if user scrolled significantly before relinquishing control
+    if (bookIsManualOverride) {
+        if (Math.abs(window.scrollY - bookLastScrollY) > 80) {
+            bookIsManualOverride = false;
+        } else {
+            return;
+        }
+    }
+
     const compassSection = document.getElementById("showcase-compass") || landingIntro;
     const rect = compassSection.getBoundingClientRect();
     const windowHeight = window.innerHeight;
     
-    // Progress is active when compass section enters viewport
-    const progress = Math.min(1, Math.max(0, (windowHeight - rect.top) / (windowHeight + rect.height * 0.5)));
+    // Normalized scroll progress across the section (0.0 when entering -> 1.0 when passing)
+    const progress = Math.min(1, Math.max(0, (windowHeight - rect.top) / (windowHeight + rect.height * 0.45)));
 
-    // Smooth page flip calculations
-    const coverRot = progress * -160;
-    const page1Progress = Math.min(1, Math.max(0, (progress - 0.15) / 0.7));
-    const page1Rot = page1Progress * -145;
-    const page2Progress = Math.min(1, Math.max(0, (progress - 0.35) / 0.65));
-    const page2Rot = page2Progress * -130;
+    // Smooth page leaf kinematic progression
+    // Phase 0 -> 1: Cover opens (progress 0.05 to 0.40)
+    const coverProgress = Math.min(1, Math.max(0, (progress - 0.05) / 0.35));
+    const coverRot = coverProgress * -175;
 
-    bookFrontCover.style.transform = `translateZ(16px) rotateY(${coverRot}deg)`;
-    bookPage1.style.transform = `translateZ(12px) rotateY(${page1Rot}deg)`;
-    bookPage2.style.transform = `translateZ(8px) rotateY(${page2Rot}deg)`;
+    // Phase 1 -> 2: Leaf 1 turns (progress 0.35 to 0.70)
+    const leaf1Progress = Math.min(1, Math.max(0, (progress - 0.35) / 0.35));
+    const leaf1Rot = leaf1Progress * -170;
 
-    // Slight container perspective tilt shift on scroll
-    const tiltY = -20 + (progress * 10);
-    const tiltX = 20 - (progress * 8);
-    bookContainer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+    // Phase 2 -> 3: Leaf 2 turns (progress 0.65 to 0.95)
+    const leaf2Progress = Math.min(1, Math.max(0, (progress - 0.65) / 0.30));
+    const leaf2Rot = leaf2Progress * -165;
+
+    leafCover.style.transform = `translateZ(20px) rotateY(${coverRot}deg)`;
+    leaf1.style.transform = `translateZ(14px) rotateY(${leaf1Rot}deg)`;
+    leaf2.style.transform = `translateZ(8px) rotateY(${leaf2Rot}deg)`;
+
+    // Perspective depth & contact shadow shifting
+    const tiltY = -22 + (progress * 17);
+    const tiltX = 16 - (progress * 4);
+    bookContainer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(0deg)`;
+
+    if (shadow) {
+        const shadowScale = 1 + (progress * 0.5);
+        const shadowShift = progress * -35;
+        shadow.style.transform = `rotateX(82deg) translateZ(-15px) translateX(${shadowShift}px) scaleX(${shadowScale})`;
+    }
+
+    if (ribbon) {
+        const ribbonRot = -2 + (progress * 4);
+        ribbon.style.transform = `translateZ(20px) rotate(${ribbonRot}deg)`;
+    }
+
+    // Determine current phase for indicator updates
+    let activePhase = 0;
+    if (progress >= 0.75) activePhase = 3;
+    else if (progress >= 0.45) activePhase = 2;
+    else if (progress >= 0.15) activePhase = 1;
+
+    if (activePhase !== bookCurrentPhase) {
+        bookCurrentPhase = activePhase;
+        updateBookUIIndicators(activePhase);
+    }
 }
 window.animateBookOnScroll = animateBookOnScroll;
+
+// Initialize 3D Mouse Parallax & Touch Gestures for Module 01 Book
+function initBookInteractions() {
+    const viewport = document.getElementById("book-module-viewport");
+    const container = document.getElementById("book-container");
+    if (!viewport || !container) return;
+
+    // Mouse Parallax 3D Hover Tilt
+    viewport.addEventListener("mousemove", (e) => {
+        if (window.innerWidth < 768) return;
+        const rect = viewport.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -6;
+        const rotateY = ((x - centerX) / centerX) * 6;
+
+        // Base tilt for current phase
+        let baseTiltY = -22 + (bookCurrentPhase * 5.5);
+        let baseTiltX = 16 - (bookCurrentPhase * 1.5);
+        container.style.transform = `rotateX(${baseTiltX + rotateX}deg) rotateY(${baseTiltY + rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+    });
+
+    viewport.addEventListener("mouseleave", () => {
+        let baseTiltY = -22 + (bookCurrentPhase * 5.5);
+        let baseTiltX = 16 - (bookCurrentPhase * 1.5);
+        container.style.transform = `rotateX(${baseTiltX}deg) rotateY(${baseTiltY}deg) scale3d(1, 1, 1)`;
+    });
+
+    // Touch Swipe Navigation for Mobile
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    viewport.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    viewport.addEventListener("touchend", (e) => {
+        if (e.changedTouches && e.changedTouches.length === 1) {
+            const deltaX = e.changedTouches[0].clientX - touchStartX;
+            const deltaY = e.changedTouches[0].clientY - touchStartY;
+            // Only trigger if horizontal swipe is dominant and significant (> 40px)
+            if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+                if (deltaX < 0) {
+                    // Swiped Left -> Next page
+                    nextBookPage(e);
+                } else {
+                    // Swiped Right -> Prev page
+                    prevBookPage(e);
+                }
+            }
+        }
+    }, { passive: true });
+}
+window.initBookInteractions = initBookInteractions;
 
 // Open Career Compass assessment view on click
 function openCompassFeature(fromPopstate = false) {
@@ -201,11 +520,13 @@ window.addEventListener("scroll", () => {
 document.addEventListener("DOMContentLoaded", () => {
     reveal();
     animateBookOnScroll();
+    initBookInteractions();
     initShowcase3DTilts();
     updateShowcaseGreeting();
 });
 reveal();
 animateBookOnScroll();
+initBookInteractions();
 
 // -------------------------------------------------------------
 // 3. TRANSITION LOGIC
