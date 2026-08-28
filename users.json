@@ -78,9 +78,67 @@
       "dataUpdatedAt": "2026-08-04T15:21:37.637Z",
       "mobile": "+919876500000",
       "updatedAt": "2026-08-24T03:55:11.025Z"
+    },
+    {
+      "id": "firebase_test_uid_12345",
+      "name": "Test Student",
+      "email": "test.student@gmail.com",
+      "mobile": "",
+      "username": "test.student",
+      "passwordHash": "",
+      "avatar": "https://lh3.googleusercontent.com/a/test",
+      "isVerified": true,
+      "createdAt": "2026-08-28T14:14:01.195Z",
+      "loginCount": 2,
+      "lastLoginAt": "2026-08-28T14:14:12.206Z",
+      "lastLoginIp": "127.0.0.1",
+      "roadmap": {
+        "title": "Full-Stack AI Developer",
+        "phases": [
+          {
+            "title": "Phase 1",
+            "steps": "Learn JS & Node"
+          }
+        ]
+      },
+      "routineTracker": {
+        "habits": [
+          {
+            "id": "h1",
+            "name": "Morning Study",
+            "days": [
+              "done",
+              false
+            ]
+          }
+        ]
+      },
+      "dataUpdatedAt": "2026-08-28T14:14:12.231Z"
     }
   ],
   "loginLogs": [
+    {
+      "id": "log_1787926452206_yjfp",
+      "userId": "firebase_test_uid_12345",
+      "name": "Test Student",
+      "username": "test.student",
+      "email": "test.student@gmail.com",
+      "timestamp": "2026-08-28T14:14:12.206Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "SUCCESS (Google Auth)"
+    },
+    {
+      "id": "log_1787926441195_k2et",
+      "userId": "firebase_test_uid_12345",
+      "name": "Test Student",
+      "username": "test.student",
+      "email": "test.student@gmail.com",
+      "timestamp": "2026-08-28T14:14:01.195Z",
+      "ip": "127.0.0.1",
+      "userAgent": "Browser",
+      "status": "SUCCESS (Google Auth)"
+    },
     {
       "id": "log_1785856524763_0otn",
       "userId": "usr_1785856512734_15zjq",

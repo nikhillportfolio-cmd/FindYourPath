@@ -1079,7 +1079,7 @@
             </p>
 
             <!-- PROMINENT GOOGLE SIGN-IN BUTTON ONLY -->
-            <button id="gate-btn-google-login" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-sm sm:text-base rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-95 border border-indigo-400/30 mb-8 cursor-pointer">
+            <button id="gate-btn-google-login" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black text-sm sm:text-base rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-95 border border-indigo-400/30 mb-3 cursor-pointer">
                 <svg class="w-6 h-6 shrink-0 bg-white p-0.5 rounded-full" viewBox="0 0 24 24">
                     <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
                     <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
@@ -1088,6 +1088,13 @@
                 </svg>
                 <span>Continue with Google</span>
             </button>
+
+            <!-- EMAIL / PASSWORD ALTERNATIVE OPTION -->
+            <div class="mb-8 text-center">
+                <button type="button" onclick="openAuthModal('login')" class="text-xs font-semibold text-slate-500 hover:text-indigo-600 transition underline underline-offset-4 cursor-pointer">
+                    Or sign in / register with Email &amp; Password
+                </button>
+            </div>
 
             <!-- FEATURES PREVIEW LIST -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full border-t border-slate-200/80 pt-6 text-left">

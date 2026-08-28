@@ -10446,6 +10446,21 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// Firebase Web App Configuration Endpoint
+app.get('/api/firebase-config', (req, res) => {
+    const clean = (val) => (val ? String(val).replace(/["',;]/g, '').trim() : '');
+    const config = {
+        apiKey: clean(process.env.FIREBASE_API_KEY) || "AIzaSyBDhP_2ZaRv4ncV7W-_p75qRoOAg8te0oU",
+        authDomain: clean(process.env.FIREBASE_AUTH_DOMAIN) || "praxis-app-e6e2a.firebaseapp.com",
+        projectId: clean(process.env.FIREBASE_PROJECT_ID) || "praxis-app-e6e2a",
+        storageBucket: clean(process.env.FIREBASE_STORAGE_BUCKET) || "praxis-app-e6e2a.firebasestorage.app",
+        messagingSenderId: clean(process.env.FIREBASE_MESSAGING_SENDER_ID) || "22274527937",
+        appId: clean(process.env.FIREBASE_APP_ID) || "1:22274527937:web:8e69fc61bf10224b71fa40"
+    };
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.json(config);
+});
+
 // Google Auth Sync & Telemetry Endpoint
 app.post('/api/auth/google', async (req, res) => {
     try {

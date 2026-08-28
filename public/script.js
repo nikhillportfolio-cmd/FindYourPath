@@ -3554,6 +3554,17 @@ document.addEventListener("DOMContentLoaded", () => {
         addHabitForm.addEventListener("submit", handleAddHabit);
     }
 
+    // Reactive Auth State listener for instant zero-lag data switching
+    window.addEventListener("praxis:auth-changed", (e) => {
+        const user = e.detail;
+        if (user) {
+            loadHabitsFromStorage();
+            if (typeof updateShowcaseGreeting === "function") updateShowcaseGreeting();
+        } else {
+            if (typeof window.clearUserUIState === "function") window.clearUserUIState();
+        }
+    });
+
     // Modal backdrop click dismissers
     document.getElementById("spreadsheet-expand-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "spreadsheet-expand-modal") closeSpreadsheetExpandModal();
