@@ -407,9 +407,6 @@ export function updateProfileUI(user) {
       setTimeout(window.reveal, 50);
       setTimeout(window.reveal, 200);
     }
-    if (typeof window.animateBookOnScroll === "function") {
-      setTimeout(window.animateBookOnScroll, 50);
-    }
 
     // Fetch and sync user data across devices in background
     fetchUserDataOnLogin(user.id || user.uid);

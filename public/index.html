@@ -427,390 +427,6 @@
                 border-radius: 0.5rem !important;
                 box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light) !important;
             }
-            .book-viewport {
-                transform: scale(0.85);
-                margin-top: 0.5rem;
-                margin-bottom: 0.5rem;
-            }
-        }
-
-        /* -------------------------------------------------------------
-           3D REALISTIC & PRACTICAL BOOK ENGINE (MODULE 01)
-        ------------------------------------------------------------- */
-        .book-viewport {
-            perspective: 1400px;
-            perspective-origin: 50% 50%;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            padding: 0.75rem 0;
-            touch-action: pan-y;
-        }
-
-        .book-container {
-            position: relative;
-            width: 230px;
-            height: 310px;
-            transform-style: preserve-3d;
-            transform: rotateX(16deg) rotateY(-22deg) rotateZ(0deg);
-            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-            cursor: pointer;
-            user-select: none;
-        }
-
-        /* Dynamic Ambient Contact Shadow */
-        .book-shadow {
-            position: absolute;
-            bottom: -28px;
-            left: -10%;
-            width: 120%;
-            height: 32px;
-            background: radial-gradient(ellipse at 45% 50%, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.14) 50%, transparent 75%);
-            filter: blur(14px);
-            border-radius: 50%;
-            transform: rotateX(82deg) translateZ(-15px);
-            transition: all 0.35s ease-out;
-            pointer-events: none;
-        }
-
-        .book {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-        }
-
-        /* 3D Spine */
-        .book-spine {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 24px;
-            height: 100%;
-            transform-origin: left center;
-            transform: rotateY(-90deg);
-            background: linear-gradient(180deg, #090d16 0%, #1e293b 15%, #0f172a 50%, #1e293b 85%, #090d16 100%);
-            border-radius: 4px 0 0 4px;
-            box-shadow: inset 2px 0 4px rgba(255,255,255,0.15), inset -2px 0 6px rgba(0,0,0,0.6);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            z-index: 5;
-        }
-
-        .book-spine-rib {
-            width: 80%;
-            height: 3px;
-            background: linear-gradient(90deg, #b45309, #fbbf24, #b45309);
-            border-radius: 2px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }
-
-        .book-spine-text {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            font-family: 'Outfit', sans-serif;
-            font-size: 8px;
-            font-weight: 900;
-            letter-spacing: 0.22em;
-            color: #fbbf24;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            opacity: 0.9;
-        }
-
-        /* 3D Paper Block / Fore-edges */
-        .book-edge-right {
-            position: absolute;
-            top: 5px;
-            right: 4px;
-            width: 20px;
-            height: calc(100% - 10px);
-            transform-origin: right center;
-            transform: rotateY(90deg);
-            background: repeating-linear-gradient(90deg, #f8fafc 0px, #f1f5f9 1px, #e2e8f0 2px, #cbd5e1 3px);
-            border-radius: 2px;
-            box-shadow: inset 0 0 6px rgba(0,0,0,0.2);
-        }
-
-        .book-edge-top {
-            position: absolute;
-            top: 0;
-            left: 4px;
-            width: calc(100% - 8px);
-            height: 20px;
-            transform-origin: top center;
-            transform: rotateX(-90deg);
-            background: repeating-linear-gradient(0deg, #f8fafc 0px, #e2e8f0 2px, #cbd5e1 3px);
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.25);
-        }
-
-        .book-edge-bottom {
-            position: absolute;
-            bottom: 0;
-            left: 4px;
-            width: calc(100% - 8px);
-            height: 20px;
-            transform-origin: bottom center;
-            transform: rotateX(90deg);
-            background: repeating-linear-gradient(180deg, #f8fafc 0px, #e2e8f0 2px, #cbd5e1 3px);
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.25);
-        }
-
-        /* Hardcover Back Cover */
-        .book-back-cover {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #090d16 0%, #1e293b 60%, #0f172a 100%);
-            border-radius: 3px 14px 14px 3px;
-            transform: translateZ(0px);
-            box-shadow: 8px 12px 28px rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        /* Base Spread Page (Phase 3 Roadmap) */
-        .book-page-base {
-            position: absolute;
-            top: 4px;
-            left: 6px;
-            width: calc(100% - 10px);
-            height: calc(100% - 8px);
-            background: #ffffff;
-            border-radius: 2px 12px 12px 2px;
-            transform: translateZ(3px);
-            box-shadow: inset 6px 0 14px rgba(0,0,0,0.08), 2px 4px 10px rgba(0,0,0,0.08);
-            padding: 1.15rem;
-            overflow: hidden;
-        }
-
-        /* Satin Bookmark Ribbon */
-        .book-ribbon {
-            position: absolute;
-            top: -8px;
-            left: 48%;
-            width: 13px;
-            height: 108%;
-            background: linear-gradient(90deg, #991b1b 0%, #dc2626 40%, #ef4444 60%, #7f1d1d 100%);
-            clip-path: polygon(0 0, 100% 0, 100% 93%, 50% 100%, 0 93%);
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.3);
-            transform: translateZ(24px) rotate(-2deg);
-            pointer-events: none;
-            z-index: 35;
-            transition: transform 0.4s ease-out;
-        }
-
-        /* Flippable Leaves */
-        .book-leaf {
-            position: absolute;
-            top: 4px;
-            left: 6px;
-            width: calc(100% - 10px);
-            height: calc(100% - 8px);
-            transform-origin: left center;
-            transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .book-leaf.leaf-cover {
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transform: translateZ(20px) rotateY(0deg);
-            z-index: 30;
-        }
-
-        .book-leaf.leaf-1 {
-            transform: translateZ(14px) rotateY(0deg);
-            z-index: 25;
-        }
-
-        .book-leaf.leaf-2 {
-            transform: translateZ(8px) rotateY(0deg);
-            z-index: 20;
-        }
-
-        /* Leaf Faces (Front & Back) */
-        .leaf-face {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .leaf-face-front {
-            background: #ffffff;
-            border-radius: 2px 12px 12px 2px;
-            padding: 1.15rem;
-            box-shadow: inset 6px 0 14px rgba(0,0,0,0.06), 2px 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .leaf-face-back {
-            background: #f8fafc;
-            border-radius: 12px 2px 2px 12px;
-            transform: rotateY(180deg);
-            padding: 1.15rem;
-            box-shadow: inset -6px 0 14px rgba(0,0,0,0.06), -2px 4px 12px rgba(0,0,0,0.1);
-        }
-
-        /* Front Hardcover Styling */
-        .book-front-cover-face {
-            background: linear-gradient(135deg, #090d16 0%, #1e293b 45%, #0f172a 100%) !important;
-            border-radius: 3px 14px 14px 3px !important;
-            padding: 1.25rem !important;
-            box-shadow: 8px 12px 28px rgba(0, 0, 0, 0.35), inset 0 0 12px rgba(255,255,255,0.08) !important;
-            border-left: 5px solid #090d16;
-        }
-
-        .book-cover-border-frame {
-            position: absolute;
-            inset: 9px;
-            border: 1.5px solid rgba(251, 191, 36, 0.45);
-            border-radius: 2px 8px 8px 2px;
-            pointer-events: none;
-        }
-
-        .book-cover-border-frame::before {
-            content: '';
-            position: absolute;
-            inset: 3px;
-            border: 0.5px solid rgba(251, 191, 36, 0.25);
-            border-radius: 1px 6px 6px 1px;
-        }
-
-        .book-cover-hinge {
-            position: absolute;
-            top: 0;
-            left: 12px;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(90deg, rgba(0,0,0,0.5), rgba(255,255,255,0.15), rgba(0,0,0,0.5));
-            box-shadow: 0 0 3px rgba(0,0,0,0.6);
-        }
-
-        /* Inside Front Cover (Endpaper) */
-        .inside-cover-face {
-            background: #fbfcfd !important;
-            border-radius: 14px 3px 3px 14px !important;
-            border-right: 4px solid #e2e8f0;
-            box-shadow: inset -10px 0 20px rgba(0,0,0,0.1) !important;
-        }
-
-        /* Gutter Shadows & Highlights */
-        .page-gutter-shadow {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 20px;
-            pointer-events: none;
-        }
-
-        .page-gutter-shadow.left-gutter {
-            left: 0;
-            background: linear-gradient(90deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.04) 60%, transparent 100%);
-        }
-
-        .page-gutter-shadow.right-gutter {
-            right: 0;
-            background: linear-gradient(270deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.04) 60%, transparent 100%);
-        }
-
-        .leaf-sheen {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(120deg, rgba(255,255,255,0.35) 0%, transparent 40%, rgba(0,0,0,0.15) 100%);
-            pointer-events: none;
-            opacity: 0.2;
-            transition: opacity 0.3s ease;
-        }
-
-        .cover-sheen {
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.4) 100%);
-            opacity: 0.4;
-        }
-
-        /* Interactive Protruding Phase Tabs */
-        .book-phase-tabs {
-            position: absolute;
-            top: 36px;
-            right: -24px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 15;
-        }
-
-        .book-tab {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px 8px;
-            border-radius: 0 6px 6px 0;
-            font-size: 8px;
-            font-weight: 900;
-            color: #ffffff;
-            box-shadow: 3px 3px 8px rgba(0,0,0,0.18);
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform-origin: left center;
-        }
-
-        .book-tab:hover {
-            transform: translateX(4px) scale(1.06);
-        }
-
-        .tab-phase-1 {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        }
-
-        .tab-phase-2 {
-            background: linear-gradient(135deg, #0284c7, #0369a1);
-        }
-
-        .tab-phase-3 {
-            background: linear-gradient(135deg, #4f46e5, #4338ca);
-        }
-
-        .book-tab.active-tab {
-            transform: translateX(6px) scale(1.08);
-            box-shadow: 4px 4px 12px rgba(0,0,0,0.25);
-            outline: 2px solid #ffffff;
-        }
-
-        /* Interactive Navigation Dock & Pills */
-        .phase-pill {
-            padding: 2px 8px;
-            font-size: 9px;
-            font-weight: 800;
-            border-radius: 6px;
-            color: #64748b;
-            background: #f1f5f9;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .phase-pill:hover {
-            color: #2563eb;
-            background: #e0e7ff;
-        }
-
-        .phase-pill.active {
-            color: #ffffff;
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
         }
 
         /* -------------------------------------------------------------
@@ -1244,13 +860,6 @@
                 padding: 0.75rem !important;
                 border-radius: 1.25rem !important;
             }
-
-            /* 3D Book Viewport Scaling for Mobile Phones */
-            .book-viewport {
-                transform: scale(0.85);
-                margin-top: -1rem;
-                margin-bottom: -1rem;
-            }
         }
     </style>
 </head>
@@ -1644,431 +1253,107 @@
                         </div>
                     </div>
 
-                    <!-- RIGHT COLUMN: 3D SCROLL-DRIVEN BOOK & TRAIT HUD PREVIEW -->
+                    <!-- RIGHT COLUMN: INTERACTIVE CAREER COMPASS SYNTHESIS & TRAIT HUD -->
                     <div class="lg:col-span-5 flex flex-col items-center justify-center reveal-right">
-                        
-                        <!-- 3D REALISTIC & PRACTICAL BOOK ANIMATION (MODULE 01) -->
-                        <div class="book-viewport my-2 select-none" id="book-module-viewport">
-                            <div class="book-container" id="book-container" title="Click pages, drag or scroll to flip">
-                                <!-- AMBIENT CONTACT SHADOW -->
-                                <div class="book-shadow" id="book-shadow"></div>
-
-                                <!-- THE 3D BOOK ASSEMBLY -->
-                                <div class="book" id="3d-book">
-                                    <!-- 3D SPINE -->
-                                    <div class="book-spine">
-                                        <div class="book-spine-rib"></div>
-                                        <div class="book-spine-text">PRAXiS · COMPASS · 2026</div>
-                                        <div class="book-spine-rib"></div>
+                        <div class="showcase-interactive-panel p-5 sm:p-6 w-full max-w-md relative overflow-hidden bg-gradient-to-br from-blue-50/40 via-white to-indigo-50/40 border border-white/80 shadow-md rounded-2xl">
+                            <!-- HEADER -->
+                            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200/80">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 neu-circle flex items-center justify-center text-blue-600 text-sm font-black">
+                                        🧭
                                     </div>
-
-                                    <!-- 3D PAPER FORE-EDGES -->
-                                    <div class="book-edge-right"></div>
-                                    <div class="book-edge-top"></div>
-                                    <div class="book-edge-bottom"></div>
-
-                                    <!-- HARDCOVER BACK COVER -->
-                                    <div class="book-back-cover"></div>
-
-                                    <!-- BASE SPREAD (Phase 3 Roadmap Blueprint) -->
-                                    <div class="book-page-base" id="book-page-base">
-                                        <div class="leaf-face-front page-inner-content flex flex-col justify-between h-full">
-                                            <div>
-                                                <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
-                                                    <span class="text-[9px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-1">
-                                                        <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span> Phase 03
-                                                    </span>
-                                                    <span class="text-[9px] font-mono font-bold text-slate-400">05/06</span>
-                                                </div>
-                                                <h4 class="font-black text-slate-800 text-sm font-outfit leading-tight">Custom Roadmap</h4>
-                                                <p class="text-[10px] text-slate-500 mt-1 leading-snug">Personalized progression milestones & curated reading guides.</p>
-
-                                                <!-- Phase milestones track -->
-                                                <div class="mt-2.5 space-y-1.5">
-                                                    <div class="p-1.5 rounded-lg bg-indigo-50/80 border border-indigo-100/80 flex items-center gap-2">
-                                                        <span class="w-5 h-5 rounded-md bg-indigo-600 text-white font-black text-[9px] flex items-center justify-center shrink-0">1</span>
-                                                        <div class="text-left">
-                                                            <div class="text-[10px] font-bold text-slate-800">Core Foundations</div>
-                                                            <div class="text-[8px] text-slate-500">Mental models & foundational tools</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="p-1.5 rounded-lg bg-sky-50/80 border border-sky-100/80 flex items-center gap-2">
-                                                        <span class="w-5 h-5 rounded-md bg-sky-600 text-white font-black text-[9px] flex items-center justify-center shrink-0">2</span>
-                                                        <div class="text-left">
-                                                            <div class="text-[10px] font-bold text-slate-800">Portfolio & Reading</div>
-                                                            <div class="text-[8px] text-slate-500">High-leverage projects & books</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="p-1.5 rounded-lg bg-emerald-50/80 border border-emerald-100/80 flex items-center gap-2">
-                                                        <span class="w-5 h-5 rounded-md bg-emerald-600 text-white font-black text-[9px] flex items-center justify-center shrink-0">3</span>
-                                                        <div class="text-left">
-                                                            <div class="text-[10px] font-bold text-slate-800">Placement & Mastery</div>
-                                                            <div class="text-[8px] text-slate-500">Industry network & verified track</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="pt-2">
-                                                <button type="button" onclick="openCompassFeature()" class="w-full py-2 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg text-[10px] font-black shadow-md flex items-center justify-center gap-1.5 transition-all transform hover:scale-[1.02] active:scale-95 cursor-pointer">
-                                                    <span>🧭</span>
-                                                    <span>Launch Compass Assessment &rarr;</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="page-gutter-shadow left-gutter"></div>
+                                    <div>
+                                        <h4 class="text-xs font-black text-slate-800 font-outfit uppercase tracking-wider">Compass Engine HUD</h4>
+                                        <p class="text-[9px] text-slate-500 font-medium">Real-Time Behavioral Matching</p>
                                     </div>
+                                </div>
+                                <span class="neu-badge text-[9px] font-extrabold text-emerald-600 px-2 py-0.5">
+                                    98% Precision
+                                </span>
+                            </div>
 
-                                    <!-- SATIN BOOKMARK RIBBON -->
-                                    <div class="book-ribbon" id="book-ribbon"></div>
-
-                                    <!-- FLIPPABLE LEAF 2: PHASE 2 (TRAITS) -->
-                                    <div class="book-leaf leaf-2" id="book-leaf-2" onclick="handleBookLeafClick(2, event)">
-                                        <!-- FRONT: Trait Synthesis (Right Page) -->
-                                        <div class="leaf-face leaf-face-front">
-                                            <div class="page-inner-content flex flex-col justify-between h-full">
-                                                <div>
-                                                    <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
-                                                        <span class="text-[9px] font-black uppercase tracking-widest text-sky-600 flex items-center gap-1">
-                                                            <span class="w-2 h-2 rounded-full bg-sky-500"></span> Phase 02
-                                                        </span>
-                                                        <span class="text-[9px] font-mono font-bold text-slate-400">03/06</span>
-                                                    </div>
-                                                    <h4 class="font-black text-slate-800 text-sm font-outfit leading-tight">Trait Synthesis</h4>
-                                                    <p class="text-[10px] text-slate-500 mt-1 leading-snug">Psychometric scenarios decode your problem-solving drivers.</p>
-
-                                                    <!-- Trait Metrics Preview Bars -->
-                                                    <div class="mt-3 space-y-2">
-                                                        <div>
-                                                            <div class="flex justify-between text-[9px] font-bold text-slate-700 mb-0.5">
-                                                                <span>Logic & Systems</span>
-                                                                <span class="text-blue-600 font-mono">94%</span>
-                                                            </div>
-                                                            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                                                                <div class="h-full bg-blue-600 rounded-full" style="width: 94%"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <div class="flex justify-between text-[9px] font-bold text-slate-700 mb-0.5">
-                                                                <span>Creative Strategy</span>
-                                                                <span class="text-indigo-600 font-mono">88%</span>
-                                                            </div>
-                                                            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                                                                <div class="h-full bg-indigo-600 rounded-full" style="width: 88%"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <div class="flex justify-between text-[9px] font-bold text-slate-700 mb-0.5">
-                                                                <span>Grit & Execution</span>
-                                                                <span class="text-cyan-600 font-mono">92%</span>
-                                                            </div>
-                                                            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                                                                <div class="h-full bg-cyan-600 rounded-full" style="width: 92%"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="pt-2 flex items-center justify-between text-[8px] font-bold text-slate-400">
-                                                    <span>● Adaptive Psychometrics</span>
-                                                    <span class="text-sky-600 font-extrabold cursor-pointer hover:underline" onclick="flipBookToPhase(3, event)">Next: Phase 3 &rarr;</span>
-                                                </div>
-                                            </div>
-                                            <div class="page-gutter-shadow left-gutter"></div>
-                                            <div class="leaf-sheen"></div>
-                                        </div>
-
-                                        <!-- BACK: Archetype Profile (Left Page when flipped) -->
-                                        <div class="leaf-face leaf-face-back">
-                                            <div class="page-inner-content flex flex-col justify-between h-full text-right">
-                                                <div>
-                                                    <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
-                                                        <span class="text-[9px] font-mono font-bold text-slate-400">04/06</span>
-                                                        <span class="text-[9px] font-black uppercase tracking-widest text-sky-600">Archetype Matrix</span>
-                                                    </div>
-                                                    <h4 class="font-black text-slate-800 text-sm font-outfit leading-tight">Behavioral Blueprint</h4>
-                                                    <p class="text-[10px] text-slate-500 mt-1 leading-snug">Calculates cognitive harmony across 6 career dimensions.</p>
-
-                                                    <div class="mt-2.5 p-2 rounded-lg bg-sky-50/70 border border-sky-200/50 text-left">
-                                                        <div class="text-[9px] font-black text-sky-700 flex items-center gap-1">
-                                                            <span>⚡</span> PRIMARY ARCHETYPE
-                                                        </div>
-                                                        <div class="text-xs font-black text-slate-800 font-outfit mt-0.5">Strategic Systems Architect</div>
-                                                        <div class="text-[8px] text-slate-500 mt-1">Exceptional synthesis of deep technical reasoning with structured project execution.</div>
-                                                    </div>
-                                                </div>
-                                                <div class="pt-2 flex items-center justify-between text-[8px] font-bold text-slate-400">
-                                                    <span class="text-sky-600 font-extrabold cursor-pointer hover:underline" onclick="flipBookToPhase(1, event)">&larr; Prev: Phase 1</span>
-                                                    <span>PRAXiS Cognitive Engine</span>
-                                                </div>
-                                            </div>
-                                            <div class="page-gutter-shadow right-gutter"></div>
-                                            <div class="leaf-sheen"></div>
+                            <!-- 3 PROGRESSION PHASES OVERVIEW -->
+                            <div class="space-y-2.5 mb-4">
+                                <!-- Phase 1 -->
+                                <div class="p-2.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 font-black text-[10px] flex items-center justify-center">01</span>
+                                        <div>
+                                            <div class="text-xs font-black text-slate-800 font-outfit">Domain Discovery</div>
+                                            <div class="text-[9px] text-slate-500">6 Specialized multi-disciplinary tracks</div>
                                         </div>
                                     </div>
+                                    <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">Ready</span>
+                                </div>
 
-                                    <!-- FLIPPABLE LEAF 1: PHASE 1 (DOMAINS) -->
-                                    <div class="book-leaf leaf-1" id="book-leaf-1" onclick="handleBookLeafClick(1, event)">
-                                        <!-- FRONT: Phase 1 Domain Discovery (Right Page) -->
-                                        <div class="leaf-face leaf-face-front">
-                                            <div class="page-inner-content flex flex-col justify-between h-full">
-                                                <div>
-                                                    <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
-                                                        <span class="text-[9px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-1">
-                                                            <span class="w-2 h-2 rounded-full bg-blue-600"></span> Phase 01
-                                                        </span>
-                                                        <span class="text-[9px] font-mono font-bold text-slate-400">01/06</span>
-                                                    </div>
-                                                    <h4 class="font-black text-slate-800 text-sm font-outfit leading-tight">Domain Selection</h4>
-                                                    <p class="text-[10px] text-slate-500 mt-1 leading-snug">Select your primary fields of interest and raw curiosity.</p>
-
-                                                    <!-- Domain Badges Grid -->
-                                                    <div class="grid grid-cols-2 gap-1.5 mt-2.5">
-                                                        <div class="p-1.5 rounded-md bg-slate-50 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-300 transition-all text-left flex items-center gap-1.5 cursor-pointer" onclick="flipBookToPhase(2, event)">
-                                                            <span class="text-xs">💻</span>
-                                                            <div>
-                                                                <div class="text-[9px] font-bold text-slate-800">Tech & AI</div>
-                                                                <div class="text-[7px] text-slate-400">Software, ML</div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="p-1.5 rounded-md bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 hover:border-indigo-300 transition-all text-left flex items-center gap-1.5 cursor-pointer" onclick="flipBookToPhase(2, event)">
-                                                            <span class="text-xs">🎨</span>
-                                                            <div>
-                                                                <div class="text-[9px] font-bold text-slate-800">Creative</div>
-                                                                <div class="text-[7px] text-slate-400">Design, Media</div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="p-1.5 rounded-md bg-slate-50 hover:bg-emerald-50 border border-slate-200/80 hover:border-emerald-300 transition-all text-left flex items-center gap-1.5 cursor-pointer" onclick="flipBookToPhase(2, event)">
-                                                            <span class="text-xs">🩺</span>
-                                                            <div>
-                                                                <div class="text-[9px] font-bold text-slate-800">Health</div>
-                                                                <div class="text-[7px] text-slate-400">Bio, Clinical</div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="p-1.5 rounded-md bg-slate-50 hover:bg-amber-50 border border-slate-200/80 hover:border-amber-300 transition-all text-left flex items-center gap-1.5 cursor-pointer" onclick="flipBookToPhase(2, event)">
-                                                            <span class="text-xs">🚀</span>
-                                                            <div>
-                                                                <div class="text-[9px] font-bold text-slate-800">Venture</div>
-                                                                <div class="text-[7px] text-slate-400">Startups, Biz</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="pt-2 flex items-center justify-between text-[8px] font-bold text-slate-400">
-                                                    <span>6 Tailored Tracks</span>
-                                                    <span class="text-blue-600 font-extrabold cursor-pointer hover:underline" onclick="flipBookToPhase(2, event)">Next: Phase 2 &rarr;</span>
-                                                </div>
-                                            </div>
-                                            <div class="page-gutter-shadow left-gutter"></div>
-                                            <div class="leaf-sheen"></div>
-                                        </div>
-
-                                        <!-- BACK: Synergy Logic (Left Page when flipped) -->
-                                        <div class="leaf-face leaf-face-back">
-                                            <div class="page-inner-content flex flex-col justify-between h-full text-right">
-                                                <div>
-                                                    <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
-                                                        <span class="text-[9px] font-mono font-bold text-slate-400">02/06</span>
-                                                        <span class="text-[9px] font-black uppercase tracking-widest text-blue-600">Cross-Discipline</span>
-                                                    </div>
-                                                    <h4 class="font-black text-slate-800 text-sm font-outfit leading-tight">Synergy Mapping</h4>
-                                                    <p class="text-[10px] text-slate-500 mt-1 leading-snug">Connects non-obvious intersections between your passions.</p>
-
-                                                    <div class="mt-3 p-2 rounded-lg bg-blue-50/70 border border-blue-200/50 text-left space-y-1.5">
-                                                        <div class="flex items-center justify-between text-[8px] font-extrabold text-slate-700">
-                                                            <span>AI + Medicine</span>
-                                                            <span class="text-blue-600 font-bold">HealthTech ML</span>
-                                                        </div>
-                                                        <div class="flex items-center justify-between text-[8px] font-extrabold text-slate-700">
-                                                            <span>Design + Tech</span>
-                                                            <span class="text-indigo-600 font-bold">Creative Eng</span>
-                                                        </div>
-                                                        <div class="flex items-center justify-between text-[8px] font-extrabold text-slate-700">
-                                                            <span>Law + Tech</span>
-                                                            <span class="text-sky-600 font-bold">AI Policy</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="pt-2 flex items-center justify-between text-[8px] font-bold text-slate-400">
-                                                    <span class="text-blue-600 font-extrabold cursor-pointer hover:underline" onclick="flipBookToPhase(0, event)">&larr; Close Cover</span>
-                                                    <span>PRAXiS Synthesis</span>
-                                                </div>
-                                            </div>
-                                            <div class="page-gutter-shadow right-gutter"></div>
-                                            <div class="leaf-sheen"></div>
+                                <!-- Phase 2 -->
+                                <div class="p-2.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-lg bg-sky-50 border border-sky-200 text-sky-600 font-black text-[10px] flex items-center justify-center">02</span>
+                                        <div>
+                                            <div class="text-xs font-black text-slate-800 font-outfit">Psychometric Synthesis</div>
+                                            <div class="text-[9px] text-slate-500">Cognitive style & execution drivers</div>
                                         </div>
                                     </div>
+                                    <span class="text-[9px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">Adaptive</span>
+                                </div>
 
-                                    <!-- FLIPPABLE LEAF 0: HARDCOVER FRONT (Outer Cover & Inside Endpaper) -->
-                                    <div class="book-leaf leaf-cover" id="book-leaf-cover" onclick="handleBookLeafClick(0, event)">
-                                        <!-- FRONT: LUXURY OBSIDIAN & GOLD EMBOSSED HARDCOVER -->
-                                        <div class="leaf-face leaf-face-front book-front-cover-face">
-                                            <div class="book-cover-border-frame"></div>
-                                            
-                                            <div class="flex flex-col items-center justify-between h-full p-3 relative z-10 text-center">
-                                                <div class="pt-1">
-                                                    <div class="text-[8px] font-black tracking-[0.25em] text-amber-300 uppercase">Interactive Guide</div>
-                                                    <div class="w-8 h-[1px] bg-gradient-to-r from-transparent via-amber-400 to-transparent mx-auto mt-1"></div>
-                                                </div>
-
-                                                <div class="flex flex-col items-center my-auto py-2">
-                                                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 p-[2px] shadow-lg shadow-amber-500/20 mb-2.5 transform hover:scale-105 transition-transform">
-                                                        <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-400">
-                                                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <circle cx="12" cy="12" r="9" stroke="url(#star-gold-grad-m1)" stroke-width="1.5"/>
-                                                                <path d="M12 4L14.2 9.8L20 12L14.2 14.2L12 20L9.8 14.2L4 12L9.8 9.8L12 4Z" fill="url(#star-gold-grad-m1)"/>
-                                                                <defs>
-                                                                    <linearGradient id="star-gold-grad-m1" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-                                                                        <stop stop-color="#fef08a"/>
-                                                                        <stop offset="0.5" stop-color="#f59e0b"/>
-                                                                        <stop offset="1" stop-color="#b45309"/>
-                                                                    </linearGradient>
-                                                                </defs>
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-
-                                                    <h3 class="font-black text-white text-xl tracking-wider font-outfit drop-shadow-md">PRAXiS</h3>
-                                                    <div class="text-[9px] font-extrabold text-amber-400 tracking-[0.2em] uppercase mt-0.5">Career Compass</div>
-                                                    <p class="text-[8.5px] text-slate-300/80 font-medium mt-1 tracking-wide">3-Phase Psychometric Guide</p>
-                                                </div>
-
-                                                <div class="pb-1 w-full flex items-center justify-between border-t border-amber-400/30 pt-1.5 text-[8px] font-bold text-amber-300/90">
-                                                    <span class="tracking-widest">EDITION 2026</span>
-                                                    <span class="flex items-center gap-1 animate-pulse">
-                                                        <span>Flip to Open</span> &rarr;
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div class="book-cover-hinge"></div>
-                                            <div class="leaf-sheen cover-sheen"></div>
-                                        </div>
-
-                                        <!-- BACK: INSIDE FRONT COVER / EX LIBRIS & TABLE OF CONTENTS -->
-                                        <div class="leaf-face leaf-face-back inside-cover-face">
-                                            <div class="page-inner-content flex flex-col justify-between h-full text-left">
-                                                <div>
-                                                    <div class="flex items-center justify-between border-b-2 border-slate-300 pb-1.5 mb-2">
-                                                        <span class="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">EX LIBRIS</span>
-                                                        <span class="text-[8px] font-extrabold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">PRAXiS ATLAS</span>
-                                                    </div>
-
-                                                    <h4 class="font-black text-slate-800 text-sm font-outfit">Table of Contents</h4>
-                                                    <p class="text-[9px] text-slate-500 mt-0.5">Structured roadmap to discover your optimal career trajectories.</p>
-
-                                                    <div class="mt-2.5 space-y-1.5 text-[9px]">
-                                                        <div class="flex items-center justify-between p-1.5 rounded bg-white border border-slate-200/60 shadow-2xs cursor-pointer hover:border-blue-400 transition-colors" onclick="flipBookToPhase(1, event)">
-                                                            <span class="font-bold text-slate-700">01. Domain Discovery</span>
-                                                            <span class="text-blue-600 font-mono font-bold">p. 01</span>
-                                                        </div>
-                                                        <div class="flex items-center justify-between p-1.5 rounded bg-white border border-slate-200/60 shadow-2xs cursor-pointer hover:border-sky-400 transition-colors" onclick="flipBookToPhase(2, event)">
-                                                            <span class="font-bold text-slate-700">02. Trait Synthesis</span>
-                                                            <span class="text-sky-600 font-mono font-bold">p. 03</span>
-                                                        </div>
-                                                        <div class="flex items-center justify-between p-1.5 rounded bg-white border border-slate-200/60 shadow-2xs cursor-pointer hover:border-indigo-400 transition-colors" onclick="flipBookToPhase(3, event)">
-                                                            <span class="font-bold text-slate-700">03. Custom Roadmap</span>
-                                                            <span class="text-indigo-600 font-mono font-bold">p. 05</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[8px] font-bold text-slate-400">
-                                                    <span>Author: PRAXiS Intelligence</span>
-                                                    <span class="text-blue-600 font-extrabold cursor-pointer hover:underline" onclick="flipBookToPhase(1, event)">Open Phase 1 &rarr;</span>
-                                                </div>
-                                            </div>
-                                            <div class="page-gutter-shadow right-gutter"></div>
-                                            <div class="leaf-sheen"></div>
+                                <!-- Phase 3 -->
+                                <div class="p-2.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 font-black text-[10px] flex items-center justify-center">03</span>
+                                        <div>
+                                            <div class="text-xs font-black text-slate-800 font-outfit">Actionable Milestone Roadmap</div>
+                                            <div class="text-[9px] text-slate-500">Skill targets, readings & portfolio sprints</div>
                                         </div>
                                     </div>
+                                    <span class="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">Tailored</span>
+                                </div>
+                            </div>
 
-                                    <!-- INTERACTIVE PROTRUDING PHASE TABS -->
-                                    <div class="book-phase-tabs">
-                                        <button type="button" class="book-tab tab-phase-1" id="book-tab-1" title="Jump to Phase 1: Domain Selection" onclick="flipBookToPhase(1, event)">
-                                            <span>① Domains</span>
-                                        </button>
-                                        <button type="button" class="book-tab tab-phase-2" id="book-tab-2" title="Jump to Phase 2: Trait Synthesis" onclick="flipBookToPhase(2, event)">
-                                            <span>② Traits</span>
-                                        </button>
-                                        <button type="button" class="book-tab tab-phase-3" id="book-tab-3" title="Jump to Phase 3: Custom Roadmap" onclick="flipBookToPhase(3, event)">
-                                            <span>③ Roadmap</span>
-                                        </button>
+                            <!-- LIVE SAMPLE TRAIT METRICS -->
+                            <div class="neu-card-sm p-3.5 bg-slate-50/80 border border-slate-200/60 rounded-xl space-y-2 mb-4">
+                                <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-600">
+                                    <span>Cognitive Trait Balance</span>
+                                    <span class="text-blue-600 font-mono">Profile #842</span>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <div>
+                                        <div class="flex justify-between text-[10px] font-bold text-slate-700 mb-0.5">
+                                            <span>Analytical & Systems Logic</span>
+                                            <span class="text-blue-600 font-mono">94%</span>
+                                        </div>
+                                        <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-blue-600 rounded-full" style="width: 94%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] font-bold text-slate-700 mb-0.5">
+                                            <span>Creative Problem Solving</span>
+                                            <span class="text-indigo-600 font-mono">88%</span>
+                                        </div>
+                                        <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-indigo-600 rounded-full" style="width: 88%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] font-bold text-slate-700 mb-0.5">
+                                            <span>Execution Grit & Discipline</span>
+                                            <span class="text-cyan-600 font-mono">92%</span>
+                                        </div>
+                                        <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-cyan-600 rounded-full" style="width: 92%"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- PRACTICAL INTERACTIVE DOCK CONTROLS -->
-                            <div class="book-controls-dock mt-3 flex flex-col items-center gap-1.5 z-10 w-full max-w-xs">
-                                <div class="flex items-center justify-between w-full neu-card-sm px-3 py-1.5 bg-white/80 backdrop-blur-sm border border-slate-200/80 shadow-sm rounded-xl">
-                                    <button type="button" onclick="prevBookPage(event)" id="book-btn-prev" class="w-7 h-7 neu-circle flex items-center justify-center text-slate-700 hover:text-blue-600 text-xs font-black transition-all cursor-pointer" title="Previous Page">
-                                        &#10094;
-                                    </button>
-
-                                    <!-- Phase Indicator Pills -->
-                                    <div class="flex items-center gap-1" id="book-phase-pills">
-                                        <button type="button" onclick="flipBookToPhase(0, event)" class="phase-pill active" data-phase="0" title="Cover">Cover</button>
-                                        <button type="button" onclick="flipBookToPhase(1, event)" class="phase-pill" data-phase="1" title="Phase 1: Domains">P1</button>
-                                        <button type="button" onclick="flipBookToPhase(2, event)" class="phase-pill" data-phase="2" title="Phase 2: Traits">P2</button>
-                                        <button type="button" onclick="flipBookToPhase(3, event)" class="phase-pill" data-phase="3" title="Phase 3: Roadmap">P3</button>
-                                    </div>
-
-                                    <button type="button" onclick="nextBookPage(event)" id="book-btn-next" class="w-7 h-7 neu-circle flex items-center justify-center text-slate-700 hover:text-blue-600 text-xs font-black transition-all cursor-pointer" title="Next Page">
-                                        &#10095;
-                                    </button>
-                                </div>
-
-                                <!-- Practical Hint & Sound Toggle -->
-                                <div class="flex items-center justify-between w-full px-1 text-[10px] text-slate-500 font-medium">
-                                    <span class="flex items-center gap-1">
-                                        <span class="text-blue-500 animate-pulse">●</span> Scroll or tap tabs to flip
-                                    </span>
-                                    <button type="button" onclick="toggleBookSound(event)" id="book-sound-btn" class="hover:text-blue-600 transition-colors flex items-center gap-1 font-bold text-[10px] cursor-pointer" title="Toggle Page Flip Sound">
-                                        <span id="book-sound-icon">🔊</span> <span id="book-sound-label">Audio On</span>
-                                    </button>
-                                </div>
-                            </div>
+                            <!-- LAUNCH CTA BUTTON -->
+                            <button type="button" onclick="openCompassFeature()" class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
+                                <span>🧭</span>
+                                <span>Start Career Compass Assessment &rarr;</span>
+                            </button>
                         </div>
-
-                        <!-- TRAIT RADAR HUD PREVIEW CARD -->
-                        <div class="neu-card-sm p-4 w-full max-w-sm mt-4 text-left border border-white/60">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-[10px] font-black uppercase tracking-wider text-blue-600">Sample Trait Analysis</span>
-                                <span class="neu-badge text-[9px] font-bold text-emerald-600 px-1.5 py-0.5">98% Match Precision</span>
-                            </div>
-                            <div class="space-y-2">
-                                <div>
-                                    <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-0.5">
-                                        <span>Analytical & Logic</span>
-                                        <span>94%</span>
-                                    </div>
-                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-blue-600 rounded-full" style="width: 94%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-0.5">
-                                        <span>Creative Problem Solving</span>
-                                        <span>88%</span>
-                                    </div>
-                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-indigo-600 rounded-full" style="width: 88%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-[11px] font-bold text-slate-700 mb-0.5">
-                                        <span>Execution & Discipline</span>
-                                        <span>92%</span>
-                                    </div>
-                                    <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-cyan-600 rounded-full" style="width: 92%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </section>
