@@ -281,9 +281,10 @@
                             <span class="live-dot"></span> Live Sync
                         </span>
                     </div>
-                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5">
-                        <span>Permanent DB:</span>
+                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5 flex-wrap">
+                        <span>Storage:</span>
                         <span id="db-location-tag" class="font-mono text-[11px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">F:\Praxis Admin server</span>
+                        <span id="sqlite-location-tag" class="font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">SQLite: D:\database\praxis_data.db</span>
                     </div>
                 </div>
             </div>
@@ -364,13 +365,13 @@
             <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Platform Traffic Hits</span>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">SQLite Traffic Hits</span>
                     </div>
                     <span id="stat-total-visitors" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Total page views recorded</p>
+                    <p class="text-[11px] text-slate-400 font-medium mt-1">Middleware logged requests</p>
                 </div>
                 <div class="w-12 h-12 neo-icon text-amber-500 flex items-center justify-center font-bold text-2xl shrink-0">
-                    📊
+                    ⚡
                 </div>
             </div>
 
@@ -550,6 +551,46 @@
                     <tbody id="users-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
                         <tr>
                             <td colspan="8" class="py-8 text-center text-slate-400 font-semibold">Loading permanent user records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- REALTIME SQLITE TRAFFIC & DATABASE MONITOR SECTION -->
+        <!-- ===================================================================== -->
+        <section class="neo-card p-5 sm:p-7 space-y-4">
+            
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-300/60 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">⚡</span>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-extrabold text-slate-800">SQLite Realtime Traffic Engine</h2>
+                        <p class="text-xs text-slate-500 font-medium">Logged live by Express Global Middleware into SSD SQLite <code id="traffic-db-subtag" class="text-emerald-700 font-mono">praxis_data.db</code></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="neo-pill px-3 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 flex items-center gap-1.5">
+                        <span class="live-dot"></span> <span id="sqlite-traffic-count-badge">0</span> Total Traffic Hits
+                    </span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto neo-inset p-3 rounded-2xl max-h-80 overflow-y-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
+                            <th class="py-2.5 px-3">Req ID</th>
+                            <th class="py-2.5 px-3">Client IP Address</th>
+                            <th class="py-2.5 px-3">Target Endpoint / URL</th>
+                            <th class="py-2.5 px-3">Timestamp (UTC)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="traffic-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
+                        <tr>
+                            <td colspan="4" class="py-6 text-center text-slate-400 font-semibold">Listening for incoming HTTP requests...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1235,6 +1276,29 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
+        function renderTrafficTable(trafficLogs) {
+            const tbody = document.getElementById('traffic-table-body');
+            if (!tbody) return;
+
+            if (!Array.isArray(trafficLogs) || trafficLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400 font-semibold">No SQLite traffic recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = trafficLogs.map(t => {
+                return `
+                    <tr class="hover:bg-slate-100/60 transition-colors">
+                        <td class="py-2.5 px-3 font-mono font-bold text-slate-500 text-[11px]">#${t.id}</td>
+                        <td class="py-2.5 px-3 font-mono font-bold text-indigo-700 text-xs">${escapeHtml(t.ip_address || '127.0.0.1')}</td>
+                        <td class="py-2.5 px-3 font-mono text-emerald-800 font-bold text-xs max-w-[260px] truncate" title="${escapeHtml(t.endpoint || '/')}">
+                            <span class="px-2 py-0.5 rounded bg-slate-200/90 text-slate-800">${escapeHtml(t.endpoint || '/')}</span>
+                        </td>
+                        <td class="py-2.5 px-3 text-slate-500 font-mono text-[11px]">${t.timestamp ? new Date(t.timestamp).toLocaleString() : 'Just now'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         function renderStats(data) {
             const activeUsersEl = document.getElementById('stat-active-users');
             const uniqueUsersEl = document.getElementById('stat-unique-users');
@@ -1244,7 +1308,29 @@
             if (activeUsersEl) activeUsersEl.innerText = data.activeUsers || 0;
             if (uniqueUsersEl) uniqueUsersEl.innerText = data.uniqueUsersTillToday || 0;
             if (totalUsersEl && data.totalRegisteredUsers !== undefined) totalUsersEl.innerText = data.totalRegisteredUsers;
-            if (totalVisitorsEl) totalVisitorsEl.innerText = data.totalVisitors || 0;
+            if (totalVisitorsEl) {
+                const totalTraffic = (data.sqlite && typeof data.sqlite.totalTraffic === 'number') 
+                    ? data.sqlite.totalTraffic 
+                    : (data.totalVisitors || 0);
+                totalVisitorsEl.innerText = totalTraffic;
+            }
+
+            // SQLite Traffic and Path rendering
+            if (data.sqlite) {
+                const trafficBadge = document.getElementById('sqlite-traffic-count-badge');
+                if (trafficBadge) trafficBadge.innerText = data.sqlite.totalTraffic || 0;
+
+                if (Array.isArray(data.sqlite.recentTraffic)) {
+                    renderTrafficTable(data.sqlite.recentTraffic);
+                }
+
+                if (data.sqlite.databasePath) {
+                    const sqliteTag = document.getElementById('sqlite-location-tag');
+                    if (sqliteTag) sqliteTag.innerText = `SQLite: ${data.sqlite.databasePath}`;
+                    const subtag = document.getElementById('traffic-db-subtag');
+                    if (subtag) subtag.innerText = data.sqlite.databasePath;
+                }
+            }
 
             if (data.databaseLocation) {
                 const dbTag = document.getElementById('db-location-tag');

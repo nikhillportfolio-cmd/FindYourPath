@@ -5,13 +5,98 @@ const path = require('path');
 const fs = require('fs');
 const webpush = require('web-push');
 const notifier = require('node-notifier');
+const Database = require('better-sqlite3');
+
+let bcrypt;
+try {
+    bcrypt = require('bcrypt');
+} catch (e) {
+    bcrypt = require('bcryptjs');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// =====================================================================
+// LOCAL SSD SQLITE DATABASE ENGINE (better-sqlite3)
+// =====================================================================
+// Absolute local SSD path placeholder as requested (use 'D:/database/praxis_data.db' for easy customization)
+const SQLITE_DB_PATH = process.env.SQLITE_DB_PATH || 'D:/database/praxis_data.db';
+
+let db;
+let actualDbPath = SQLITE_DB_PATH;
+
+try {
+    const dbDir = path.dirname(SQLITE_DB_PATH);
+    if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+    }
+    db = new Database(SQLITE_DB_PATH);
+    db.pragma('journal_mode = WAL');
+    console.log(`💾 Local SQLite Database successfully initialized at SSD path: ${SQLITE_DB_PATH}`);
+} catch (err) {
+    console.warn(`⚠️ Could not initialize SQLite at ${SQLITE_DB_PATH}: ${err.message}. Initializing fallback SSD / workspace storage...`);
+    try {
+        const ssdDir = 'F:\\Praxis Admin server';
+        if (fs.existsSync(ssdDir)) {
+            actualDbPath = path.join(ssdDir, 'praxis_data.db');
+            db = new Database(actualDbPath);
+            db.pragma('journal_mode = WAL');
+            console.log(`💾 Connected SQLite Database at SSD storage: ${actualDbPath}`);
+        } else {
+            const localDataDir = path.join(__dirname, 'database');
+            if (!fs.existsSync(localDataDir)) fs.mkdirSync(localDataDir, { recursive: true });
+            actualDbPath = path.join(localDataDir, 'praxis_data.db');
+            db = new Database(actualDbPath);
+            db.pragma('journal_mode = WAL');
+            console.log(`💾 Connected SQLite Database at workspace fallback: ${actualDbPath}`);
+        }
+    } catch (fallbackErr) {
+        console.error(`❌ Critical SQLite Initialization Error:`, fallbackErr.message);
+        db = new Database(':memory:');
+        actualDbPath = ':memory:';
+    }
+}
+
+// Database Initialization Block: Create users and traffic tables if they do not exist
+db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        hashed_password TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS traffic (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip_address TEXT,
+        endpoint TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+`);
+
+// Prepared statement for fast traffic logging
+const insertTrafficStmt = db.prepare(`
+    INSERT INTO traffic (ip_address, endpoint) VALUES (?, ?)
+`);
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global Express Middleware: inserts req.ip and req.originalUrl into the traffic table for every incoming request
+app.use((req, res, next) => {
+    try {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '127.0.0.1';
+        const endpoint = req.originalUrl || req.url;
+        insertTrafficStmt.run(String(clientIp), String(endpoint));
+    } catch (err) {
+        console.error('⚠️ Failed to log traffic into SQLite table:', err.message);
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // =====================================================================
@@ -10283,10 +10368,111 @@ app.post('/api/track-event', (req, res) => {
 });
 
 // =====================================================================
-// USER AUTHENTICATION & REGISTRATION ENDPOINTS
+// SQLITE USER DATABASE & AUTHENTICATION ENDPOINTS
 // =====================================================================
 
-// User Registration
+// POST /register - Accepts name, email, and password; hashes password with bcrypt & inserts into SQLite users table
+app.post('/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body || {};
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: "Name, email, and password are required." });
+        }
+
+        const trimmedName = String(name).trim();
+        const normalizedEmail = String(email).trim().toLowerCase();
+
+        if (!trimmedName || !normalizedEmail || !password) {
+            return res.status(400).json({ error: "Invalid name, email, or password provided." });
+        }
+
+        // Securely hash password with bcrypt
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        try {
+            const insertStmt = db.prepare(`
+                INSERT INTO users (name, email, hashed_password)
+                VALUES (?, ?, ?)
+            `);
+            const result = insertStmt.run(trimmedName, normalizedEmail, hashedPassword);
+
+            // Also keep usersData in sync so all features operate smoothly
+            const userId = `usr_${result.lastInsertRowid}`;
+            const timestamp = new Date().toISOString();
+            const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '127.0.0.1';
+
+            if (!usersData.users.some(u => u.email && u.email.toLowerCase() === normalizedEmail)) {
+                usersData.users.push({
+                    id: userId,
+                    name: trimmedName,
+                    email: normalizedEmail,
+                    username: normalizedEmail.split('@')[0],
+                    passwordHash: hashedPassword,
+                    avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(trimmedName)}`,
+                    isVerified: true,
+                    createdAt: timestamp,
+                    loginCount: 1,
+                    lastLoginAt: timestamp,
+                    lastLoginIp: clientIp
+                });
+                saveUsersData();
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: "User registered successfully in SQLite database.",
+                user: {
+                    id: result.lastInsertRowid,
+                    name: trimmedName,
+                    email: normalizedEmail
+                }
+            });
+        } catch (dbErr) {
+            if (dbErr.message && (dbErr.message.includes('UNIQUE constraint failed') || dbErr.code === 'SQLITE_CONSTRAINT_UNIQUE')) {
+                return res.status(409).json({ error: "User with this email already exists." });
+            }
+            throw dbErr;
+        }
+    } catch (err) {
+        console.error("Registration Error:", err);
+        return res.status(500).json({ error: "Internal server error during registration." });
+    }
+});
+
+// GET /api/users/:email - Fetches and returns id, name, and email (excludes password)
+app.get('/api/users/:email', (req, res) => {
+    try {
+        const { email } = req.params;
+        if (!email) {
+            return res.status(400).json({ error: "Email parameter is required." });
+        }
+
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const selectStmt = db.prepare(`
+            SELECT id, name, email FROM users WHERE LOWER(email) = ?
+        `);
+        const user = selectStmt.get(normalizedEmail);
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        return res.json({
+            success: true,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
+        });
+    } catch (err) {
+        console.error("Fetch User Error:", err);
+        return res.status(500).json({ error: "Internal server error retrieving user." });
+    }
+});
+
+// User Registration (API Route)
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { name, email, username, password, mobile } = req.body || {};
@@ -10342,6 +10528,17 @@ app.post('/api/auth/register', async (req, res) => {
         usersData.users.push(newUser);
         usersData.loginLogs.unshift(newLog);
         saveUsersData();
+
+        // Also insert into SQLite users table
+        try {
+            const insertStmt = db.prepare(`
+                INSERT OR IGNORE INTO users (name, email, hashed_password)
+                VALUES (?, ?, ?)
+            `);
+            insertStmt.run(newUser.name, newUser.email, passwordHash);
+        } catch (dbErr) {
+            console.warn("SQLite insert on /api/auth/register warning:", dbErr.message);
+        }
 
         const token = jwt.sign(
             { userId: newUser.id, email: newUser.email, username: newUser.username },
@@ -11207,10 +11404,38 @@ app.get('/api/admin/users', (req, res) => {
         return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
     }
 
+    let sqliteUsers = [];
+    try {
+        sqliteUsers = db.prepare('SELECT id, name, email, created_at FROM users ORDER BY id DESC').all();
+    } catch (e) {
+        console.warn("SQLite users fetch error:", e.message);
+    }
+
+    // Combine usersData.users with SQLite users
+    const combinedUsers = [...usersData.users];
+    sqliteUsers.forEach(su => {
+        if (!combinedUsers.some(u => u.email && su.email && u.email.toLowerCase() === su.email.toLowerCase())) {
+            combinedUsers.unshift({
+                id: `sqlite_${su.id}`,
+                sqliteId: su.id,
+                name: su.name,
+                email: su.email,
+                username: su.email ? su.email.split('@')[0] : 'user',
+                mobile: '',
+                createdAt: su.created_at || new Date().toISOString(),
+                loginCount: 1,
+                isGmail: (su.email || '').toLowerCase().endsWith('@gmail.com'),
+                isSqliteUser: true
+            });
+        }
+    });
+
     res.json({
         success: true,
-        totalUsers: usersData.users.length,
-        users: usersData.users.map(({ passwordHash, ...u }) => ({
+        totalUsers: combinedUsers.length,
+        sqliteUsersCount: sqliteUsers.length,
+        sqliteUsers: sqliteUsers,
+        users: combinedUsers.map(({ passwordHash, ...u }) => ({
             ...u,
             mobile: u.mobile || '',
             isGmail: (u.email || '').toLowerCase().endsWith('@gmail.com'),
@@ -11221,7 +11446,8 @@ app.get('/api/admin/users', (req, res) => {
             habits: (u.routineTracker && Array.isArray(u.routineTracker.habits)) ? u.routineTracker.habits : []
         })),
         loginLogs: usersData.loginLogs,
-        databaseLocation: DB_DIR
+        databaseLocation: DB_DIR,
+        sqliteDatabasePath: actualDbPath
     });
 });
 
@@ -11279,7 +11505,12 @@ app.post('/api/admin/user/delete', (req, res) => {
 app.post('/api/admin/login', (req, res) => {
     const { password } = req.body || {};
     if (password === ADMIN_PASSWORD) {
-        return res.json({ success: true, message: "Authentication successful", databaseLocation: DB_DIR });
+        return res.json({ 
+            success: true, 
+            message: "Authentication successful", 
+            databaseLocation: DB_DIR,
+            sqliteDatabasePath: actualDbPath
+        });
     }
     return res.status(401).json({ success: false, message: "Invalid admin password" });
 });
@@ -11291,7 +11522,23 @@ app.get('/api/admin/stats', (req, res) => {
         return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
     }
 
-    const totalVisitors = analyticsData.totalVisitors || 0;
+    // Query SQLite metrics
+    let sqliteTrafficCount = 0;
+    let sqliteUsersCount = 0;
+    let recentTrafficLogs = [];
+    try {
+        const trafficCountRow = db.prepare('SELECT COUNT(*) AS count FROM traffic').get();
+        sqliteTrafficCount = trafficCountRow ? trafficCountRow.count : 0;
+
+        const usersCountRow = db.prepare('SELECT COUNT(*) AS count FROM users').get();
+        sqliteUsersCount = usersCountRow ? usersCountRow.count : 0;
+
+        recentTrafficLogs = db.prepare('SELECT id, ip_address, endpoint, timestamp FROM traffic ORDER BY id DESC LIMIT 50').all();
+    } catch (sqliteErr) {
+        console.warn("SQLite stats fetch error:", sqliteErr.message);
+    }
+
+    const totalVisitors = Math.max(analyticsData.totalVisitors || 0, sqliteTrafficCount);
     const totalQuizzes = analyticsData.totalQuizzesCompleted || 0;
     const conversionRate = totalVisitors > 0 ? ((totalQuizzes / totalVisitors) * 100).toFixed(1) : "0.0";
     
@@ -11301,7 +11548,7 @@ app.get('/api/admin/stats', (req, res) => {
         : 0;
 
     const uniqueVisitorsCount = Object.keys(analyticsData.uniqueVisitors || {}).length;
-    const uniqueUsersTillToday = Math.max(uniqueVisitorsCount, usersData.users.length, totalVisitors > 0 ? totalVisitors : 0);
+    const uniqueUsersTillToday = Math.max(uniqueVisitorsCount, usersData.users.length, sqliteUsersCount, totalVisitors > 0 ? totalVisitors : 0);
 
     // Feature Usage Breakdown
     const compassUsage = analyticsData.featureUsage?.compass || 0;
@@ -11315,8 +11562,14 @@ app.get('/api/admin/stats', (req, res) => {
         totalVisitors: totalVisitors,
         totalQuizzesCompleted: totalQuizzes,
         conversionRate: `${conversionRate}%`,
-        totalRegisteredUsers: usersData.users.length,
+        totalRegisteredUsers: Math.max(usersData.users.length, sqliteUsersCount),
         totalLoginsRecorded: usersData.loginLogs.length,
+        sqlite: {
+            databasePath: actualDbPath,
+            totalTraffic: sqliteTrafficCount,
+            totalUsers: sqliteUsersCount,
+            recentTraffic: recentTrafficLogs
+        },
         featureUsage: {
             compass: compassUsage,
             library: libraryUsage,
@@ -11342,8 +11595,31 @@ app.get('/api/admin/stats', (req, res) => {
             totalHabitCheckoffs: analyticsData.routineStats?.totalHabitCheckoffs || 0
         },
         databaseLocation: DB_DIR,
+        sqliteDatabasePath: actualDbPath,
         timestamp: new Date().toISOString()
     });
+});
+
+// Admin Realtime Traffic API Endpoint (SQLite)
+app.get('/api/admin/traffic', (req, res) => {
+    const providedPass = req.headers['x-admin-password'] || req.query.password;
+    if (providedPass !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
+    }
+
+    try {
+        const trafficLogs = db.prepare('SELECT id, ip_address, endpoint, timestamp FROM traffic ORDER BY id DESC LIMIT 100').all();
+        const totalCount = db.prepare('SELECT COUNT(*) AS count FROM traffic').get().count;
+        res.json({
+            success: true,
+            totalTraffic: totalCount,
+            logs: trafficLogs,
+            databasePath: actualDbPath
+        });
+    } catch (err) {
+        console.error("Admin Traffic Fetch Error:", err);
+        res.status(500).json({ error: "Failed to fetch traffic logs." });
+    }
 });
 
 // Serve Admin UI
