@@ -943,6 +943,8 @@
         // 1. INITIALIZATION & AUTH STATE LISTENER
         // -------------------------------------------------------------
         document.addEventListener('DOMContentLoaded', async () => {
+            updateConnectionStatus('connecting');
+
             try {
                 await initFirebase();
                 db = getFirestoreDb();
@@ -957,20 +959,44 @@
             document.getElementById('btn-admin-logout')?.addEventListener('click', window.handleAdminLogout);
             document.getElementById('btn-manual-refresh')?.addEventListener('click', window.forceManualRefresh);
 
-            // Check if active verified admin session exists
-            const savedAdminSession = localStorage.getItem('praxis_admin_session');
-            const savedAdminToken = localStorage.getItem('praxis_admin_token');
+            // Check if active verified admin session or token exists
+            const savedAdminToken = localStorage.getItem('praxis_admin_token') || localStorage.getItem('praxis_token');
 
-            if (savedAdminSession === 'true') {
-                currentAdminUser = {
-                    uid: 'admin_master',
-                    displayName: 'Master Administrator',
-                    email: 'admin@praxis.app',
-                    role: 'admin'
-                };
-                showDashboardUI();
-                startAdminSync();
-            } else if (auth) {
+            if (savedAdminToken) {
+                // Securely verify token with server before presenting dashboard data
+                try {
+                    const res = await fetch('/api/admin/stats', {
+                        headers: {
+                            'Authorization': `Bearer ${savedAdminToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (res.ok) {
+                        const stats = await res.json();
+                        localStorage.setItem('praxis_admin_session', 'true');
+                        currentAdminUser = {
+                            uid: 'admin_master',
+                            displayName: 'Master Administrator',
+                            email: 'admin@praxis.app',
+                            role: 'admin'
+                        };
+                        showDashboardUI();
+                        startAdminSync();
+                    } else {
+                        // Token invalid/expired
+                        localStorage.removeItem('praxis_admin_session');
+                        localStorage.removeItem('praxis_admin_token');
+                    }
+                } catch (tokErr) {
+                    if (localStorage.getItem('praxis_admin_session') === 'true') {
+                        showDashboardUI();
+                        startAdminSync();
+                    }
+                }
+            }
+
+            if (auth) {
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         const adminStatus = isUserAdmin(user);
@@ -980,13 +1006,15 @@
                             showDashboardUI();
                             startAdminSync();
                         } else if (db) {
-                            const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
-                            if (userDoc && userDoc.exists() && userDoc.data().role === 'admin') {
-                                currentAdminUser = user;
-                                localStorage.setItem('praxis_admin_session', 'true');
-                                showDashboardUI();
-                                startAdminSync();
-                            }
+                            try {
+                                const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
+                                if (userDoc && userDoc.exists() && userDoc.data().role === 'admin') {
+                                    currentAdminUser = user;
+                                    localStorage.setItem('praxis_admin_session', 'true');
+                                    showDashboardUI();
+                                    startAdminSync();
+                                }
+                            } catch (e) {}
                         }
                     }
                 });
@@ -994,6 +1022,14 @@
 
             // Start clock ticker for last update
             setInterval(updateLastUpdatedBadge, 1000);
+
+            // Listen for online/offline events
+            window.addEventListener('online', () => {
+                startAdminSync();
+            });
+            window.addEventListener('offline', () => {
+                updateConnectionStatus('offline');
+            });
         });
 
         async function handleAdminPasswordSubmit(e) {
@@ -1040,14 +1076,7 @@
                     showLoginError(data.error || "Incorrect admin password. Access denied.");
                 }
             } catch (err) {
-                // Offline fallback check
-                if (password === '@Byta4524') {
-                    localStorage.setItem('praxis_admin_session', 'true');
-                    showDashboardUI();
-                    startAdminSync();
-                } else {
-                    showLoginError("Connection error or invalid admin password.");
-                }
+                showLoginError("Could not connect to authentication server. Please check your network.");
             } finally {
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -1214,7 +1243,7 @@
                 liveUnsubscribes.push(unsubAudit);
             } catch (e) {}
 
-            updateConnectionStatus(true);
+            updateConnectionStatus('connected');
         }
 
         function stopRealtimeFirestoreListeners() {
@@ -1225,28 +1254,57 @@
         }
 
         function handleFirestoreError(err) {
-            console.warn("[PRAXiS Admin] Firestore realtime notice (using hybrid server API):", err.message);
+            if (err && (err.code === 'permission-denied' || String(err.message).includes('permission-denied'))) {
+                console.warn("[PRAXiS Admin] Firestore Permission Denied: Admin authorization required.", err.message);
+                updateConnectionStatus('permission_denied');
+            } else if (!navigator.onLine) {
+                updateConnectionStatus('offline');
+            } else {
+                console.warn("[PRAXiS Admin] Firestore realtime notice (using hybrid server telemetry):", err ? err.message : err);
+                updateConnectionStatus('connected', 'Hybrid Synced');
+            }
             fetchServerAdminData();
         }
 
-        function updateConnectionStatus(isConnected, customLabel = null) {
+        function updateConnectionStatus(state, customLabel = null) {
             const dot = document.getElementById('realtime-dot');
             const pillText = document.getElementById('realtime-status-text');
             const dbBadge = document.getElementById('db-status-badge');
 
-            if (isConnected) {
+            if (state === 'connected' || state === true) {
                 if (dot) dot.className = "live-dot";
                 if (pillText) pillText.innerText = customLabel || "Realtime Live";
                 if (dbBadge) {
                     dbBadge.innerText = "Connected";
                     dbBadge.className = "font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 font-bold";
                 }
-            } else {
-                if (dot) dot.className = "live-dot";
-                if (pillText) pillText.innerText = "Hybrid Synced";
+            } else if (state === 'connecting') {
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse inline-block";
+                if (pillText) pillText.innerText = "Connecting...";
                 if (dbBadge) {
-                    dbBadge.innerText = "Online";
-                    dbBadge.className = "font-mono text-[11px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-300 font-bold";
+                    dbBadge.innerText = "Connecting";
+                    dbBadge.className = "font-mono text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-300 font-bold";
+                }
+            } else if (state === 'permission_denied') {
+                if (dot) dot.className = "live-dot-red";
+                if (pillText) pillText.innerText = "Permission Denied";
+                if (dbBadge) {
+                    dbBadge.innerText = "Restricted";
+                    dbBadge.className = "font-mono text-[11px] text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-300 font-bold";
+                }
+            } else if (state === 'offline') {
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-slate-400 inline-block";
+                if (pillText) pillText.innerText = "Offline";
+                if (dbBadge) {
+                    dbBadge.innerText = "Offline";
+                    dbBadge.className = "font-mono text-[11px] text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 font-bold";
+                }
+            } else {
+                if (dot) dot.className = "live-dot-red";
+                if (pillText) pillText.innerText = customLabel || "Error";
+                if (dbBadge) {
+                    dbBadge.innerText = "Disconnected";
+                    dbBadge.className = "font-mono text-[11px] text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-300 font-bold";
                 }
             }
         }

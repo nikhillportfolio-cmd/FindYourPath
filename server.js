@@ -79,7 +79,7 @@ if (DB_DIR !== __dirname) {
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 }
 
-// Robust JSON file writer for permanent storage in F:\Praxis Admin server & mirrored workspace
+// Robust JSON file writer for persistent data storage
 function safeWriteJsonFile(filePath, dataObj, backupPath = null) {
     try {
         const dir = path.dirname(filePath);
@@ -102,7 +102,7 @@ function safeWriteJsonFile(filePath, dataObj, backupPath = null) {
     }
 }
 
-// Initial Data Migration & Synchronization to F:\Praxis Admin server
+// Initial Data Migration & Synchronization
 function syncInitialDataToStorage() {
     try {
         if (DB_DIR !== __dirname) {
@@ -11357,17 +11357,18 @@ function verifyAdminAuth(req, res, next) {
     const authHeader = req.headers.authorization;
     const providedPass = req.headers['x-admin-password'] || req.query.password || (req.body && req.body.adminPassword);
     const validPassword = process.env.ADMIN_PASSWORD || '@Byta4524';
+    const adminEmails = ['admin@praxis.app', 'codesznikhil@gmail.com', 'nikhil@example.com'];
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
             const token = authHeader.split(' ')[1];
             const decoded = jwt.verify(token, JWT_SECRET);
-            if (decoded && (decoded.role === 'admin' || decoded.email === 'admin@praxis.app')) {
+            if (decoded && (decoded.role === 'admin' || (decoded.email && adminEmails.includes(decoded.email.toLowerCase())))) {
                 req.adminUser = decoded;
                 return next();
             }
-            const user = usersData.users.find(u => u.id === decoded.userId || u.email === decoded.email);
-            if (user && (user.role === 'admin' || (user.email && user.email.toLowerCase() === 'admin@praxis.app'))) {
+            const user = usersData.users.find(u => u.id === decoded.userId || (u.email && decoded.email && u.email.toLowerCase() === decoded.email.toLowerCase()));
+            if (user && (user.role === 'admin' || (user.email && adminEmails.includes(user.email.toLowerCase())))) {
                 req.adminUser = user;
                 return next();
             }

@@ -62,6 +62,7 @@ let isOnline = navigator.onLine;
 // Admin emails list for authorization checks
 export const KNOWN_ADMIN_EMAILS = [
   "admin@praxis.app",
+  "codesznikhil@gmail.com",
   "nikhil@example.com"
 ];
 
@@ -211,18 +212,9 @@ export async function syncFirebaseUserToFirestore(firebaseUser, additionalData =
   const email = (firebaseUser.email || "").trim().toLowerCase();
   const displayName = firebaseUser.displayName || additionalData.name || (email ? email.split('@')[0] : "Student");
   const photoURL = firebaseUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(displayName)}`;
-  const role = additionalData.role || (KNOWN_ADMIN_EMAILS.includes(email) ? 'admin' : 'student');
+  const isEmailAdmin = KNOWN_ADMIN_EMAILS.some(e => e.toLowerCase() === email);
+  let role = additionalData.role || (isEmailAdmin ? 'admin' : 'student');
   const nowIso = new Date().toISOString();
-
-  const minimalUserData = {
-    displayName,
-    email,
-    photoURL,
-    role,
-    status: 'active',
-    lastSeenAt: nowIso,
-    ...(additionalData.mobile ? { mobile: String(additionalData.mobile).trim() } : {})
-  };
 
   // Sync to Firestore
   if (db) {
@@ -231,6 +223,16 @@ export async function syncFirebaseUserToFirestore(firebaseUser, additionalData =
       const userDocSnap = await getDoc(userDocRef).catch(() => null);
 
       if (!userDocSnap || !userDocSnap.exists()) {
+        const minimalUserData = {
+          displayName,
+          email,
+          photoURL,
+          role,
+          status: 'active',
+          lastSeenAt: nowIso,
+          ...(additionalData.mobile ? { mobile: String(additionalData.mobile).trim() } : {})
+        };
+
         await setDoc(userDocRef, {
           ...minimalUserData,
           createdAt: nowIso
@@ -250,9 +252,16 @@ export async function syncFirebaseUserToFirestore(firebaseUser, additionalData =
         recordDailyMetric("uniqueUsers");
       } else {
         const existingData = userDocSnap.data();
+        if (existingData && existingData.role === 'admin') {
+          role = 'admin';
+        } else if (isEmailAdmin) {
+          role = 'admin';
+        }
+
         await updateDoc(userDocRef, {
           lastSeenAt: nowIso,
           displayName: displayName || existingData.displayName || "Student",
+          role: role,
           status: 'active'
         }).catch(() => {});
 
@@ -443,7 +452,7 @@ export function isUserAdmin(user) {
   const u = user || currentUser || readStoredLocalUser();
   if (!u) return false;
   if (u.role === 'admin') return true;
-  if (u.email && KNOWN_ADMIN_EMAILS.includes(u.email.toLowerCase())) return true;
+  if (u.email && KNOWN_ADMIN_EMAILS.some(e => e.toLowerCase() === u.email.toLowerCase())) return true;
   return false;
 }
 
@@ -749,20 +758,27 @@ export function updateProfileUI(user) {
   const authGate = document.getElementById("auth-gate-landing");
   const mainAppContent = document.getElementById("main-app-content");
   const adminStudioBtn = document.getElementById("admin-studio-btn");
+  const navAdminBtn = document.getElementById("nav-admin-btn");
+  const mobileNavAdminBtn = document.getElementById("mobile-nav-admin-btn");
+  const profileAdminBtn = document.getElementById("profile-admin-btn");
+  const profileRoleBadge = document.getElementById("profile-role-badge");
   const showcaseUserName = document.getElementById("showcase-user-name");
+
+  const adminElements = [adminStudioBtn, navAdminBtn, mobileNavAdminBtn, profileAdminBtn, profileRoleBadge].filter(Boolean);
 
   if (user && (user.id || user.uid || user.email)) {
     if (authGate) authGate.classList.add("hidden");
     if (mainAppContent) mainAppContent.classList.remove("hidden");
     const hasAdminSession = localStorage.getItem("praxis_admin_session") === "true";
     const userIsAdmin = isUserAdmin(user);
-    if (adminStudioBtn) {
+
+    adminElements.forEach(el => {
       if (userIsAdmin || hasAdminSession) {
-        adminStudioBtn.classList.remove("hidden");
+        el.classList.remove("hidden");
       } else {
-        adminStudioBtn.classList.add("hidden");
+        el.classList.add("hidden");
       }
-    }
+    });
 
     if (loginBtn) loginBtn.classList.add("hidden");
     if (profileSection) profileSection.classList.remove("hidden");
@@ -790,13 +806,13 @@ export function updateProfileUI(user) {
     if (mainAppContent) mainAppContent.classList.add("hidden");
     
     const hasAdminSession = localStorage.getItem("praxis_admin_session") === "true";
-    if (adminStudioBtn) {
+    adminElements.forEach(el => {
       if (hasAdminSession) {
-        adminStudioBtn.classList.remove("hidden");
+        el.classList.remove("hidden");
       } else {
-        adminStudioBtn.classList.add("hidden");
+        el.classList.add("hidden");
       }
-    }
+    });
 
     if (loginBtn) loginBtn.classList.remove("hidden");
     if (profileSection) profileSection.classList.add("hidden");

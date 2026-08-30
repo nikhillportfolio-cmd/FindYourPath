@@ -84,7 +84,7 @@ service cloud.firestore {
         request.auth.token.admin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-        request.auth.token.email in ['admin@praxis.app', 'nikhil@example.com']
+        request.auth.token.email in ['admin@praxis.app', 'codesznikhil@gmail.com', 'nikhil@example.com']
       );
     }
 
