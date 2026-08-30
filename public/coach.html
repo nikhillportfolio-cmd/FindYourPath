@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRAXiS - Communication Coach & Real-Time English Fluency Engine</title>
+    <meta name="description" content="Elevate your spoken and written English, workplace communication, public speaking skills, and test readiness (IELTS, TOEFL, PTE) with real-time speech diagnostics and voice feedback.">
+    <meta property="og:title" content="PRAXiS - Communication Coach & Real-Time Speech Lab">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="/coach">
+    <link rel="canonical" href="/coach">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'SF Mono', 'Roboto Mono', 'Monaco', 'Consolas', 'monospace'],
+                    },
+                    colors: {
+                        neu: {
+                            base: '#e0e5ec',
+                            dark: '#1e293b',
+                            text: '#334155',
+                            muted: '#64748b',
+                            accent: '#2563eb',
+                            sky: '#0284c7',
+                            indigo: '#4f46e5'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-color: #e0e5ec;
+            --shadow-light: rgba(255, 255, 255, 0.75);
+            --shadow-light-soft: rgba(255, 255, 255, 0.55);
+            --shadow-dark: #b8bec7;
+            --shadow-dark-deep: #a3abb7;
+            --shadow-minor: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-minor-sm: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #334155;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Neumorphic Design Tokens */
+        .neu-card {
+            background: #e0e5ec;
+            border-radius: 1.5rem;
+            box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light), var(--shadow-minor);
+            transition: all 0.3s ease;
+        }
+
+        .neu-card-sm {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light), var(--shadow-minor-sm);
+            transition: all 0.3s ease;
+        }
+
+        .neu-btn {
+            background: #e0e5ec;
+            border-radius: 1.25rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light), var(--shadow-minor-sm);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .neu-btn:hover {
+            box-shadow: 8px 8px 16px var(--shadow-dark-deep), -8px -8px 16px var(--shadow-light), var(--shadow-minor);
+            transform: translateY(-2px);
+        }
+
+        .neu-btn:active, .neu-btn.pressed {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light-soft);
+            transform: translateY(0);
+        }
+
+        .neu-trench {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light-soft);
+        }
+
+        .neu-circle {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light), var(--shadow-minor-sm);
+        }
+
+        .neu-badge {
+            background: #e0e5ec;
+            border-radius: 9999px;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light), var(--shadow-minor-sm);
+        }
+
+        .neu-input {
+            background: #e0e5ec;
+            border-radius: 1rem;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light-soft);
+            border: 1.5px solid #cbd5e1;
+            transition: all 0.25s ease;
+        }
+
+        .neu-input:focus {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-deep), inset -4px -4px 8px var(--shadow-light-soft), 0 0 0 2px #2563eb;
+            border-color: #2563eb;
+            outline: none;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #1e293b 0%, #2563eb 50%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .font-digital {
+            font-family: 'JetBrains Mono', monospace;
+            font-feature-settings: 'tnum' on, 'zero' on;
+        }
+
+        /* Voice Soundwave Animation */
+        .soundwave-bar {
+            width: 4px;
+            border-radius: 9999px;
+            background: linear-gradient(180deg, #2563eb 0%, #4f46e5 100%);
+            animation: waveBounce 1.2s ease-in-out infinite alternate;
+        }
+        @keyframes waveBounce {
+            0% { height: 6px; }
+            100% { height: 32px; }
+        }
+
+        .mic-recording-pulse {
+            animation: micPulse 1.4s infinite;
+        }
+        @keyframes micPulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Custom highlight tags in transcript */
+        .highlight-filler {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 1px 6px;
+            border-radius: 6px;
+            font-weight: 600;
+            border-bottom: 2px solid #ef4444;
+        }
+        .highlight-hedging {
+            background-color: #fef3c7;
+            color: #d97706;
+            padding: 1px 6px;
+            border-radius: 6px;
+            font-weight: 600;
+            border-bottom: 2px solid #f59e0b;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e0e5ec;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+            border: 2px solid #e0e5ec;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center relative overflow-x-hidden pb-16">
+
+    <!-- FLOATING TOP-LEFT QUICK ADMIN BUTTON -->
+    <a id="admin-studio-btn" href="/admin.html" title="Open Admin Analytics Studio" class="fixed top-3 left-3 sm:top-4 sm:left-4 z-50 neu-btn px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center gap-1.5 sm:gap-2 text-slate-700 hover:text-blue-600 transition-all text-xs font-bold shadow-lg hidden">
+        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path>
+        </svg>
+        <span class="hidden sm:inline">Admin Studio</span>
+    </a>
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="relative w-full max-w-6xl px-3 sm:px-6 py-4 sm:py-6 flex items-center justify-between z-20 gap-2 min-h-[64px]">
+        <!-- LEFT: LOGO & MAIN NAV LINKS -->
+        <div class="flex items-center gap-2 sm:gap-4">
+            <a href="/praxis" class="flex items-center gap-2 sm:gap-2.5 group cursor-pointer" title="Return to PRAXiS Home">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 neu-circle flex items-center justify-center text-amber-500 shrink-0 group-hover:scale-105 transition-transform">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L14.85 8.36L21.82 9.27L16.66 14.14L18.09 21.02L12 17.67L5.91 21.02L7.34 14.14L2.18 9.27L9.15 8.36L12 2Z" fill="url(#star-grad-nav)" stroke="#f59e0b" stroke-width="0.8" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="star-grad-nav" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#fbbf24"/>
+                                <stop offset="1" stop-color="#d97706"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="font-outfit font-extrabold text-xl sm:text-2xl text-slate-800 tracking-tight">PRAXiS</span>
+            </a>
+
+            <!-- DESKTOP TOP NAV LINKS -->
+            <nav class="hidden md:flex items-center gap-2 ml-2">
+                <a href="/praxis" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all">
+                    <span>🧭</span> Compass
+                </a>
+                <a href="/routine.html" class="neu-btn px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all">
+                    <span>🔥</span> Routine Tracker
+                </a>
+                <a href="/coach.html" class="neu-btn pressed px-3.5 py-1.5 text-xs font-extrabold text-blue-600 flex items-center gap-1.5 border border-blue-200 shadow-inner">
+                    <span>🎙️</span> Fluency Coach
+                </a>
+            </nav>
+        </div>
+
+        <!-- RIGHT: AUTH PROFILE & MOBILE ICONS -->
+        <div class="ml-auto flex items-center gap-2 sm:gap-3 shrink-0">
+            <div class="flex md:hidden items-center gap-1.5">
+                <a href="/praxis" title="Career Compass" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-blue-600">
+                    🧭
+                </a>
+                <a href="/routine.html" title="Routine Tracker" class="neu-circle w-8 h-8 flex items-center justify-center text-xs text-amber-500">
+                    🔥
+                </a>
+            </div>
+
+            <!-- AUTH & PROFILE CONTAINER -->
+            <div id="auth-container" class="flex items-center gap-2 z-30">
+                <button id="btn-google-login" class="neu-btn px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2 text-slate-800 hover:text-indigo-600 font-bold text-xs transition-all shadow-sm cursor-pointer">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
+                        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                        <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.8s.7 5.1 1.9 7.5l3.7-2.9z"/>
+                        <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
+                    </svg>
+                    <span>Sign In</span>
+                </button>
+                <div id="user-profile" class="hidden flex items-center gap-2">
+                    <img id="user-avatar" src="" alt="User" class="w-8 h-8 rounded-full shadow-sm border border-slate-300">
+                    <span id="user-name" class="text-xs font-bold text-slate-800 hidden sm:inline"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN COACH CONTAINER -->
+    <main class="w-full max-w-5xl px-3 sm:px-6 flex flex-col gap-6 sm:gap-8 mt-2">
+
+        <!-- HERO HEADER BANNER -->
+        <section class="neu-card p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+            <div class="flex flex-col gap-2.5 max-w-2xl">
+                <div class="flex items-center gap-2">
+                    <span class="neu-badge px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50/50">
+                        ⚡ Voice & Fluency Engine
+                    </span>
+                    <span class="neu-badge px-2.5 py-1 text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Diagnostics
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-800 tracking-tight leading-tight">
+                    Communication & Speech <span class="text-gradient">Coach</span>
+                </h1>
+                <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+                    Master real-time speech fluency, eliminate filler crutches, perfect your pace, and elevate executive presence with instant voice diagnostics and structured multi-level upgrades.
+                </p>
+            </div>
+
+            <!-- QUICK STATS WIDGET -->
+            <div class="neu-card-sm p-4 flex items-center gap-4 shrink-0 bg-gradient-to-br from-slate-50/70 to-blue-50/40 border border-white/60">
+                <div class="neu-circle w-12 h-12 flex items-center justify-center text-xl text-blue-600 shrink-0">
+                    🎙️
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Target Cadence</div>
+                    <div class="text-lg font-outfit font-extrabold text-slate-800">120–150 <span class="text-xs font-sans text-blue-600 font-semibold">WPM</span></div>
+                    <div class="text-[11px] text-emerald-600 font-medium">Zero-Filler Goal</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRACK SELECTOR TABS -->
+        <section class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <button type="button" onclick="selectTrack('express')" id="tab-express" class="track-tab-btn neu-btn pressed px-4 py-2.5 text-xs sm:text-sm font-extrabold text-blue-600 flex items-center gap-2 border border-blue-300">
+                <span>⚡</span> 60-Second Express Speaking Lab
+            </button>
+            <button type="button" onclick="selectTrack('interview')" id="tab-interview" class="track-tab-btn neu-btn px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-600 flex items-center gap-2">
+                <span>💼</span> Mock Interview & Executive Pitching
+            </button>
+            <button type="button" onclick="selectTrack('casual')" id="tab-casual" class="track-tab-btn neu-btn px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-600 flex items-center gap-2">
+                <span>☕</span> Casual & Social Fluency
+            </button>
+            <button type="button" onclick="selectTrack('ielts')" id="tab-ielts" class="track-tab-btn neu-btn px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-600 flex items-center gap-2">
+                <span>🎓</span> IELTS / TOEFL / PTE Test Prep
+            </button>
+        </section>
+
+        <!-- PRACTICE STUDIO WORKSPACE -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT: TOPIC & PROMPT CONTROLS (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-5">
+                <!-- TOPIC CARD -->
+                <div class="neu-card p-5 sm:p-6 flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <span id="topic-category-badge" class="neu-badge px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-indigo-600">
+                            Workplace & Tech
+                        </span>
+                        <button type="button" onclick="shuffleTopic()" class="neu-btn px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 cursor-pointer" title="Get a new prompt">
+                            <span>🎲</span> Shuffle Topic
+                        </button>
+                    </div>
+
+                    <div>
+                        <h2 id="topic-title" class="text-base sm:text-lg font-extrabold text-slate-800">
+                            Remote Work vs. Hybrid Model
+                        </h2>
+                        <p id="topic-prompt" class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed bg-white/40 p-3 rounded-xl border border-slate-200/60">
+                            "Should remote work completely replace traditional office work in the future, or is a hybrid model the only sustainable path?"
+                        </p>
+                    </div>
+
+                    <!-- FRAMEWORK GUIDE PILL -->
+                    <div class="neu-card-sm p-3 bg-slate-50/50 border border-white/60">
+                        <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                            <span>📐</span> Recommended Structure:
+                        </div>
+                        <div id="framework-desc" class="text-xs font-semibold text-blue-700 mt-1">
+                            PREP: Point ➔ Reason ➔ Example ➔ Point
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIMER & AUDIO ENGINE CONTROLS -->
+                <div class="neu-card p-5 flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">⏱️ Chrono Speech Timer</span>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="setTimerDuration(60)" class="timer-preset-btn neu-badge px-2 py-0.5 text-xs font-bold text-blue-600 border border-blue-300">60s</button>
+                            <button type="button" onclick="setTimerDuration(120)" class="timer-preset-btn neu-badge px-2 py-0.5 text-xs font-bold text-slate-600">120s</button>
+                            <button type="button" onclick="setTimerDuration(180)" class="timer-preset-btn neu-badge px-2 py-0.5 text-xs font-bold text-slate-600">180s</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-900 text-white p-4 rounded-2xl shadow-inner">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Time Remaining</span>
+                            <span id="timer-display" class="font-digital text-3xl font-extrabold text-emerald-400">01:00</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="btn-toggle-timer" onclick="toggleTimer()" class="neu-btn px-4 py-2 text-xs font-extrabold text-slate-900 bg-white hover:bg-slate-100 rounded-xl shadow cursor-pointer">
+                                ▶ Start
+                            </button>
+                            <button type="button" onclick="resetTimer()" class="p-2 text-xs text-slate-400 hover:text-white" title="Reset Timer">
+                                ↺
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
+                        <div id="timer-progress-bar" class="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: RECORDING, TRANSCRIPT & LIVE INPUT (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-5">
+                <div class="neu-card p-5 sm:p-6 flex flex-col gap-4">
+                    
+                    <!-- VOICE MICROPHONE CONTROLS -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+                        <div class="flex items-center gap-3">
+                            <button type="button" id="btn-record-mic" onclick="toggleMicRecording()" class="neu-circle w-12 h-12 flex items-center justify-center text-xl text-slate-700 hover:text-red-600 transition-all cursor-pointer shadow-md">
+                                🎙️
+                            </button>
+                            <div>
+                                <div id="mic-status-label" class="text-xs font-extrabold text-slate-800">
+                                    Click Mic to Record Voice
+                                </div>
+                                <div class="text-[11px] text-slate-500">
+                                    Real-time Web Speech Transcription
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LIVE SOUNDWAVE BARS -->
+                        <div id="soundwave-container" class="hidden flex items-center gap-1 h-8 px-3 py-1 rounded-xl bg-blue-50 border border-blue-100">
+                            <div class="soundwave-bar" style="animation-delay: 0.1s;"></div>
+                            <div class="soundwave-bar" style="animation-delay: 0.3s;"></div>
+                            <div class="soundwave-bar" style="animation-delay: 0.5s;"></div>
+                            <div class="soundwave-bar" style="animation-delay: 0.2s;"></div>
+                            <div class="soundwave-bar" style="animation-delay: 0.4s;"></div>
+                            <span class="text-[10px] font-bold text-blue-600 ml-1.5 animate-pulse">LISTENING...</span>
+                        </div>
+                    </div>
+
+                    <!-- TRANSCRIPT TEXTAREA -->
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
+                            <span>Spoken Speech / Input Transcript:</span>
+                            <div class="flex items-center gap-2">
+                                <span id="word-count-badge" class="neu-badge px-2 py-0.5 text-[10px] font-bold text-slate-600">0 words</span>
+                                <button type="button" onclick="clearTranscript()" class="text-slate-400 hover:text-red-500 text-[11px]">Clear</button>
+                            </div>
+                        </div>
+                        <textarea id="speech-transcript-input" rows="7" placeholder="Speak into the microphone or paste your speech transcript here to evaluate fluency, pace, fillers, and grammar..." class="neu-input w-full p-4 text-xs sm:text-sm text-slate-800 placeholder-slate-400 resize-none font-sans leading-relaxed"></textarea>
+                    </div>
+
+                    <!-- EVALUATE BUTTON -->
+                    <div class="flex items-center justify-between pt-1">
+                        <div class="text-[11px] text-slate-500 hidden sm:block">
+                            💡 Tip: Aim for 100–140 words in 60s
+                        </div>
+                        <button type="button" id="btn-evaluate" onclick="submitSpeechForEvaluation()" class="neu-btn px-6 py-3 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg flex items-center gap-2 transition-all cursor-pointer">
+                            <span>⚡</span> Get Speech Diagnostics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- EVALUATION RESULTS DASHBOARD (HIDDEN UNTIL ANALYZED) -->
+        <section id="results-dashboard-section" class="hidden flex flex-col gap-6">
+
+            <!-- 1. COMMUNICATION METRICS DASHBOARD -->
+            <div class="neu-card p-6 sm:p-8 flex flex-col gap-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+                    <div>
+                        <span class="neu-badge px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50/50">
+                            Diagnostic Analysis
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-1">
+                            Communication Dashboard
+                        </h2>
+                    </div>
+                    <!-- Overall Score Pill -->
+                    <div class="neu-card-sm px-5 py-3 flex items-center gap-3 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200">
+                        <div class="text-right">
+                            <div class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Overall Score</div>
+                            <div id="metric-overall-score" class="text-2xl font-outfit font-black text-blue-600">-- / 100</div>
+                        </div>
+                        <div class="w-10 h-10 neu-circle flex items-center justify-center text-lg text-amber-500 font-bold">
+                            🏆
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3 METRIC CARDS -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Fluency & Pace -->
+                    <div class="neu-card-sm p-4 flex flex-col gap-2 bg-white/40">
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-500">
+                            <span>🎙️ FLUENCY & PACE</span>
+                            <span id="metric-fluency-score" class="font-outfit font-extrabold text-sm text-blue-600">-- / 10</span>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span id="metric-wpm" class="text-xl font-outfit font-extrabold text-slate-800">--</span>
+                            <span class="text-xs text-slate-500 font-semibold">WPM</span>
+                            <span id="metric-pace-status" class="ml-auto neu-badge px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">Optimal</span>
+                        </div>
+                        <div class="text-[11px] text-slate-600 flex items-center justify-between pt-1 border-t border-slate-200">
+                            <span>Filler Crutches:</span>
+                            <span id="metric-filler-count" class="font-bold text-red-600">0 detected</span>
+                        </div>
+                    </div>
+
+                    <!-- Grammar & Structure -->
+                    <div class="neu-card-sm p-4 flex flex-col gap-2 bg-white/40">
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-500">
+                            <span>📐 GRAMMAR & SYNTAX</span>
+                            <span id="metric-grammar-score" class="font-outfit font-extrabold text-sm text-indigo-600">-- / 10</span>
+                        </div>
+                        <div class="text-sm font-extrabold text-slate-800 truncate" id="metric-grammar-status">
+                            Syntactically Sound
+                        </div>
+                        <div class="text-[11px] text-slate-600 flex items-center justify-between pt-1 border-t border-slate-200">
+                            <span>Structure Focus:</span>
+                            <span class="font-bold text-indigo-600">PREP / STAR</span>
+                        </div>
+                    </div>
+
+                    <!-- Vocabulary Sophistication -->
+                    <div class="neu-card-sm p-4 flex flex-col gap-2 bg-white/40">
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-500">
+                            <span>📚 VOCABULARY DEPTH</span>
+                            <span id="metric-vocab-score" class="font-outfit font-extrabold text-sm text-emerald-600">-- / 10</span>
+                        </div>
+                        <div class="text-sm font-extrabold text-slate-800" id="metric-vocab-status">
+                            Balanced Lexical Range
+                        </div>
+                        <div class="text-[11px] text-slate-600 flex items-center justify-between pt-1 border-t border-slate-200">
+                            <span>Lexical Variety:</span>
+                            <span id="metric-diversity" class="font-bold text-emerald-600">75% unique</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HIGHLIGHTED TRANSCRIPT REVIEW -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Annotated Transcript Review</span>
+                        <div class="flex items-center gap-3 text-[11px]">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-red-300"></span> Fillers</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-300"></span> Hedging</span>
+                        </div>
+                    </div>
+                    <div id="annotated-transcript-box" class="neu-card-sm p-4 text-xs sm:text-sm text-slate-800 bg-white/50 leading-relaxed min-h-[60px]">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. KEY STRENGTHS & REFINEMENT MATRIX -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- KEY STRENGTHS (5 cols) -->
+                <div class="lg:col-span-5 neu-card p-6 flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-emerald-600">🌟</span>
+                        <h3 class="text-base font-extrabold text-slate-800">Key Strengths</h3>
+                    </div>
+                    <ul id="key-strengths-list" class="flex flex-col gap-3">
+                        <li class="neu-card-sm p-3 text-xs sm:text-sm text-slate-700 bg-emerald-50/40 border border-emerald-100 flex items-start gap-2">
+                            <span class="text-emerald-500 font-bold">✓</span> Steady pacing and structured delivery.
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- REFINEMENT MATRIX (7 cols) -->
+                <div class="lg:col-span-7 neu-card p-6 flex flex-col gap-5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-blue-600">🛠️</span>
+                            <h3 class="text-base font-extrabold text-slate-800">Refinement Matrix (Corrections & Upgrades)</h3>
+                        </div>
+                        <!-- TTS Voice Coach Button -->
+                        <button type="button" onclick="speakCoachFeedback()" class="neu-btn px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 cursor-pointer shadow-sm" title="Listen to Native Upgrade Audio">
+                            <span>🔊</span> Listen Coach
+                        </button>
+                    </div>
+
+                    <!-- 1. CORRECTION -->
+                    <div class="neu-card-sm p-4 flex flex-col gap-2 bg-white/40 border border-slate-200">
+                        <span class="text-[11px] font-extrabold text-red-600 uppercase tracking-wider">1. Grammatical Correction</span>
+                        <div class="text-xs text-slate-500">Original: <span id="refine-correction-orig" class="text-slate-800 line-through">"..."</span></div>
+                        <div class="text-xs font-bold text-emerald-700">Corrected: <span id="refine-correction-fix">"..."</span></div>
+                        <div id="refine-correction-explain" class="text-[11px] text-slate-600 bg-slate-100 p-2 rounded-lg mt-1"></div>
+                    </div>
+
+                    <!-- 2. STYLE UPGRADE (LEVEL UP) -->
+                    <div class="neu-card-sm p-4 flex flex-col gap-2 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 border border-indigo-200">
+                        <span class="text-[11px] font-extrabold text-indigo-600 uppercase tracking-wider">2. Style Upgrade (Executive / Native Level Up)</span>
+                        <div class="text-xs text-slate-500">Original: <span id="refine-style-orig" class="text-slate-700">"..."</span></div>
+                        <div class="text-xs sm:text-sm font-extrabold text-indigo-900 bg-white/80 p-2.5 rounded-xl border border-indigo-100" id="refine-style-upgrade">
+                            "..."
+                        </div>
+                        <div id="refine-style-why" class="text-[11px] text-indigo-700 italic"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. VOCABULARY BOOST & PRACTICE FOLLOW-UP -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- VOCABULARY BOOST (6 cols) -->
+                <div class="lg:col-span-6 neu-card p-6 flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-amber-500">🚀</span>
+                        <h3 class="text-base font-extrabold text-slate-800">Vocabulary Boost (Elevate Simple Words)</h3>
+                    </div>
+                    <div id="vocab-boost-container" class="flex flex-col gap-3">
+                        <!-- Dynamic Vocab items -->
+                    </div>
+                </div>
+
+                <!-- NEXT STEP / PRACTICE FOLLOW-UP (6 cols) -->
+                <div class="lg:col-span-6 neu-card p-6 flex flex-col gap-4 bg-gradient-to-br from-blue-50/40 to-slate-50">
+                    <div class="flex items-center gap-2">
+                        <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-blue-600">🎯</span>
+                        <h3 class="text-base font-extrabold text-slate-800">Next Step / Practice Follow-Up</h3>
+                    </div>
+                    <div id="practice-follow-up-box" class="text-xs sm:text-sm text-slate-700 bg-white/70 p-4 rounded-xl border border-blue-200 leading-relaxed">
+                        Ready for your next speaking drill?
+                    </div>
+                    <div class="flex items-center gap-3 mt-auto">
+                        <button type="button" onclick="acceptFollowUpChallenge()" class="neu-btn px-4 py-2 text-xs font-extrabold text-blue-600 hover:text-blue-800 flex items-center gap-2 cursor-pointer">
+                            <span>🎙️</span> Accept Challenge & Speak Again
+                        </button>
+                        <button type="button" onclick="shuffleTopic()" class="neu-btn px-3 py-2 text-xs font-bold text-slate-600 cursor-pointer">
+                            Next Topic ➔
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RECENT SESSIONS HISTORY LOG -->
+        <section class="neu-card p-6 flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-slate-700">📜</span>
+                    <h3 class="text-base font-extrabold text-slate-800">Recent Speech Sessions & Growth Log</h3>
+                </div>
+                <button type="button" onclick="loadSpeechHistory()" class="text-xs text-blue-600 font-bold hover:underline">
+                    Refresh
+                </button>
+            </div>
+            <div id="sessions-history-list" class="flex flex-col gap-2.5">
+                <div class="text-xs text-slate-500 py-3 text-center">No past speech sessions recorded yet. Start speaking above!</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FLOATING TOAST NOTIFICATION -->
+    <div id="coach-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 neu-card px-4 py-3 text-xs font-bold text-slate-800 flex items-center gap-2 border border-slate-300 shadow-2xl">
+        <span id="coach-toast-icon">ℹ️</span>
+        <span id="coach-toast-msg">Notification</span>
+    </div>
+
+    <!-- FIREBASE & CORE CLIENT SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="/app-firebase.js"></script>
+
+    <script>
+        // =====================================================================
+        // CLIENT STATE & INITIALIZATION
+        // =====================================================================
+        let currentTrack = 'express';
+        let allTopics = {};
+        let currentTopic = null;
+        let isRecording = false;
+        let recognition = null;
+        let timerInterval = null;
+        let timerDuration = 60;
+        let timeRemaining = 60;
+        let isTimerRunning = false;
+        let speechStartTime = 0;
+        let latestEvaluation = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchTopics();
+            initSpeechRecognition();
+            loadSpeechHistory();
+        });
+
+        // =====================================================================
+        // TOPIC & TRACK MANAGEMENT
+        // =====================================================================
+        async function fetchTopics() {
+            try {
+                const res = await fetch('/api/coach/topics');
+                const data = await res.json();
+                if (data.success && data.topics) {
+                    allTopics = data.topics;
+                    shuffleTopic();
+                }
+            } catch (err) {
+                console.error("Error fetching topics:", err);
+            }
+        }
+
+        function selectTrack(track) {
+            currentTrack = track;
+            document.querySelectorAll('.track-tab-btn').forEach(btn => {
+                btn.classList.remove('pressed', 'text-blue-600', 'border', 'border-blue-300');
+                btn.classList.add('text-slate-700');
+            });
+            const activeBtn = document.getElementById(`tab-${track}`);
+            if (activeBtn) {
+                activeBtn.classList.add('pressed', 'text-blue-600', 'border', 'border-blue-300');
+                activeBtn.classList.remove('text-slate-700');
+            }
+            shuffleTopic();
+        }
+
+        function shuffleTopic() {
+            const trackList = allTopics[currentTrack] || [];
+            if (trackList.length === 0) return;
+            const randomIndex = Math.floor(Math.random() * trackList.length);
+            currentTopic = trackList[randomIndex];
+
+            document.getElementById('topic-title').innerText = currentTopic.title;
+            document.getElementById('topic-prompt').innerText = `"${currentTopic.prompt}"`;
+            document.getElementById('topic-category-badge').innerText = currentTopic.category || currentTrack.toUpperCase();
+            document.getElementById('framework-desc').innerText = currentTopic.framework || currentTopic.focus || "PREP / STAR Structure";
+
+            if (currentTopic.duration) {
+                setTimerDuration(currentTopic.duration);
+            }
+        }
+
+        // =====================================================================
+        // WEB SPEECH RECOGNITION (VOICE INPUT)
+        // =====================================================================
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn("Web Speech Recognition not supported in this browser.");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                speechStartTime = Date.now();
+                document.getElementById('btn-record-mic').classList.add('mic-recording-pulse', 'text-red-600', 'bg-red-50');
+                document.getElementById('mic-status-label').innerText = "Recording... Speak naturally!";
+                document.getElementById('soundwave-container').classList.remove('hidden');
+                if (!isTimerRunning) {
+                    toggleTimer();
+                }
+            };
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = 0; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript + ' ';
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                const transcriptArea = document.getElementById('speech-transcript-input');
+                transcriptArea.value = (finalTranscript + interimTranscript).trim();
+                updateWordCount();
+            };
+
+            recognition.onerror = (event) => {
+                console.warn("Speech recognition error:", event.error);
+                if (event.error === 'not-allowed') {
+                    showToast("Microphone permission denied. Please grant permission in browser settings.", "⚠️");
+                }
+                stopRecordingUI();
+            };
+
+            recognition.onend = () => {
+                stopRecordingUI();
+            };
+        }
+
+        function toggleMicRecording() {
+            if (!recognition) {
+                showToast("Web Speech API not supported. Please type or paste your transcript directly.", "ℹ️");
+                return;
+            }
+            if (isRecording) {
+                recognition.stop();
+                stopRecordingUI();
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    recognition.stop();
+                }
+            }
+        }
+
+        function stopRecordingUI() {
+            isRecording = false;
+            document.getElementById('btn-record-mic').classList.remove('mic-recording-pulse', 'text-red-600', 'bg-red-50');
+            document.getElementById('mic-status-label').innerText = "Click Mic to Record Voice";
+            document.getElementById('soundwave-container').classList.add('hidden');
+        }
+
+        function clearTranscript() {
+            document.getElementById('speech-transcript-input').value = '';
+            updateWordCount();
+        }
+
+        function updateWordCount() {
+            const text = document.getElementById('speech-transcript-input').value.trim();
+            const words = text ? text.split(/\s+/).length : 0;
+            document.getElementById('word-count-badge').innerText = `${words} words`;
+        }
+
+        document.getElementById('speech-transcript-input').addEventListener('input', updateWordCount);
+
+        // =====================================================================
+        // CHRONO TIMER ENGINE
+        // =====================================================================
+        function setTimerDuration(seconds) {
+            timerDuration = seconds;
+            timeRemaining = seconds;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeRemaining / 60);
+            const secs = timeRemaining % 60;
+            document.getElementById('timer-display').innerText = 
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            
+            const pct = (timeRemaining / timerDuration) * 100;
+            document.getElementById('timer-progress-bar').style.width = `${pct}%`;
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                document.getElementById('btn-toggle-timer').innerText = "▶ Resume";
+            } else {
+                isTimerRunning = true;
+                document.getElementById('btn-toggle-timer').innerText = "⏸ Pause";
+                timerInterval = setInterval(() => {
+                    if (timeRemaining > 0) {
+                        timeRemaining--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        document.getElementById('btn-toggle-timer').innerText = "▶ Start";
+                        if (isRecording && recognition) {
+                            recognition.stop();
+                        }
+                        showToast("⏱️ Time's up! Ready to analyze your speech.", "🔔");
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timeRemaining = timerDuration;
+            document.getElementById('btn-toggle-timer').innerText = "▶ Start";
+            updateTimerDisplay();
+        }
+
+        // =====================================================================
+        // SPEECH DIAGNOSTICS & EVALUATION API
+        // =====================================================================
+        async function submitSpeechForEvaluation() {
+            const transcript = document.getElementById('speech-transcript-input').value.trim();
+            if (!transcript) {
+                showToast("Please speak or enter a speech transcript first.", "⚠️");
+                return;
+            }
+
+            const btn = document.getElementById('btn-evaluate');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = `<span>⏳</span> Analyzing...`;
+            btn.disabled = true;
+
+            const timeSpent = Math.max(10, timerDuration - timeRemaining) || 60;
+            const currentUser = firebase.auth().currentUser;
+            const userEmail = currentUser ? currentUser.email : 'guest@praxis.app';
+
+            try {
+                const response = await fetch('/api/coach/evaluate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        transcript,
+                        mode: currentTrack,
+                        topic: currentTopic ? currentTopic.prompt : '',
+                        timeSpentSeconds: timeSpent,
+                        userEmail
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success && data.evaluation) {
+                    latestEvaluation = data.evaluation;
+                    renderEvaluationDashboard(data.evaluation, transcript);
+                    showToast("Speech evaluated successfully!", "✅");
+                    loadSpeechHistory();
+                } else {
+                    showToast(data.error || "Failed to analyze speech", "❌");
+                }
+            } catch (err) {
+                console.error("Evaluation error:", err);
+                showToast("Error connecting to evaluation engine.", "❌");
+            } finally {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+            }
+        }
+
+        // =====================================================================
+        // RENDER RESULTS DASHBOARD
+        // =====================================================================
+        function renderEvaluationDashboard(evalData, rawTranscript) {
+            const section = document.getElementById('results-dashboard-section');
+            section.classList.remove('hidden');
+            section.scrollIntoView({ behavior: 'smooth' });
+
+            // 1. Dashboard Metrics
+            document.getElementById('metric-overall-score').innerText = `${evalData.overallScore} / 100`;
+            document.getElementById('metric-fluency-score').innerText = `${evalData.metrics.fluencyScore} / 10`;
+            document.getElementById('metric-grammar-score').innerText = `${evalData.metrics.grammarScore} / 10`;
+            document.getElementById('metric-vocab-score').innerText = `${evalData.metrics.vocabScore} / 10`;
+
+            document.getElementById('metric-wpm').innerText = evalData.metrics.wpm;
+            document.getElementById('metric-pace-status').innerText = evalData.metrics.paceStatus;
+            document.getElementById('metric-filler-count').innerText = `${evalData.metrics.fillerCount} detected`;
+            document.getElementById('metric-diversity').innerText = `${evalData.metrics.lexicalDiversity}% unique`;
+
+            // 2. Annotated Transcript Highlighting
+            let highlighted = rawTranscript;
+            // Highlight fillers
+            const fillerRegex = /\b(um+|uh+|basically|you know|actually|literally|sort of|kind of|i mean|to be honest)\b/gi;
+            highlighted = highlighted.replace(fillerRegex, '<span class="highlight-filler">$1</span>');
+            // Highlight hedging
+            const hedgingRegex = /\b(i feel like|i think maybe|probably|just|hopefully|in my humble opinion)\b/gi;
+            highlighted = highlighted.replace(hedgingRegex, '<span class="highlight-hedging">$1</span>');
+            document.getElementById('annotated-transcript-box').innerHTML = highlighted;
+
+            // 3. Key Strengths
+            const strengthsList = document.getElementById('key-strengths-list');
+            strengthsList.innerHTML = '';
+            (evalData.strengths || []).forEach(st => {
+                const li = document.createElement('li');
+                li.className = "neu-card-sm p-3 text-xs sm:text-sm text-slate-700 bg-emerald-50/40 border border-emerald-100 flex items-start gap-2";
+                li.innerHTML = `<span class="text-emerald-500 font-bold">✓</span> <span>${st}</span>`;
+                strengthsList.appendChild(li);
+            });
+
+            // 4. Refinement Matrix
+            const correction = evalData.refinementMatrix?.correction || {};
+            document.getElementById('refine-correction-orig').innerText = `"${correction.original || rawTranscript.slice(0, 35)}..."`;
+            document.getElementById('refine-correction-fix').innerText = `"${correction.corrected || 'Accurate syntax'}"`;
+            document.getElementById('refine-correction-explain').innerText = correction.explanation || "Well-formed phrasing.";
+
+            const styleUpgrade = evalData.refinementMatrix?.styleUpgrade || {};
+            document.getElementById('refine-style-orig').innerText = `"${styleUpgrade.original || 'Standard phrasing'}"`;
+            document.getElementById('refine-style-upgrade').innerText = `"${styleUpgrade.upgrade || evalData.rephrasings?.corporate || evalData.rephrasings?.native || rawTranscript}"`;
+            document.getElementById('refine-style-why').innerText = styleUpgrade.whyItWorks || "Enhances authority and executive presence.";
+
+            // 5. Vocabulary Boost
+            const vocabContainer = document.getElementById('vocab-boost-container');
+            vocabContainer.innerHTML = '';
+            (evalData.vocabularyBoost || []).forEach(v => {
+                const card = document.createElement('div');
+                card.className = "neu-card-sm p-3.5 flex flex-col gap-1.5 bg-white/50 border border-amber-100";
+                card.innerHTML = `
+                    <div class="text-xs text-slate-500">Instead of: <span class="font-bold text-red-600 line-through">"${v.overused}"</span></div>
+                    <div class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <span class="neu-badge px-2 py-0.5 text-[10px] text-amber-700 bg-amber-50">✨ ${v.synonym1}</span>
+                        <span class="text-[11px] text-slate-600 font-normal">e.g. "${v.example1}"</span>
+                    </div>
+                `;
+                vocabContainer.appendChild(card);
+            });
+
+            // 6. Practice Follow-Up
+            document.getElementById('practice-follow-up-box').innerHTML = evalData.nextStep || "Great progress! Continue to next challenge.";
+        }
+
+        function acceptFollowUpChallenge() {
+            document.getElementById('speech-transcript-input').value = '';
+            updateWordCount();
+            resetTimer();
+            toggleTimer();
+            if (recognition) {
+                toggleMicRecording();
+            }
+            window.scrollTo({ top: 350, behavior: 'smooth' });
+        }
+
+        // =====================================================================
+        // TEXT-TO-SPEECH (TTS) VOICE COACH
+        // =====================================================================
+        function speakCoachFeedback() {
+            if (!('speechSynthesis' in window)) {
+                showToast("Text-to-speech not supported in this browser.", "⚠️");
+                return;
+            }
+            window.speechSynthesis.cancel();
+
+            const textToSpeak = latestEvaluation?.refinementMatrix?.styleUpgrade?.upgrade || 
+                latestEvaluation?.rephrasings?.native || 
+                "Great speaking practice! Keep refining your pace and structure.";
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            utterance.lang = 'en-US';
+
+            window.speechSynthesis.speak(utterance);
+            showToast("🔊 Playing Native Upgrade audio...", "🎙️");
+        }
+
+        // =====================================================================
+        // SPEECH HISTORY & PAST LOGS
+        // =====================================================================
+        async function loadSpeechHistory() {
+            const currentUser = firebase.auth().currentUser;
+            const userEmail = currentUser ? currentUser.email : 'guest@praxis.app';
+
+            try {
+                const res = await fetch(`/api/coach/history?email=${encodeURIComponent(userEmail)}`);
+                const data = await res.json();
+                const container = document.getElementById('sessions-history-list');
+
+                if (data.success && data.sessions && data.sessions.length > 0) {
+                    container.innerHTML = '';
+                    data.sessions.forEach(s => {
+                        const dateStr = new Date(s.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        const item = document.createElement('div');
+                        item.className = "neu-card-sm p-3.5 flex flex-wrap items-center justify-between gap-3 bg-white/40 border border-slate-200/60";
+                        item.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <div class="neu-circle w-9 h-9 flex items-center justify-center font-bold text-xs text-blue-600">
+                                    ${s.overall_score || 75}
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">${s.topic || s.mode.toUpperCase() + ' Lab'}</div>
+                                    <div class="text-[10px] text-slate-500">${dateStr} • ${s.wpm || 0} WPM • ${s.filler_count || 0} fillers</div>
+                                </div>
+                            </div>
+                            <span class="neu-badge px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-indigo-600 bg-indigo-50/50">
+                                ${s.mode}
+                            </span>
+                        `;
+                        container.appendChild(item);
+                    });
+                }
+            } catch (err) {
+                console.warn("Could not load speech history:", err);
+            }
+        }
+
+        // Toast Helper
+        function showToast(msg, icon = 'ℹ️') {
+            const toast = document.getElementById('coach-toast');
+            document.getElementById('coach-toast-msg').innerText = msg;
+            document.getElementById('coach-toast-icon').innerText = icon;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3200);
+        }
+    </script>
+</body>
+</html>

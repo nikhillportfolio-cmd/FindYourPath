@@ -177,7 +177,11 @@ syncInitialDataToStorage();
 // =====================================================================
 // USER DATABASE & AUTHENTICATION ENGINE (users.json)
 // =====================================================================
-const bcrypt = require('bcryptjs');
+if (!bcrypt) {
+    try {
+        bcrypt = require('bcryptjs');
+    } catch(e){}
+}
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'praxis_jwt_secret_987654321_secure';
 
@@ -11945,6 +11949,16 @@ function parseGutenbergText(rawText, title, author) {
         totalChapters: chapters.length,
         totalWords: totalWords
     };
+}
+
+// =====================================================================
+// COMMUNICATION COACH & REAL-TIME SPEECH FLUENCY ENGINE
+// =====================================================================
+try {
+    const { initCoachEngine } = require('./coach-engine');
+    initCoachEngine(app, db);
+} catch (coachErr) {
+    console.error("⚠️ Failed to initialize Communication Coach engine:", coachErr.message);
 }
 
 // Serve PRAXiS main entry point
