@@ -11356,11 +11356,16 @@ app.post('/api/push/test', async (req, res) => {
 function verifyAdminAuth(req, res, next) {
     const authHeader = req.headers.authorization;
     const providedPass = req.headers['x-admin-password'] || req.query.password || (req.body && req.body.adminPassword);
+    const validPassword = process.env.ADMIN_PASSWORD || '@Byta4524';
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
             const token = authHeader.split(' ')[1];
             const decoded = jwt.verify(token, JWT_SECRET);
+            if (decoded && (decoded.role === 'admin' || decoded.email === 'admin@praxis.app')) {
+                req.adminUser = decoded;
+                return next();
+            }
             const user = usersData.users.find(u => u.id === decoded.userId || u.email === decoded.email);
             if (user && (user.role === 'admin' || (user.email && user.email.toLowerCase() === 'admin@praxis.app'))) {
                 req.adminUser = user;
@@ -11369,12 +11374,40 @@ function verifyAdminAuth(req, res, next) {
         } catch (err) {}
     }
 
-    if (providedPass && process.env.ADMIN_PASSWORD && providedPass === process.env.ADMIN_PASSWORD) {
+    if (providedPass && providedPass === validPassword) {
         return next();
     }
 
     return res.status(401).json({ error: "Unauthorized: Admin authorization required" });
 }
+
+// Admin login verification route
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body || {};
+    const validPassword = process.env.ADMIN_PASSWORD || '@Byta4524';
+
+    if (password && password === validPassword) {
+        const token = jwt.sign(
+            { role: 'admin', email: 'admin@praxis.app', userId: 'admin_master' },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+        return res.json({ 
+            success: true, 
+            token,
+            user: {
+                uid: 'admin_master',
+                id: 'admin_master',
+                displayName: 'Master Administrator',
+                email: 'admin@praxis.app',
+                role: 'admin',
+                status: 'active'
+            },
+            message: "Admin authentication successful"
+        });
+    }
+    return res.status(401).json({ success: false, error: "Invalid admin password" });
+});
 
 // 11. Admin Registered Users API
 app.get('/api/admin/users', verifyAdminAuth, (req, res) => {

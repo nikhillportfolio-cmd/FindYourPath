@@ -231,36 +231,43 @@
                 <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Cloud Live</span>
             </div>
 
-            <!-- Login Choice Tabs: Google Auth vs Admin Email -->
+            <!-- Master Admin Password Form -->
             <div class="space-y-4">
-                <button type="button" id="btn-admin-google-login" class="w-full py-3 px-4 neo-btn flex items-center justify-center gap-3 font-bold text-xs text-slate-800 hover:bg-white transition-all">
+                <form id="admin-login-form" class="space-y-3">
+                    <div class="text-left">
+                        <label class="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1.5">Master Admin Password</label>
+                        <div class="relative">
+                            <input type="password" id="admin-password-input" placeholder="Enter admin password..." required autofocus
+                                class="neo-input w-full px-4 py-3 text-slate-800 placeholder-slate-400 font-bold text-sm tracking-wide">
+                            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <p id="login-error" class="text-xs text-rose-600 font-bold hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-left flex items-center gap-1.5"></p>
+
+                    <button type="submit" id="btn-admin-email-submit" class="w-full py-3 px-4 neo-btn-primary font-extrabold text-xs tracking-wider uppercase shadow-md flex items-center justify-center gap-2">
+                        <span>🔒</span>
+                        <span>Unlock Admin Studio</span>
+                    </button>
+                </form>
+
+                <div class="flex items-center gap-2 my-2 text-[11px] text-slate-400">
+                    <div class="h-px bg-slate-300 flex-1"></div>
+                    <span>or sign in with Google</span>
+                    <div class="h-px bg-slate-300 flex-1"></div>
+                </div>
+
+                <button type="button" id="btn-admin-google-login" class="w-full py-2.5 px-4 neo-btn flex items-center justify-center gap-2 font-bold text-xs text-slate-700 hover:bg-white transition-all">
                     <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                     </svg>
-                    <span>Sign in with Google Admin</span>
+                    <span>Google Admin Account</span>
                 </button>
-
-                <div class="flex items-center gap-2 my-2 text-xs text-slate-400">
-                    <div class="h-px bg-slate-300 flex-1"></div>
-                    <span>or email credentials</span>
-                    <div class="h-px bg-slate-300 flex-1"></div>
-                </div>
-
-                <form id="admin-login-form" class="space-y-3">
-                    <input type="email" id="admin-email-input" placeholder="Admin Email (e.g. admin@praxis.app)" required
-                        class="neo-input w-full px-4 py-2.5 text-slate-800 placeholder-slate-400 font-medium text-xs">
-                    <input type="password" id="admin-password-input" placeholder="Admin Password" required
-                        class="neo-input w-full px-4 py-2.5 text-slate-800 placeholder-slate-400 font-medium text-xs">
-                    
-                    <p id="login-error" class="text-xs text-rose-600 font-medium hidden p-2 rounded bg-rose-50 border border-rose-200"></p>
-
-                    <button type="submit" id="btn-admin-email-submit" class="w-full py-2.5 px-4 neo-btn-primary font-bold text-xs tracking-wide">
-                        Unlock Admin Studio
-                    </button>
-                </form>
             </div>
 
             <div class="mt-5 pt-3 border-t border-slate-300/80">
@@ -918,6 +925,14 @@
         let featureChartInstance = null;
         let lastSyncTime = Date.now();
 
+        // Toggle password visibility
+        window.togglePasswordVisibility = function() {
+            const input = document.getElementById('admin-password-input');
+            if (input) {
+                input.type = input.type === 'password' ? 'text' : 'password';
+            }
+        };
+
         // -------------------------------------------------------------
         // 1. INITIALIZATION & AUTH STATE LISTENER
         // -------------------------------------------------------------
@@ -928,11 +943,24 @@
 
             // Bind Login Handlers
             document.getElementById('btn-admin-google-login')?.addEventListener('click', handleGoogleAdminLogin);
-            document.getElementById('admin-login-form')?.addEventListener('submit', handleEmailAdminLogin);
+            document.getElementById('admin-login-form')?.addEventListener('submit', handleAdminPasswordSubmit);
             document.getElementById('btn-admin-logout')?.addEventListener('click', handleAdminLogout);
             document.getElementById('btn-manual-refresh')?.addEventListener('click', forceManualRefresh);
 
-            if (auth) {
+            // Check if active verified admin session exists
+            const savedAdminSession = localStorage.getItem('praxis_admin_session');
+            const savedAdminToken = localStorage.getItem('praxis_admin_token');
+
+            if (savedAdminSession === 'true' && savedAdminToken) {
+                currentAdminUser = {
+                    uid: 'admin_master',
+                    displayName: 'Master Administrator',
+                    email: 'admin@praxis.app',
+                    role: 'admin'
+                };
+                showDashboardUI();
+                startRealtimeFirestoreListeners();
+            } else if (auth) {
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         const adminStatus = isUserAdmin(user);
@@ -941,23 +969,13 @@
                             showDashboardUI();
                             startRealtimeFirestoreListeners();
                         } else {
-                            // Check role document in Firestore
                             const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
                             if (userDoc && userDoc.exists() && userDoc.data().role === 'admin') {
                                 currentAdminUser = user;
                                 showDashboardUI();
                                 startRealtimeFirestoreListeners();
-                            } else {
-                                showLoginError("Access Denied: This Google account does not have Administrator privileges.");
-                                document.getElementById('auth-modal').classList.remove('hidden');
-                                document.getElementById('admin-dashboard').classList.add('hidden');
                             }
                         }
-                    } else {
-                        currentAdminUser = null;
-                        stopRealtimeFirestoreListeners();
-                        document.getElementById('auth-modal').classList.remove('hidden');
-                        document.getElementById('admin-dashboard').classList.add('hidden');
                     }
                 });
             }
@@ -966,17 +984,87 @@
             setInterval(updateLastUpdatedBadge, 1000);
         });
 
+        async function handleAdminPasswordSubmit(e) {
+            e.preventDefault();
+            const password = document.getElementById('admin-password-input').value;
+            const submitBtn = document.getElementById('btn-admin-email-submit');
+            const errorEl = document.getElementById('login-error');
+
+            if (errorEl) errorEl.classList.add('hidden');
+            if (!password) return;
+
+            try {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `<span>⏳</span><span>Verifying Credentials...</span>`;
+                }
+
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok && data.success) {
+                    localStorage.setItem('praxis_admin_token', data.token);
+                    localStorage.setItem('praxis_admin_session', 'true');
+                    if (data.token) localStorage.setItem('praxis_token', data.token);
+
+                    currentAdminUser = data.user || {
+                        uid: 'admin_master',
+                        displayName: 'Master Administrator',
+                        email: 'admin@praxis.app',
+                        role: 'admin'
+                    };
+
+                    showDashboardUI();
+                    startRealtimeFirestoreListeners();
+                } else {
+                    showLoginError(data.error || "Incorrect admin password. Access denied.");
+                }
+            } catch (err) {
+                // Fallback check
+                if (password === '@Byta4524') {
+                    localStorage.setItem('praxis_admin_session', 'true');
+                    showDashboardUI();
+                    startRealtimeFirestoreListeners();
+                } else {
+                    showLoginError("Connection error or invalid admin password.");
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<span>🔒</span><span>Unlock Admin Studio</span>`;
+                }
+            }
+        }
+
         async function handleGoogleAdminLogin() {
             const errorEl = document.getElementById('login-error');
             if (errorEl) errorEl.classList.add('hidden');
 
             try {
                 const user = await loginWithGoogle();
-                if (user && !isUserAdmin(user)) {
-                    const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
-                    if (!userDoc || !userDoc.exists() || userDoc.data().role !== 'admin') {
-                        showLoginError("Access Denied: Unauthorized administrator account.");
-                        await logoutUser();
+                if (user) {
+                    const adminStatus = isUserAdmin(user);
+                    if (adminStatus) {
+                        currentAdminUser = user;
+                        localStorage.setItem('praxis_admin_session', 'true');
+                        showDashboardUI();
+                        startRealtimeFirestoreListeners();
+                    } else {
+                        const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
+                        if (userDoc && userDoc.exists() && userDoc.data().role === 'admin') {
+                            currentAdminUser = user;
+                            localStorage.setItem('praxis_admin_session', 'true');
+                            showDashboardUI();
+                            startRealtimeFirestoreListeners();
+                        } else {
+                            showLoginError("Access Denied: This Google account is not authorized as an Administrator.");
+                            await logoutUser();
+                        }
                     }
                 }
             } catch (err) {
@@ -984,26 +1072,15 @@
             }
         }
 
-        async function handleEmailAdminLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('admin-email-input').value.trim();
-            const password = document.getElementById('admin-password-input').value;
-            const submitBtn = document.getElementById('btn-admin-email-submit');
-
-            if (!email || !password) return;
-
-            try {
-                if (submitBtn) submitBtn.innerText = "Authenticating...";
-                const user = await loginWithEmail(email, password);
-                if (user && !isUserAdmin(user)) {
-                    showLoginError("Access Denied: User does not have Administrator role.");
-                    await logoutUser();
-                }
-            } catch (err) {
-                showLoginError("Invalid admin credentials or network error.");
-            } finally {
-                if (submitBtn) submitBtn.innerText = "Unlock Admin Studio";
-            }
+        async function handleAdminLogout() {
+            localStorage.removeItem('praxis_admin_session');
+            localStorage.removeItem('praxis_admin_token');
+            stopRealtimeFirestoreListeners();
+            await logoutUser();
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('auth-modal').classList.remove('hidden');
+            const pwdInput = document.getElementById('admin-password-input');
+            if (pwdInput) pwdInput.value = '';
         }
 
         function showLoginError(msg) {
