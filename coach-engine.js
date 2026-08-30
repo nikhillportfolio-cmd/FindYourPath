@@ -237,6 +237,17 @@ function initCoachEngine(app, db) {
                 console.warn("⚠️ Could not persist speech session:", saveErr.message);
             }
 
+            // Update analytics.json featureUsage.coach
+            try {
+                const analyticsPath = path.join(__dirname, 'analytics.json');
+                if (fs.existsSync(analyticsPath)) {
+                    const aData = JSON.parse(fs.readFileSync(analyticsPath, 'utf8')) || {};
+                    if (!aData.featureUsage) aData.featureUsage = {};
+                    aData.featureUsage.coach = (aData.featureUsage.coach || 0) + 1;
+                    fs.writeFileSync(analyticsPath, JSON.stringify(aData, null, 2), 'utf8');
+                }
+            } catch (aErr) {}
+
             res.json({
                 success: true,
                 evaluation

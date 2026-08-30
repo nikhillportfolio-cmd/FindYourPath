@@ -11459,20 +11459,42 @@ app.post('/api/admin/user/update', verifyAdminAuth, (req, res) => {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    const user = usersData.users.find(u => u.id === userId);
-    if (!user) {
-        return res.status(404).json({ error: "User not found" });
+    let user = usersData.users.find(u => u.id === userId || (email && u.email && u.email.toLowerCase() === email.toLowerCase()));
+    if (user) {
+        if (name) user.name = name.trim();
+        if (email) user.email = email.trim().toLowerCase();
+        if (typeof mobile !== 'undefined') user.mobile = mobile.trim();
+        if (username) user.username = username.trim().toLowerCase();
+        if (role) user.role = role.trim();
+        user.updatedAt = new Date().toISOString();
+        saveUsersData();
     }
 
-    if (name) user.name = name.trim();
-    if (email) user.email = email.trim().toLowerCase();
-    if (typeof mobile !== 'undefined') user.mobile = mobile.trim();
-    if (username) user.username = username.trim().toLowerCase();
-    if (role) user.role = role.trim();
-    user.updatedAt = new Date().toISOString();
+    if (db && typeof db.prepare === 'function' && String(userId).startsWith('sqlite_')) {
+        try {
+            const rawId = parseInt(String(userId).replace('sqlite_', ''), 10);
+            if (rawId) {
+                db.prepare('UPDATE users SET name = ?, email = ? WHERE id = ?').run(name || '', email || '', rawId);
+            }
+        } catch (e) {}
+    }
 
-    saveUsersData();
-    res.json({ success: true, message: "User profile updated successfully.", user });
+    if (!user && !String(userId).startsWith('sqlite_')) {
+        user = {
+            id: userId,
+            name: name || 'User',
+            email: email || '',
+            mobile: mobile || '',
+            username: username || (email ? email.split('@')[0] : 'user'),
+            role: role || 'student',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        usersData.users.push(user);
+        saveUsersData();
+    }
+
+    res.json({ success: true, message: "User profile updated successfully.", user: user || { id: userId, name, email, mobile, role } });
 });
 
 // Admin Delete User Account
@@ -11482,15 +11504,71 @@ app.post('/api/admin/user/delete', verifyAdminAuth, (req, res) => {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    const initialLen = usersData.users.length;
     usersData.users = usersData.users.filter(u => u.id !== userId);
+    saveUsersData();
 
-    if (usersData.users.length === initialLen) {
-        return res.status(404).json({ error: "User not found" });
+    if (db && typeof db.prepare === 'function' && String(userId).startsWith('sqlite_')) {
+        try {
+            const rawId = parseInt(String(userId).replace('sqlite_', ''), 10);
+            if (rawId) {
+                db.prepare('DELETE FROM users WHERE id = ?').run(rawId);
+            }
+        } catch (e) {}
     }
 
-    saveUsersData();
     res.json({ success: true, message: "User deleted successfully." });
+});
+
+// Speech Coach Sessions API for Admin Studio
+app.get('/api/admin/coach-sessions', verifyAdminAuth, (req, res) => {
+    let sessions = [];
+    if (db && typeof db.prepare === 'function') {
+        try {
+            sessions = db.prepare(`
+                SELECT id, user_email as userEmail, mode, topic, overall_score as overallScore,
+                       fluency_score as fluencyScore, grammar_score as grammarScore, vocab_score as vocabScore,
+                       structure_score as structureScore, wpm, filler_count as fillerCount, word_count as wordCount,
+                       created_at as createdAt
+                FROM speech_sessions 
+                ORDER BY id DESC 
+                LIMIT 50
+            `).all();
+        } catch (e) {}
+    }
+    res.json({ success: true, sessions });
+});
+
+// Live Activity & Telemetry Feed API for Admin Studio
+app.get('/api/admin/activity', verifyAdminAuth, (req, res) => {
+    const logs = (usersData.loginLogs || []).slice(-40).reverse().map(l => ({
+        id: l.id || `act_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        type: l.status && l.status.includes('Google') ? 'USER_LOGIN' : 'USER_AUTH',
+        summary: `${l.name || l.username || 'User'} (${l.email || 'Direct'}) - ${l.status || 'Active'}`,
+        userName: l.name || l.username || 'Explorer',
+        timestamp: l.timestamp || new Date().toISOString()
+    }));
+    res.json({ success: true, activities: logs });
+});
+
+// Admin Security Audit Trail API
+let adminAuditLogs = [];
+app.get('/api/admin/audit', verifyAdminAuth, (req, res) => {
+    res.json({ success: true, audits: adminAuditLogs.slice(-50).reverse() });
+});
+
+app.post('/api/admin/audit', verifyAdminAuth, (req, res) => {
+    const { action, targetUserId, details } = req.body || {};
+    const auditItem = {
+        id: `audit_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        adminEmail: req.adminUser?.email || 'admin@praxis.app',
+        action: String(action || 'ADMIN_ACTION').slice(0, 50),
+        targetUserId: targetUserId ? String(targetUserId) : null,
+        details: String(details || '').slice(0, 200),
+        timestamp: new Date().toISOString()
+    };
+    adminAuditLogs.push(auditItem);
+    if (adminAuditLogs.length > 200) adminAuditLogs.shift();
+    res.json({ success: true, audit: auditItem });
 });
 
 // Admin Stats API
@@ -11510,7 +11588,8 @@ app.get('/api/admin/stats', verifyAdminAuth, (req, res) => {
     const compassUsage = analyticsData.featureUsage?.compass || 0;
     const libraryUsage = analyticsData.featureUsage?.library || 0;
     const routineUsage = analyticsData.featureUsage?.routine || 0;
-    const totalFeatureActions = (compassUsage + libraryUsage + routineUsage) || 1;
+    const coachUsage = analyticsData.featureUsage?.coach || 0;
+    const totalFeatureActions = (compassUsage + libraryUsage + routineUsage + coachUsage) || 1;
 
     res.json({
         activeUsers: getActiveUserCount(),
@@ -11523,11 +11602,13 @@ app.get('/api/admin/stats', verifyAdminAuth, (req, res) => {
             compass: compassUsage,
             library: libraryUsage,
             routine: routineUsage,
-            total: compassUsage + libraryUsage + routineUsage,
+            coach: coachUsage,
+            total: compassUsage + libraryUsage + routineUsage + coachUsage,
             percentages: {
                 compass: Math.round((compassUsage / totalFeatureActions) * 100),
                 library: Math.round((libraryUsage / totalFeatureActions) * 100),
-                routine: Math.round((routineUsage / totalFeatureActions) * 100)
+                routine: Math.round((routineUsage / totalFeatureActions) * 100),
+                coach: Math.round((coachUsage / totalFeatureActions) * 100)
             }
         },
         routineStats: {

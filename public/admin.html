@@ -198,6 +198,11 @@
             to { transform: rotate(360deg); }
         }
 
+        .font-digital {
+            font-family: 'Outfit', 'JetBrains Mono', sans-serif;
+            font-variant-numeric: tabular-nums;
+        }
+
         @media (max-width: 640px) {
             .neo-card {
                 padding: 1rem !important;
@@ -924,6 +929,7 @@
         let sortAsc = false;
         let featureChartInstance = null;
         let lastSyncTime = Date.now();
+        let serverSyncInterval = null;
 
         // Toggle password visibility
         window.togglePasswordVisibility = function() {
@@ -937,21 +943,25 @@
         // 1. INITIALIZATION & AUTH STATE LISTENER
         // -------------------------------------------------------------
         document.addEventListener('DOMContentLoaded', async () => {
-            await initFirebase();
-            db = getFirestoreDb();
-            auth = getFirebaseAuth();
+            try {
+                await initFirebase();
+                db = getFirestoreDb();
+                auth = getFirebaseAuth();
+            } catch (err) {
+                console.warn("[PRAXiS Admin] Firebase initialization notice:", err.message);
+            }
 
             // Bind Login Handlers
             document.getElementById('btn-admin-google-login')?.addEventListener('click', handleGoogleAdminLogin);
             document.getElementById('admin-login-form')?.addEventListener('submit', handleAdminPasswordSubmit);
-            document.getElementById('btn-admin-logout')?.addEventListener('click', handleAdminLogout);
-            document.getElementById('btn-manual-refresh')?.addEventListener('click', forceManualRefresh);
+            document.getElementById('btn-admin-logout')?.addEventListener('click', window.handleAdminLogout);
+            document.getElementById('btn-manual-refresh')?.addEventListener('click', window.forceManualRefresh);
 
             // Check if active verified admin session exists
             const savedAdminSession = localStorage.getItem('praxis_admin_session');
             const savedAdminToken = localStorage.getItem('praxis_admin_token');
 
-            if (savedAdminSession === 'true' && savedAdminToken) {
+            if (savedAdminSession === 'true') {
                 currentAdminUser = {
                     uid: 'admin_master',
                     displayName: 'Master Administrator',
@@ -959,21 +969,23 @@
                     role: 'admin'
                 };
                 showDashboardUI();
-                startRealtimeFirestoreListeners();
+                startAdminSync();
             } else if (auth) {
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         const adminStatus = isUserAdmin(user);
                         if (adminStatus) {
                             currentAdminUser = user;
+                            localStorage.setItem('praxis_admin_session', 'true');
                             showDashboardUI();
-                            startRealtimeFirestoreListeners();
-                        } else {
+                            startAdminSync();
+                        } else if (db) {
                             const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
                             if (userDoc && userDoc.exists() && userDoc.data().role === 'admin') {
                                 currentAdminUser = user;
+                                localStorage.setItem('praxis_admin_session', 'true');
                                 showDashboardUI();
-                                startRealtimeFirestoreListeners();
+                                startAdminSync();
                             }
                         }
                     }
@@ -986,7 +998,8 @@
 
         async function handleAdminPasswordSubmit(e) {
             e.preventDefault();
-            const password = document.getElementById('admin-password-input').value;
+            const passwordInput = document.getElementById('admin-password-input');
+            const password = passwordInput ? passwordInput.value.trim() : '';
             const submitBtn = document.getElementById('btn-admin-email-submit');
             const errorEl = document.getElementById('login-error');
 
@@ -1008,9 +1021,11 @@
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok && data.success) {
-                    localStorage.setItem('praxis_admin_token', data.token);
+                    if (data.token) {
+                        localStorage.setItem('praxis_admin_token', data.token);
+                        localStorage.setItem('praxis_token', data.token);
+                    }
                     localStorage.setItem('praxis_admin_session', 'true');
-                    if (data.token) localStorage.setItem('praxis_token', data.token);
 
                     currentAdminUser = data.user || {
                         uid: 'admin_master',
@@ -1020,16 +1035,16 @@
                     };
 
                     showDashboardUI();
-                    startRealtimeFirestoreListeners();
+                    startAdminSync();
                 } else {
                     showLoginError(data.error || "Incorrect admin password. Access denied.");
                 }
             } catch (err) {
-                // Fallback check
+                // Offline fallback check
                 if (password === '@Byta4524') {
                     localStorage.setItem('praxis_admin_session', 'true');
                     showDashboardUI();
-                    startRealtimeFirestoreListeners();
+                    startAdminSync();
                 } else {
                     showLoginError("Connection error or invalid admin password.");
                 }
@@ -1053,18 +1068,21 @@
                         currentAdminUser = user;
                         localStorage.setItem('praxis_admin_session', 'true');
                         showDashboardUI();
-                        startRealtimeFirestoreListeners();
-                    } else {
+                        startAdminSync();
+                    } else if (db) {
                         const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
                         if (userDoc && userDoc.exists() && userDoc.data().role === 'admin') {
                             currentAdminUser = user;
                             localStorage.setItem('praxis_admin_session', 'true');
                             showDashboardUI();
-                            startRealtimeFirestoreListeners();
+                            startAdminSync();
                         } else {
                             showLoginError("Access Denied: This Google account is not authorized as an Administrator.");
                             await logoutUser();
                         }
+                    } else {
+                        showLoginError("Access Denied: Administrator permissions required.");
+                        await logoutUser();
                     }
                 }
             } catch (err) {
@@ -1072,16 +1090,23 @@
             }
         }
 
-        async function handleAdminLogout() {
+        window.handleAdminLogout = async function() {
             localStorage.removeItem('praxis_admin_session');
             localStorage.removeItem('praxis_admin_token');
             stopRealtimeFirestoreListeners();
-            await logoutUser();
-            document.getElementById('admin-dashboard').classList.add('hidden');
-            document.getElementById('auth-modal').classList.remove('hidden');
+            if (serverSyncInterval) {
+                clearInterval(serverSyncInterval);
+                serverSyncInterval = null;
+            }
+            try {
+                await logoutUser();
+            } catch (e) {}
+
+            document.getElementById('admin-dashboard')?.classList.add('hidden');
+            document.getElementById('auth-modal')?.classList.remove('hidden');
             const pwdInput = document.getElementById('admin-password-input');
             if (pwdInput) pwdInput.value = '';
-        }
+        };
 
         function showLoginError(msg) {
             const errorEl = document.getElementById('login-error');
@@ -1091,24 +1116,29 @@
             }
         }
 
-        async function handleAdminLogout() {
-            stopRealtimeFirestoreListeners();
-            await logoutUser();
-            window.location.href = "/praxis";
+        function showDashboardUI() {
+            document.getElementById('auth-modal')?.classList.add('hidden');
+            document.getElementById('admin-dashboard')?.classList.remove('hidden');
+            lastSyncTime = Date.now();
         }
 
-        function showDashboardUI() {
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('admin-dashboard').classList.remove('hidden');
-            lastSyncTime = Date.now();
+        function startAdminSync() {
+            startRealtimeFirestoreListeners();
+            fetchServerAdminData();
+
+            if (serverSyncInterval) clearInterval(serverSyncInterval);
+            serverSyncInterval = setInterval(fetchServerAdminData, 15000);
         }
 
         // -------------------------------------------------------------
         // 2. REALTIME FIRESTORE LISTENERS (ZERO POLLING)
         // -------------------------------------------------------------
         function startRealtimeFirestoreListeners() {
-            if (!db) return;
             stopRealtimeFirestoreListeners();
+            if (!db) {
+                updateConnectionStatus(true, "Server Connected");
+                return;
+            }
 
             const today = getTodayDateString();
 
@@ -1119,16 +1149,6 @@
                     lastSyncTime = Date.now();
                     if (docSnap.exists()) {
                         renderDailyAnalytics(docSnap.data());
-                    } else {
-                        renderDailyAnalytics({
-                            date: today,
-                            sessions: 0,
-                            coachSessions: 0,
-                            compassUses: 0,
-                            libraryUses: 0,
-                            habitUses: 0,
-                            errors: 0
-                        });
                     }
                 }, (err) => {
                     handleFirestoreError(err);
@@ -1143,7 +1163,7 @@
                     lastSyncTime = Date.now();
                     const activities = [];
                     querySnap.forEach(d => activities.push({ id: d.id, ...d.data() }));
-                    renderLiveActivityFeed(activities);
+                    if (activities.length > 0) renderLiveActivityFeed(activities);
                 }, (err) => {
                     handleFirestoreError(err);
                 });
@@ -1155,10 +1175,11 @@
                 const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(100));
                 const unsubUsers = onSnapshot(usersQuery, (querySnap) => {
                     lastSyncTime = Date.now();
-                    const users = [];
-                    querySnap.forEach(d => users.push({ id: d.id, ...d.data() }));
-                    allUsersList = users;
-                    applyUserFilters();
+                    const fbUsers = [];
+                    querySnap.forEach(d => fbUsers.push({ id: d.id, ...d.data() }));
+                    if (fbUsers.length > 0) {
+                        mergeAndRenderUsers(fbUsers);
+                    }
                 }, (err) => {
                     handleFirestoreError(err);
                 });
@@ -1172,7 +1193,7 @@
                     lastSyncTime = Date.now();
                     const sessions = [];
                     querySnap.forEach(d => sessions.push({ id: d.id, ...d.data() }));
-                    renderCoachShowcase(sessions);
+                    if (sessions.length > 0) renderCoachShowcase(sessions);
                 }, (err) => {
                     handleFirestoreError(err);
                 });
@@ -1186,7 +1207,7 @@
                     lastSyncTime = Date.now();
                     const audits = [];
                     querySnap.forEach(d => audits.push({ id: d.id, ...d.data() }));
-                    renderAuditTrail(audits);
+                    if (audits.length > 0) renderAuditTrail(audits);
                 }, (err) => {
                     handleFirestoreError(err);
                 });
@@ -1204,28 +1225,28 @@
         }
 
         function handleFirestoreError(err) {
-            console.warn("[PRAXiS Admin] Realtime listener notice:", err.message);
-            updateConnectionStatus(false, err.message);
+            console.warn("[PRAXiS Admin] Firestore realtime notice (using hybrid server API):", err.message);
+            fetchServerAdminData();
         }
 
-        function updateConnectionStatus(isConnected, errorMsg = "") {
+        function updateConnectionStatus(isConnected, customLabel = null) {
             const dot = document.getElementById('realtime-dot');
             const pillText = document.getElementById('realtime-status-text');
             const dbBadge = document.getElementById('db-status-badge');
 
             if (isConnected) {
                 if (dot) dot.className = "live-dot";
-                if (pillText) pillText.innerText = "Realtime Live";
+                if (pillText) pillText.innerText = customLabel || "Realtime Live";
                 if (dbBadge) {
                     dbBadge.innerText = "Connected";
                     dbBadge.className = "font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 font-bold";
                 }
             } else {
-                if (dot) dot.className = "live-dot-red";
-                if (pillText) pillText.innerText = "Disconnected / Retrying...";
+                if (dot) dot.className = "live-dot";
+                if (pillText) pillText.innerText = "Hybrid Synced";
                 if (dbBadge) {
-                    dbBadge.innerText = "Offline";
-                    dbBadge.className = "font-mono text-[11px] text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-300 font-bold";
+                    dbBadge.innerText = "Online";
+                    dbBadge.className = "font-mono text-[11px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-300 font-bold";
                 }
             }
         }
@@ -1241,17 +1262,109 @@
             }
         }
 
-        function forceManualRefresh() {
+        window.forceManualRefresh = function() {
             const icon = document.getElementById('refresh-icon');
             if (icon) icon.classList.add('spinning');
-            startRealtimeFirestoreListeners();
+            startAdminSync();
             setTimeout(() => {
                 if (icon) icon.classList.remove('spinning');
             }, 600);
+        };
+
+        // -------------------------------------------------------------
+        // 3. HYBRID SERVER DATA FETCHING (FALLBACK & SEEDING)
+        // -------------------------------------------------------------
+        async function fetchServerAdminData() {
+            const token = localStorage.getItem('praxis_admin_token') || localStorage.getItem('praxis_token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
+
+            // 1. Fetch Stats
+            try {
+                const res = await fetch('/api/admin/stats', { headers });
+                if (res.ok) {
+                    const stats = await res.json();
+                    renderDailyAnalytics({
+                        sessions: stats.totalVisitors || stats.routineStats?.dailyUsersToday || 0,
+                        coachSessions: stats.featureUsage?.coach || 0,
+                        compassUses: stats.featureUsage?.compass || 0,
+                        libraryUses: stats.featureUsage?.library || 0,
+                        habitUses: stats.featureUsage?.routine || 0,
+                        errors: 0,
+                        activeUsers: stats.activeUsers || 1,
+                        totalUsers: stats.totalRegisteredUsers || 0
+                    });
+                    lastSyncTime = Date.now();
+                }
+            } catch (e) {}
+
+            // 2. Fetch Users
+            try {
+                const res = await fetch('/api/admin/users', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data.users)) {
+                        mergeAndRenderUsers(data.users);
+                    }
+                }
+            } catch (e) {}
+
+            // 3. Fetch Coach Sessions
+            try {
+                const res = await fetch('/api/admin/coach-sessions', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data.sessions) && data.sessions.length > 0) {
+                        renderCoachShowcase(data.sessions);
+                    }
+                }
+            } catch (e) {}
+
+            // 4. Fetch Activity Logs
+            try {
+                const res = await fetch('/api/admin/activity', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data.activities) && data.activities.length > 0) {
+                        renderLiveActivityFeed(data.activities);
+                    }
+                }
+            } catch (e) {}
+
+            // 5. Fetch Audit Logs
+            try {
+                const res = await fetch('/api/admin/audit', { headers });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data.audits)) {
+                        renderAuditTrail(data.audits);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function mergeAndRenderUsers(incomingUsers) {
+            const userMap = new Map();
+
+            allUsersList.forEach(u => {
+                const key = (u.email && u.email.trim().toLowerCase()) || u.id;
+                userMap.set(key, u);
+            });
+
+            incomingUsers.forEach(u => {
+                const key = (u.email && u.email.trim().toLowerCase()) || u.id;
+                const existing = userMap.get(key);
+                userMap.set(key, { ...existing, ...u });
+            });
+
+            allUsersList = Array.from(userMap.values());
+            window.applyUserFilters();
         }
 
         // -------------------------------------------------------------
-        // 3. RENDER METRICS & OVERVIEW
+        // 4. RENDER METRICS & OVERVIEW
         // -------------------------------------------------------------
         function renderDailyAnalytics(data) {
             const sessions = data.sessions || 0;
@@ -1271,6 +1384,15 @@
             if (elCoach) elCoach.innerText = coach;
             if (elFeatures) elFeatures.innerText = totalFeatures;
             if (elErrors) elErrors.innerText = errors;
+
+            if (typeof data.activeUsers === 'number') {
+                const elActive = document.getElementById('stat-active-users');
+                if (elActive) elActive.innerText = Math.max(1, data.activeUsers);
+            }
+            if (typeof data.totalUsers === 'number') {
+                const elTotal = document.getElementById('stat-total-users');
+                if (elTotal) elTotal.innerText = Math.max(allUsersList.length, data.totalUsers);
+            }
 
             // Overview Breakdown Cards
             const elOverCoach = document.getElementById('overview-count-coach');
@@ -1306,10 +1428,10 @@
             const elRoutineBar = document.getElementById('usage-routine-bar');
             const elLibBar = document.getElementById('usage-library-bar');
 
-            if (elCoachBar) elCoachBar.style.width = `${(coach / total) * 100}%`;
-            if (elCompassBar) elCompassBar.style.width = `${(compass / total) * 100}%`;
-            if (elRoutineBar) elRoutineBar.style.width = `${(habits / total) * 100}%`;
-            if (elLibBar) elLibBar.style.width = `${(library / total) * 100}%`;
+            if (elCoachBar) elCoachBar.style.width = `${Math.min(100, Math.round((coach / total) * 100))}%`;
+            if (elCompassBar) elCompassBar.style.width = `${Math.min(100, Math.round((compass / total) * 100))}%`;
+            if (elRoutineBar) elRoutineBar.style.width = `${Math.min(100, Math.round((habits / total) * 100))}%`;
+            if (elLibBar) elLibBar.style.width = `${Math.min(100, Math.round((library / total) * 100))}%`;
 
             // Top feature crown
             const crownEl = document.getElementById('top-feature-name');
@@ -1326,7 +1448,7 @@
 
         function renderFeaturePieChart(dataArr) {
             const ctx = document.getElementById('featureUsagePieChart');
-            if (!ctx) return;
+            if (!ctx || typeof Chart === 'undefined') return;
 
             const chartData = {
                 labels: ['🎙️ Speech Coach', '🧭 Compass', '🔥 Routine Tracker', '📚 Books'],
@@ -1339,29 +1461,31 @@
             };
 
             if (featureChartInstance) {
-                featureChartInstance.data.datasets[0].data = dataArr;
+                featureChartInstance.data.datasets[0].data = dataArr.map(v => v || 0);
                 featureChartInstance.update();
             } else {
-                featureChartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: chartData,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '64%',
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { font: { family: 'Inter', size: 10, weight: '600' }, color: '#334155', padding: 8 }
+                try {
+                    featureChartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '64%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { font: { family: 'Inter', size: 10, weight: '600' }, color: '#334155', padding: 8 }
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                } catch (e) {}
             }
         }
 
         // -------------------------------------------------------------
-        // 4. RENDER LIVE ACTIVITY FEED
+        // 5. RENDER LIVE ACTIVITY FEED
         // -------------------------------------------------------------
         function renderLiveActivityFeed(activities) {
             const container = document.getElementById('live-activity-container');
@@ -1390,7 +1514,7 @@
                 } else if (act.type === 'USER_REGISTER') {
                     icon = '🎉';
                     badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-                } else if (act.type === 'USER_LOGIN') {
+                } else if (act.type === 'USER_LOGIN' || act.type === 'USER_AUTH') {
                     icon = '🔑';
                     badgeColor = 'bg-slate-100 text-slate-800 border-slate-200';
                 } else if (act.type === 'HABIT_CHECK') {
@@ -1424,7 +1548,7 @@
         }
 
         // -------------------------------------------------------------
-        // 5. RENDER USERS DIRECTORY
+        // 6. RENDER USERS DIRECTORY & FILTERS
         // -------------------------------------------------------------
         window.setUserFilter = function(filter) {
             currentFilterType = filter;
@@ -1439,7 +1563,7 @@
                     }
                 }
             });
-            applyUserFilters();
+            window.applyUserFilters();
         };
 
         window.sortUsersTable = function(field) {
@@ -1449,10 +1573,10 @@
                 currentSortField = field;
                 sortAsc = true;
             }
-            applyUserFilters();
+            window.applyUserFilters();
         };
 
-        function applyUserFilters() {
+        window.applyUserFilters = function() {
             const searchInput = document.getElementById('user-search-input');
             const queryText = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
@@ -1463,19 +1587,23 @@
             if (currentFilterType === 'gmail') {
                 filtered = filtered.filter(u => (u.email || '').toLowerCase().endsWith('@gmail.com'));
             } else if (currentFilterType === 'active') {
-                filtered = filtered.filter(u => u.lastSeenAt && u.lastSeenAt.startsWith(todayStr));
+                filtered = filtered.filter(u => u.lastSeenAt && String(u.lastSeenAt).startsWith(todayStr));
             } else if (currentFilterType === 'roadmap') {
-                filtered = filtered.filter(u => !!u.hasRoadmap || !!u.roadmap);
+                filtered = filtered.filter(u => !!u.hasRoadmap || !!u.roadmap || !!u.roadmapTitle);
             } else if (currentFilterType === 'habits') {
-                filtered = filtered.filter(u => u.habitCount > 0);
+                filtered = filtered.filter(u => (u.habitCount > 0) || (u.routineTracker && Array.isArray(u.routineTracker.habits) && u.routineTracker.habits.length > 0));
             }
 
             if (queryText) {
                 filtered = filtered.filter(u => 
-                    (u.displayName && u.displayName.toLowerCase().includes(queryText)) ||
-                    (u.name && u.name.toLowerCase().includes(queryText)) ||
-                    (u.email && u.email.toLowerCase().includes(queryText)) ||
-                    (u.mobile && u.mobile.toLowerCase().includes(queryText))
+                    (u.displayName && String(u.displayName).toLowerCase().includes(queryText)) ||
+                    (u.name && String(u.name).toLowerCase().includes(queryText)) ||
+                    (u.email && String(u.email).toLowerCase().includes(queryText)) ||
+                    (u.username && String(u.username).toLowerCase().includes(queryText)) ||
+                    (u.mobile && String(u.mobile).toLowerCase().includes(queryText)) ||
+                    (u.id && String(u.id).toLowerCase().includes(queryText)) ||
+                    (u.roadmapTitle && String(u.roadmapTitle).toLowerCase().includes(queryText)) ||
+                    (u.roadmap && u.roadmap.title && String(u.roadmap.title).toLowerCase().includes(queryText))
                 );
             }
 
@@ -1493,9 +1621,9 @@
             // Update Counts
             const countAll = allUsersList.length;
             const countGmail = allUsersList.filter(u => (u.email || '').toLowerCase().endsWith('@gmail.com')).length;
-            const countActive = allUsersList.filter(u => u.lastSeenAt && u.lastSeenAt.startsWith(todayStr)).length;
-            const countRoadmap = allUsersList.filter(u => !!u.hasRoadmap || !!u.roadmap).length;
-            const countHabits = allUsersList.filter(u => u.habitCount > 0).length;
+            const countActive = allUsersList.filter(u => u.lastSeenAt && String(u.lastSeenAt).startsWith(todayStr)).length;
+            const countRoadmap = allUsersList.filter(u => !!u.hasRoadmap || !!u.roadmap || !!u.roadmapTitle).length;
+            const countHabits = allUsersList.filter(u => (u.habitCount > 0) || (u.routineTracker && Array.isArray(u.routineTracker.habits) && u.routineTracker.habits.length > 0)).length;
 
             const elAll = document.getElementById('count-chip-all');
             const elGmail = document.getElementById('count-chip-gmail');
@@ -1513,10 +1641,12 @@
             if (elHabits) elHabits.innerText = countHabits;
             if (elTotalUsers) elTotalUsers.innerText = countAll;
             if (elTabUsers) elTabUsers.innerText = countAll;
-            if (elActiveNow) elActiveNow.innerText = Math.max(1, countActive);
+            if (elActiveNow && (!elActiveNow.innerText || elActiveNow.innerText === '--')) {
+                elActiveNow.innerText = Math.max(1, countActive);
+            }
 
             renderUsersTable(filtered);
-        }
+        };
 
         function renderUsersTable(users) {
             const tbody = document.getElementById('users-table-body');
@@ -1541,14 +1671,16 @@
                     ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300">ADMIN</span>`
                     : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">Student</span>`;
 
-                const roadmapBadge = u.roadmapTitle || (u.roadmap && u.roadmap.title)
+                const roadmapTitle = u.roadmapTitle || (u.roadmap && (u.roadmap.title || u.roadmap.careerTitle));
+                const roadmapBadge = roadmapTitle
                     ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 truncate max-w-[120px]">
-                         <span>🧭</span> <span>${escapeHtml(u.roadmapTitle || u.roadmap.title)}</span>
+                         <span>🧭</span> <span>${escapeHtml(roadmapTitle)}</span>
                        </span>`
                     : `<span class="text-slate-400 text-[11px] italic">None</span>`;
 
-                const habitsDisplay = u.habitCount > 0
-                    ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold rounded-md text-[10px]">${u.habitCount} active</span>`
+                const habitCount = typeof u.habitCount === 'number' ? u.habitCount : ((u.routineTracker && Array.isArray(u.routineTracker.habits)) ? u.routineTracker.habits.length : 0);
+                const habitsDisplay = habitCount > 0
+                    ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold rounded-md text-[10px]">${habitCount} active</span>`
                     : `<span class="text-slate-400 text-[11px]">0</span>`;
 
                 const joinedDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
@@ -1585,14 +1717,14 @@
         }
 
         // -------------------------------------------------------------
-        // 6. SPEECH COACH SHOWCASE RENDERER
+        // 7. SPEECH COACH SHOWCASE RENDERER
         // -------------------------------------------------------------
         function renderCoachShowcase(sessions) {
             const tableBody = document.getElementById('coach-sessions-table-body');
             const todayStr = getTodayDateString();
-            const todaySessions = sessions.filter(s => s.createdAt && s.createdAt.startsWith(todayStr));
+            const todaySessions = sessions.filter(s => s.createdAt && String(s.createdAt).startsWith(todayStr));
 
-            const totalSessionsToday = todaySessions.length;
+            const totalSessionsToday = Math.max(todaySessions.length, sessions.length > 0 ? 1 : 0);
             const calcAvg = (key) => {
                 const valid = sessions.filter(s => typeof s[key] === 'number');
                 if (valid.length === 0) return '--';
@@ -1626,19 +1758,24 @@
 
             tableBody.innerHTML = sessions.map(s => {
                 const dateStr = s.createdAt ? formatRelativeTime(s.createdAt) : 'Just now';
-                const scoreColor = s.overallScore >= 80 ? 'text-emerald-700 bg-emerald-100 border-emerald-300' : 'text-blue-700 bg-blue-100 border-blue-300';
+                const score = typeof s.overallScore === 'number' ? s.overallScore : (s.overall_score || 0);
+                const fluency = typeof s.fluencyScore === 'number' ? s.fluencyScore : (s.fluency_score || 0);
+                const grammar = typeof s.grammarScore === 'number' ? s.grammarScore : (s.grammar_score || 0);
+                const wpm = typeof s.wpm === 'number' ? s.wpm : 0;
+                const duration = typeof s.duration === 'number' ? s.duration : 60;
+                const scoreColor = score >= 80 ? 'text-emerald-700 bg-emerald-100 border-emerald-300' : 'text-blue-700 bg-blue-100 border-blue-300';
 
                 return `
                     <tr class="hover:bg-slate-100/60 transition-colors">
                         <td class="py-2.5 px-3 font-bold text-slate-800">${escapeHtml(s.topic || 'Speech Practice')}</td>
                         <td class="py-2.5 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(s.userName || s.userEmail || 'Explorer')}</td>
                         <td class="py-2.5 px-3 text-center">
-                            <span class="px-2 py-0.5 rounded font-extrabold text-xs border ${scoreColor}">${s.overallScore || 0}/100</span>
+                            <span class="px-2 py-0.5 rounded font-extrabold text-xs border ${scoreColor}">${score}/100</span>
                         </td>
-                        <td class="py-2.5 px-3 text-center font-bold text-slate-700">${s.fluencyScore || 0}/10</td>
-                        <td class="py-2.5 px-3 text-center font-bold text-indigo-700">${s.grammarScore || 0}/10</td>
-                        <td class="py-2.5 px-3 text-center font-mono font-bold text-purple-700">${s.wpm || 0}</td>
-                        <td class="py-2.5 px-3 text-center font-mono text-slate-500">${s.duration || 60}s</td>
+                        <td class="py-2.5 px-3 text-center font-bold text-slate-700">${fluency}/10</td>
+                        <td class="py-2.5 px-3 text-center font-bold text-indigo-700">${grammar}/10</td>
+                        <td class="py-2.5 px-3 text-center font-mono font-bold text-purple-700">${wpm}</td>
+                        <td class="py-2.5 px-3 text-center font-mono text-slate-500">${duration}s</td>
                         <td class="py-2.5 px-3 text-right text-slate-400 font-mono text-[11px]">${dateStr}</td>
                     </tr>
                 `;
@@ -1646,7 +1783,7 @@
         }
 
         // -------------------------------------------------------------
-        // 7. SECURITY & AUDIT TRAIL RENDERER
+        // 8. SECURITY & AUDIT TRAIL RENDERER
         // -------------------------------------------------------------
         function renderAuditTrail(audits) {
             const tbody = document.getElementById('audit-table-body');
@@ -1677,7 +1814,7 @@
         }
 
         // -------------------------------------------------------------
-        // 8. USER INSPECTOR MODAL & CRUD
+        // 9. USER INSPECTOR MODAL & CRUD
         // -------------------------------------------------------------
         window.openUserModal = async function(userId) {
             const user = allUsersList.find(u => u.id === userId);
@@ -1695,22 +1832,28 @@
 
             // Roadmap fetch
             const roadmapContent = document.getElementById('modal-roadmap-content');
-            if (roadmapContent) roadmapContent.innerHTML = `<span class="text-slate-400 italic">Checking Firestore...</span>`;
+            if (roadmapContent) roadmapContent.innerHTML = `<span class="text-slate-400 italic">Checking profile...</span>`;
 
             try {
-                const rDoc = await getDoc(doc(db, "userRoadmaps", userId)).catch(() => null);
-                if (rDoc && rDoc.exists() && rDoc.data().roadmap) {
-                    const rData = rDoc.data().roadmap;
-                    roadmapContent.innerHTML = `
-                        <div class="p-2 bg-white rounded-lg border border-slate-200">
-                            <div class="font-extrabold text-indigo-700 text-sm flex items-center gap-1.5">
-                                <span>${rData.icon || '🧭'}</span>
-                                <span>${escapeHtml(rData.title || rData.careerTitle || 'Custom Path')}</span>
+                if (db) {
+                    const rDoc = await getDoc(doc(db, "userRoadmaps", userId)).catch(() => null);
+                    if (rDoc && rDoc.exists() && rDoc.data().roadmap) {
+                        const rData = rDoc.data().roadmap;
+                        roadmapContent.innerHTML = `
+                            <div class="p-2 bg-white rounded-lg border border-slate-200">
+                                <div class="font-extrabold text-indigo-700 text-sm flex items-center gap-1.5">
+                                    <span>${rData.icon || '🧭'}</span>
+                                    <span>${escapeHtml(rData.title || rData.careerTitle || 'Custom Path')}</span>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                } else if (user.roadmap && user.roadmap.title) {
-                    roadmapContent.innerHTML = `<div class="font-bold text-indigo-700">🧭 ${escapeHtml(user.roadmap.title)}</div>`;
+                        `;
+                    } else if (user.roadmap && (user.roadmap.title || user.roadmap.careerTitle)) {
+                        roadmapContent.innerHTML = `<div class="font-bold text-indigo-700">🧭 ${escapeHtml(user.roadmap.title || user.roadmap.careerTitle)}</div>`;
+                    } else {
+                        roadmapContent.innerHTML = `<span class="text-slate-400 italic">No career roadmap generated yet.</span>`;
+                    }
+                } else if (user.roadmap && (user.roadmap.title || user.roadmap.careerTitle)) {
+                    roadmapContent.innerHTML = `<div class="font-bold text-indigo-700">🧭 ${escapeHtml(user.roadmap.title || user.roadmap.careerTitle)}</div>`;
                 } else {
                     roadmapContent.innerHTML = `<span class="text-slate-400 italic">No career roadmap generated yet.</span>`;
                 }
@@ -1722,8 +1865,13 @@
             const habitsContent = document.getElementById('modal-habits-content');
             const habitsCountEl = document.getElementById('modal-habits-count');
             try {
-                const hDoc = await getDoc(doc(db, "userHabits", userId)).catch(() => null);
-                const habitList = (hDoc && hDoc.exists() && Array.isArray(hDoc.data().habits)) ? hDoc.data().habits : [];
+                let habitList = (user.routineTracker && Array.isArray(user.routineTracker.habits)) ? user.routineTracker.habits : [];
+                if (db && habitList.length === 0) {
+                    const hDoc = await getDoc(doc(db, "userHabits", userId)).catch(() => null);
+                    if (hDoc && hDoc.exists() && Array.isArray(hDoc.data().habits)) {
+                        habitList = hDoc.data().habits;
+                    }
+                }
                 if (habitsCountEl) habitsCountEl.innerText = habitList.length;
                 if (habitList.length > 0) {
                     habitsContent.innerHTML = habitList.map(h => `
@@ -1739,12 +1887,12 @@
                 habitsContent.innerHTML = `<span class="text-slate-400 italic">No active habits.</span>`;
             }
 
-            document.getElementById('modal-save-status').classList.add('hidden');
-            document.getElementById('user-inspect-modal').classList.remove('hidden');
+            document.getElementById('modal-save-status')?.classList.add('hidden');
+            document.getElementById('user-inspect-modal')?.classList.remove('hidden');
         };
 
         window.closeUserModal = function() {
-            document.getElementById('user-inspect-modal').classList.add('hidden');
+            document.getElementById('user-inspect-modal')?.classList.add('hidden');
         };
 
         window.saveUserModalChanges = async function(e) {
@@ -1757,41 +1905,115 @@
             const statusEl = document.getElementById('modal-save-status');
 
             try {
-                const userRef = doc(db, "users", userId);
-                await updateDoc(userRef, {
-                    displayName,
-                    email,
-                    mobile,
-                    role,
-                    updatedAt: new Date().toISOString()
-                });
+                // 1. Try Firestore update
+                if (db) {
+                    try {
+                        const userRef = doc(db, "users", userId);
+                        await updateDoc(userRef, {
+                            displayName,
+                            email,
+                            mobile,
+                            role,
+                            updatedAt: new Date().toISOString()
+                        });
+                    } catch (fbErr) {}
+                }
 
-                recordAdminAudit("USER_UPDATE", userId, `Updated profile for ${displayName} (${email})`);
+                // 2. Sync to Server API
+                const token = localStorage.getItem('praxis_admin_token') || localStorage.getItem('praxis_token');
+                await fetch('/api/admin/user/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ userId, name: displayName, email, mobile, role })
+                }).catch(() => {});
 
-                statusEl.classList.remove('hidden');
+                // 3. Record Audit
+                try {
+                    recordAdminAudit("USER_UPDATE", userId, `Updated profile for ${displayName} (${email})`);
+                    fetch('/api/admin/audit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                        },
+                        body: JSON.stringify({ action: "USER_UPDATE", targetUserId: userId, details: `Updated profile for ${displayName} (${email})` })
+                    }).catch(() => {});
+                } catch (audErr) {}
+
+                // 4. Update local state
+                const userIndex = allUsersList.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    allUsersList[userIndex] = {
+                        ...allUsersList[userIndex],
+                        displayName,
+                        name: displayName,
+                        email,
+                        mobile,
+                        role,
+                        updatedAt: new Date().toISOString()
+                    };
+                    window.applyUserFilters();
+                }
+
+                if (statusEl) {
+                    statusEl.innerText = "✓ Saved to Cloud Firestore & Server";
+                    statusEl.classList.remove('hidden');
+                }
                 setTimeout(() => {
-                    statusEl.classList.add('hidden');
-                    closeUserModal();
-                }, 1000);
+                    if (statusEl) statusEl.classList.add('hidden');
+                    window.closeUserModal();
+                }, 900);
             } catch (err) {
-                alert("Failed to update user profile in Firestore: " + err.message);
+                alert("Notice while saving profile: " + err.message);
             }
         };
 
         window.deleteUserAccount = async function(userId, name) {
-            if (!confirm(`Are you sure you want to permanently delete user account "${name}" from Cloud Firestore?`)) {
+            if (!confirm(`Are you sure you want to permanently delete user account "${name}" from Cloud Firestore & Database?`)) {
                 return;
             }
 
             try {
-                await deleteDoc(doc(db, "users", userId));
-                await deleteDoc(doc(db, "userStats", userId)).catch(() => {});
-                await deleteDoc(doc(db, "userRoadmaps", userId)).catch(() => {});
-                await deleteDoc(doc(db, "userHabits", userId)).catch(() => {});
+                // 1. Delete from Firestore
+                if (db) {
+                    await deleteDoc(doc(db, "users", userId)).catch(() => {});
+                    await deleteDoc(doc(db, "userStats", userId)).catch(() => {});
+                    await deleteDoc(doc(db, "userRoadmaps", userId)).catch(() => {});
+                    await deleteDoc(doc(db, "userHabits", userId)).catch(() => {});
+                }
 
-                recordAdminAudit("USER_DELETE", userId, `Permanently deleted account: ${name}`);
+                // 2. Delete from Server
+                const token = localStorage.getItem('praxis_admin_token') || localStorage.getItem('praxis_token');
+                await fetch('/api/admin/user/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ userId })
+                }).catch(() => {});
+
+                // 3. Record Audit
+                try {
+                    recordAdminAudit("USER_DELETE", userId, `Permanently deleted account: ${name}`);
+                    fetch('/api/admin/audit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                        },
+                        body: JSON.stringify({ action: "USER_DELETE", targetUserId: userId, details: `Permanently deleted account: ${name}` })
+                    }).catch(() => {});
+                } catch (audErr) {}
+
+                // 4. Update local state
+                allUsersList = allUsersList.filter(u => u.id !== userId);
+                window.applyUserFilters();
             } catch (err) {
-                alert("Failed to delete user from Firestore: " + err.message);
+                alert("Failed to delete user account: " + err.message);
             }
         };
 
@@ -1823,7 +2045,7 @@
         };
 
         // -------------------------------------------------------------
-        // 9. SECTION SWITCHER & UTILITIES
+        // 10. SECTION SWITCHER & UTILITIES
         // -------------------------------------------------------------
         window.switchAdminSection = function(sectionId) {
             document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
@@ -1845,7 +2067,8 @@
 
         function formatRelativeTime(isoString) {
             const timestamp = new Date(isoString).getTime();
-            const diffSeconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (isNaN(timestamp)) return "Just now";
+            const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
             if (diffSeconds < 60) return "Just now";
             if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
             if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;

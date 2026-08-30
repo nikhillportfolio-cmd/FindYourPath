@@ -12,7 +12,9 @@
       "createdAt": "2026-07-31T08:59:35.856Z",
       "loginCount": 2,
       "lastLoginAt": "2026-07-31T08:59:35.932Z",
-      "lastLoginIp": "127.0.0.1"
+      "lastLoginIp": "127.0.0.1",
+      "role": "student",
+      "updatedAt": "2026-08-30T16:00:06.898Z"
     },
     {
       "id": "usr_1785856512734_15zjq",

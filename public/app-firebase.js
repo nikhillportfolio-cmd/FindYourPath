@@ -754,7 +754,15 @@ export function updateProfileUI(user) {
   if (user && (user.id || user.uid || user.email)) {
     if (authGate) authGate.classList.add("hidden");
     if (mainAppContent) mainAppContent.classList.remove("hidden");
-    if (adminStudioBtn) adminStudioBtn.classList.remove("hidden");
+    const hasAdminSession = localStorage.getItem("praxis_admin_session") === "true";
+    const userIsAdmin = isUserAdmin(user);
+    if (adminStudioBtn) {
+      if (userIsAdmin || hasAdminSession) {
+        adminStudioBtn.classList.remove("hidden");
+      } else {
+        adminStudioBtn.classList.add("hidden");
+      }
+    }
 
     if (loginBtn) loginBtn.classList.add("hidden");
     if (profileSection) profileSection.classList.remove("hidden");
@@ -780,7 +788,15 @@ export function updateProfileUI(user) {
   } else {
     if (authGate) authGate.classList.remove("hidden");
     if (mainAppContent) mainAppContent.classList.add("hidden");
-    if (adminStudioBtn) adminStudioBtn.classList.add("hidden");
+    
+    const hasAdminSession = localStorage.getItem("praxis_admin_session") === "true";
+    if (adminStudioBtn) {
+      if (hasAdminSession) {
+        adminStudioBtn.classList.remove("hidden");
+      } else {
+        adminStudioBtn.classList.add("hidden");
+      }
+    }
 
     if (loginBtn) loginBtn.classList.remove("hidden");
     if (profileSection) profileSection.classList.add("hidden");
