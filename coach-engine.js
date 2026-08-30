@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // =====================================================================
-// COMMUNICATION COACH - REAL-TIME ENGLISH FLUENCY & SPEECH ENGINE
+// Communication COACH - REAL-TIME ENGLISH FLUENCY & SPEECH ENGINE
 // =====================================================================
 
 // Comprehensive Filler Words & Crutch Phrases Dictionary
@@ -397,7 +397,7 @@ function analyzeSpeechDiagnostics(transcript, mode = 'express', timeSpentSeconds
 
     // Markdown Output conforming to exact requested schema
     const formattedMarkdown = `
-**COMMUNICATION DASHBOARD**
+**Communication DASHBOARD**
 - **Overall Score:** ${overallScore} / 100
 - **Fluency & Pace:** ${fluencyScore} / 10 | ${paceStatus} | ${totalFillerCount} filler crutches
 - **Grammar & Structure:** ${grammarScore} / 10 | ${grammarIssues.length > 0 ? grammarIssues[0].match : 'Syntactically Sound'}
@@ -599,8 +599,8 @@ async function evaluateWithLLMIfAvailable(transcript, mode, topic, targetRole, t
         const openai = new OpenAI({ apiKey: openaiApiKey });
 
         const systemPrompt = `
-You are the Communication Coach, a real-time English fluency and communication engine integrated into the AntiGravity platform (praxis-axpz.onrender.com).
-Your target is to elevate users' spoken and written English, workplace communication, public speaking skills, and test readiness (IELTS, TOEFL, PTE).
+You are the Communication Coach, a real-time English fluency and Communication engine integrated into the AntiGravity platform (praxis-axpz.onrender.com).
+Your target is to elevate users' spoken and written English, workplace Communication, public speaking skills, and test readiness (IELTS, TOEFL, PTE).
 You offer precise metrics, real-time corrections, and interactive practice.
 
 Selected Practice Mode: ${mode}
@@ -661,7 +661,7 @@ Analyze the user's transcript and produce strict JSON conforming to this schema:
         const wpm = Math.round((transcript.split(/\s+/).length / Math.max(timeSpentSeconds / 60, 0.2)));
 
         const formattedMarkdown = `
-**COMMUNICATION DASHBOARD**
+**Communication DASHBOARD**
 - **Overall Score:** ${parsed.overallScore} / 100
 - **Fluency & Pace:** ${parsed.fluencyScore} / 10 | ${parsed.paceStatus} | ${parsed.fillerCount} filler crutches
 - **Grammar & Structure:** ${parsed.grammarScore} / 10 | ${parsed.correction ? parsed.correction.explanation.slice(0, 40) : 'Accurate'}

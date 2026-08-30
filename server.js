@@ -1248,7 +1248,7 @@ const questionsDB = {
                     }
                 },
                 {
-                    "text": "Take charge of team communication and manage client updates.",
+                    "text": "Take charge of team Communication and manage client updates.",
                     "tags": {
                         "Leadership": 3,
                         "Communication": 3
@@ -6479,7 +6479,7 @@ const questionsDB = {
             ]
         },
         {
-            "text": "Your preferred method of professional communication is:",
+            "text": "Your preferred method of professional Communication is:",
             "options": [
                 {
                     "text": "A formally formatted, highly precise email.",
@@ -8494,7 +8494,7 @@ const careersDB = {
                 },
                 {
                     "title": "Phase 3: Skill-Building",
-                    "steps": "Earn M.Sc in Genetic Counseling or Human Genetics. Master bioinformatics tools (BLAST, Variant Call Format files) and clinical communication."
+                    "steps": "Earn M.Sc in Genetic Counseling or Human Genetics. Master bioinformatics tools (BLAST, Variant Call Format files) and clinical Communication."
                 },
                 {
                     "title": "Phase 4: First Job",
@@ -8606,7 +8606,7 @@ const careersDB = {
             "phases": [
                 {
                     "title": "Phase 1: Foundation (Classes 9–12)",
-                    "steps": "Develop strong communication skills and interest in healthcare technology."
+                    "steps": "Develop strong Communication skills and interest in healthcare technology."
                 },
                 {
                     "title": "Phase 2: Entry Pathway",
@@ -9892,7 +9892,7 @@ const careersDB = {
             "phases": [
                 {
                     "title": "Phase 1: Foundation (Classes 9–12)",
-                    "steps": "Develop strong negotiation, conflict resolution, and communication skills."
+                    "steps": "Develop strong negotiation, conflict resolution, and Communication skills."
                 },
                 {
                     "title": "Phase 2: Entry Pathway",
@@ -11664,7 +11664,7 @@ const PRELOADED_PUBLIC_DOMAIN_BOOKS = {
             },
             {
                 title: "Letter 2",
-                content: `To Mrs. Saville, England.\nArchangel, 28th March, 17--.\n\nHow slowly the time passes here, encompassed as I am by frost and snow! Yet a step is taken towards my enterprise. I have hired a vessel and am occupied in collecting sailors; those whom I have already engaged appear to be men on whom I can depend and are certainly possessed of dauntless courage.\n\nBut I have one want which I have never yet been able to satisfy, and the absence of the object of which I now feel as a most severe evil. I have no friend, Margaret: when I am glowing with the enthusiasm of success, there will be none to participate my joy; if I am assailed by disappointment, no one will endeavour to sustain me in dejection. I shall commit my thoughts to paper, it is true; but that is a poor medium for the communication of feeling. I desire the company of a man who could sympathize with me, whose eyes would reply to mine.`
+                content: `To Mrs. Saville, England.\nArchangel, 28th March, 17--.\n\nHow slowly the time passes here, encompassed as I am by frost and snow! Yet a step is taken towards my enterprise. I have hired a vessel and am occupied in collecting sailors; those whom I have already engaged appear to be men on whom I can depend and are certainly possessed of dauntless courage.\n\nBut I have one want which I have never yet been able to satisfy, and the absence of the object of which I now feel as a most severe evil. I have no friend, Margaret: when I am glowing with the enthusiasm of success, there will be none to participate my joy; if I am assailed by disappointment, no one will endeavour to sustain me in dejection. I shall commit my thoughts to paper, it is true; but that is a poor medium for the Communication of feeling. I desire the company of a man who could sympathize with me, whose eyes would reply to mine.`
             },
             {
                 title: "Chapter 1: Birth & Upbringing of Victor Frankenstein",
@@ -11952,7 +11952,7 @@ function parseGutenbergText(rawText, title, author) {
 }
 
 // =====================================================================
-// COMMUNICATION COACH & REAL-TIME SPEECH FLUENCY ENGINE
+// Communication COACH & REAL-TIME SPEECH FLUENCY ENGINE
 // =====================================================================
 try {
     const { initCoachEngine } = require('./coach-engine');
