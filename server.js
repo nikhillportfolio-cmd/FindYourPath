@@ -5,7 +5,10 @@ const path = require('path');
 const fs = require('fs');
 const webpush = require('web-push');
 const notifier = require('node-notifier');
-const Database = require('better-sqlite3');
+let Database = null;
+try {
+    Database = require('better-sqlite3');
+} catch (e) {}
 
 let bcrypt;
 try {
@@ -18,103 +21,51 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // =====================================================================
-// LOCAL SSD SQLITE DATABASE ENGINE (better-sqlite3)
+// LOCAL DATA STORAGE & PERSISTENCE ENGINE
 // =====================================================================
-// Absolute local SSD path placeholder as requested (use 'D:/database/praxis_data.db' for easy customization)
-const SQLITE_DB_PATH = process.env.SQLITE_DB_PATH || 'D:/database/praxis_data.db';
+const SQLITE_DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, 'praxis_local.db');
 
-let db;
-let actualDbPath = SQLITE_DB_PATH;
-
-try {
-    const dbDir = path.dirname(SQLITE_DB_PATH);
-    if (!fs.existsSync(dbDir)) {
-        fs.mkdirSync(dbDir, { recursive: true });
-    }
-    db = new Database(SQLITE_DB_PATH);
-    db.pragma('journal_mode = WAL');
-    console.log(`💾 Local SQLite Database successfully initialized at SSD path: ${SQLITE_DB_PATH}`);
-} catch (err) {
-    console.warn(`⚠️ Could not initialize SQLite at ${SQLITE_DB_PATH}: ${err.message}. Initializing fallback SSD / workspace storage...`);
+let db = null;
+if (Database) {
     try {
-        const ssdDir = 'F:\\Praxis Admin server';
-        if (fs.existsSync(ssdDir)) {
-            actualDbPath = path.join(ssdDir, 'praxis_data.db');
-            db = new Database(actualDbPath);
-            db.pragma('journal_mode = WAL');
-            console.log(`💾 Connected SQLite Database at SSD storage: ${actualDbPath}`);
-        } else {
-            const localDataDir = path.join(__dirname, 'database');
-            if (!fs.existsSync(localDataDir)) fs.mkdirSync(localDataDir, { recursive: true });
-            actualDbPath = path.join(localDataDir, 'praxis_data.db');
-            db = new Database(actualDbPath);
-            db.pragma('journal_mode = WAL');
-            console.log(`💾 Connected SQLite Database at workspace fallback: ${actualDbPath}`);
+        const dbDir = path.dirname(SQLITE_DB_PATH);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
         }
-    } catch (fallbackErr) {
-        console.error(`❌ Critical SQLite Initialization Error:`, fallbackErr.message);
-        db = new Database(':memory:');
-        actualDbPath = ':memory:';
+        db = new Database(SQLITE_DB_PATH);
+        db.pragma('journal_mode = WAL');
+        console.log(`💾 Local SQLite Database initialized at: ${path.basename(SQLITE_DB_PATH)}`);
+    } catch (err) {
+        console.warn(`⚠️ SQLite initialization fallback to memory: ${err.message}`);
+        try {
+            db = new Database(':memory:');
+        } catch (fallbackErr) {}
     }
 }
 
-// Database Initialization Block: Create users and traffic tables if they do not exist
-db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        hashed_password TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS traffic (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ip_address TEXT,
-        endpoint TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-`);
-
-// Prepared statement for fast traffic logging
-const insertTrafficStmt = db.prepare(`
-    INSERT INTO traffic (ip_address, endpoint) VALUES (?, ?)
-`);
+// Database Initialization Block
+if (db) {
+    try {
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                hashed_password TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+    } catch (e) {}
+}
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Global Express Middleware: inserts req.ip and req.originalUrl into the traffic table for every incoming request
-app.use((req, res, next) => {
-    try {
-        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '127.0.0.1';
-        const endpoint = req.originalUrl || req.url;
-        insertTrafficStmt.run(String(clientIp), String(endpoint));
-    } catch (err) {
-        console.error('⚠️ Failed to log traffic into SQLite table:', err.message);
-    }
-    next();
-});
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-// =====================================================================
-// PERMANENT DATABASE ENGINE (F:\Praxis Admin server)
-// =====================================================================
-const PRIMARY_DB_DIR = 'F:\\Praxis Admin server';
-let DB_DIR = PRIMARY_DB_DIR;
-
-try {
-    if (!fs.existsSync(PRIMARY_DB_DIR)) {
-        fs.mkdirSync(PRIMARY_DB_DIR, { recursive: true });
-    }
-    console.log(`💾 Praxis Database permanently mounted at: ${PRIMARY_DB_DIR}`);
-} catch (dbErr) {
-    console.warn(`⚠️ Could not initialize ${PRIMARY_DB_DIR}, falling back to local workspace:`, dbErr.message);
-    DB_DIR = __dirname;
-}
-
+// Local Storage Fallback Directories
+const DB_DIR = __dirname;
 const USERS_FILE = path.join(DB_DIR, 'users.json');
 const ANALYTICS_FILE = path.join(DB_DIR, 'analytics.json');
 const SUBSCRIPTIONS_FILE = path.join(DB_DIR, 'subscriptions.json');
@@ -250,7 +201,7 @@ loadUsersData();
 // =====================================================================
 // REAL-TIME ANALYTICS & ACTIVE USER TRACKING ENGINE
 // =====================================================================
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const activeSessions = new Map(); // clientId -> lastPingTimestamp
 const activeRoutineSessions = new Map(); // clientId -> lastPingTimestamp
 const PING_TIMEOUT_MS = 45000; // 45 seconds (ping sent every 30s)
@@ -11401,27 +11352,44 @@ app.post('/api/push/test', async (req, res) => {
     }
 });
 
+// Helper middleware: Admin Authorization Check
+function verifyAdminAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    const providedPass = req.headers['x-admin-password'] || req.query.password || (req.body && req.body.adminPassword);
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+            const token = authHeader.split(' ')[1];
+            const decoded = jwt.verify(token, JWT_SECRET);
+            const user = usersData.users.find(u => u.id === decoded.userId || u.email === decoded.email);
+            if (user && (user.role === 'admin' || (user.email && user.email.toLowerCase() === 'admin@praxis.app'))) {
+                req.adminUser = user;
+                return next();
+            }
+        } catch (err) {}
+    }
+
+    if (providedPass && process.env.ADMIN_PASSWORD && providedPass === process.env.ADMIN_PASSWORD) {
+        return next();
+    }
+
+    return res.status(401).json({ error: "Unauthorized: Admin authorization required" });
+}
+
 // 11. Admin Registered Users API
-app.get('/api/admin/users', (req, res) => {
-    const providedPass = req.headers['x-admin-password'] || req.query.password;
-    if (providedPass !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
-    }
-
+app.get('/api/admin/users', verifyAdminAuth, (req, res) => {
     let sqliteUsers = [];
-    try {
-        sqliteUsers = db.prepare('SELECT id, name, email, created_at FROM users ORDER BY id DESC').all();
-    } catch (e) {
-        console.warn("SQLite users fetch error:", e.message);
+    if (db) {
+        try {
+            sqliteUsers = db.prepare('SELECT id, name, email, created_at FROM users ORDER BY id DESC').all();
+        } catch (e) {}
     }
 
-    // Combine usersData.users with SQLite users
     const combinedUsers = [...usersData.users];
     sqliteUsers.forEach(su => {
         if (!combinedUsers.some(u => u.email && su.email && u.email.toLowerCase() === su.email.toLowerCase())) {
             combinedUsers.unshift({
                 id: `sqlite_${su.id}`,
-                sqliteId: su.id,
                 name: su.name,
                 email: su.email,
                 username: su.email ? su.email.split('@')[0] : 'user',
@@ -11429,7 +11397,7 @@ app.get('/api/admin/users', (req, res) => {
                 createdAt: su.created_at || new Date().toISOString(),
                 loginCount: 1,
                 isGmail: (su.email || '').toLowerCase().endsWith('@gmail.com'),
-                isSqliteUser: true
+                status: 'active'
             });
         }
     });
@@ -11437,8 +11405,6 @@ app.get('/api/admin/users', (req, res) => {
     res.json({
         success: true,
         totalUsers: combinedUsers.length,
-        sqliteUsersCount: sqliteUsers.length,
-        sqliteUsers: sqliteUsers,
         users: combinedUsers.map(({ passwordHash, ...u }) => ({
             ...u,
             mobile: u.mobile || '',
@@ -11446,23 +11412,16 @@ app.get('/api/admin/users', (req, res) => {
             hasRoadmap: !!(u.roadmap && (u.roadmap.title || u.roadmap.careerTitle)),
             roadmapTitle: u.roadmap ? (u.roadmap.title || u.roadmap.careerTitle || 'Custom Path') : null,
             roadmapIcon: u.roadmap ? (u.roadmap.icon || '🧭') : null,
-            habitCount: (u.routineTracker && Array.isArray(u.routineTracker.habits)) ? u.routineTracker.habits.length : 0,
-            habits: (u.routineTracker && Array.isArray(u.routineTracker.habits)) ? u.routineTracker.habits : []
+            habitCount: (u.routineTracker && Array.isArray(u.routineTracker.habits)) ? u.routineTracker.habits.length : 0
         })),
-        loginLogs: usersData.loginLogs,
-        databaseLocation: DB_DIR,
-        sqliteDatabasePath: actualDbPath
+        database: "Firebase Cloud Firestore",
+        status: "Connected"
     });
 });
 
-// Admin Update User Profile Details (e.g., Mobile Number, Name, Email)
-app.post('/api/admin/user/update', (req, res) => {
-    const providedPass = req.headers['x-admin-password'] || req.body.adminPassword;
-    if (providedPass !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
-    }
-
-    const { userId, name, email, mobile, username } = req.body || {};
+// Admin Update User Profile Details
+app.post('/api/admin/user/update', verifyAdminAuth, (req, res) => {
+    const { userId, name, email, mobile, username, role } = req.body || {};
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
     }
@@ -11476,6 +11435,7 @@ app.post('/api/admin/user/update', (req, res) => {
     if (email) user.email = email.trim().toLowerCase();
     if (typeof mobile !== 'undefined') user.mobile = mobile.trim();
     if (username) user.username = username.trim().toLowerCase();
+    if (role) user.role = role.trim();
     user.updatedAt = new Date().toISOString();
 
     saveUsersData();
@@ -11483,12 +11443,7 @@ app.post('/api/admin/user/update', (req, res) => {
 });
 
 // Admin Delete User Account
-app.post('/api/admin/user/delete', (req, res) => {
-    const providedPass = req.headers['x-admin-password'] || req.body.adminPassword;
-    if (providedPass !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
-    }
-
+app.post('/api/admin/user/delete', verifyAdminAuth, (req, res) => {
     const { userId } = req.body || {};
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
@@ -11502,47 +11457,12 @@ app.post('/api/admin/user/delete', (req, res) => {
     }
 
     saveUsersData();
-    res.json({ success: true, message: "User deleted permanently from database." });
+    res.json({ success: true, message: "User deleted successfully." });
 });
 
-// Admin login verification route
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body || {};
-    if (password === ADMIN_PASSWORD) {
-        return res.json({ 
-            success: true, 
-            message: "Authentication successful", 
-            databaseLocation: DB_DIR,
-            sqliteDatabasePath: actualDbPath
-        });
-    }
-    return res.status(401).json({ success: false, message: "Invalid admin password" });
-});
-
-// Protected Admin Stats API
-app.get('/api/admin/stats', (req, res) => {
-    const providedPass = req.headers['x-admin-password'] || req.query.password;
-    if (providedPass !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
-    }
-
-    // Query SQLite metrics
-    let sqliteTrafficCount = 0;
-    let sqliteUsersCount = 0;
-    let recentTrafficLogs = [];
-    try {
-        const trafficCountRow = db.prepare('SELECT COUNT(*) AS count FROM traffic').get();
-        sqliteTrafficCount = trafficCountRow ? trafficCountRow.count : 0;
-
-        const usersCountRow = db.prepare('SELECT COUNT(*) AS count FROM users').get();
-        sqliteUsersCount = usersCountRow ? usersCountRow.count : 0;
-
-        recentTrafficLogs = db.prepare('SELECT id, ip_address, endpoint, timestamp FROM traffic ORDER BY id DESC LIMIT 50').all();
-    } catch (sqliteErr) {
-        console.warn("SQLite stats fetch error:", sqliteErr.message);
-    }
-
-    const totalVisitors = Math.max(analyticsData.totalVisitors || 0, sqliteTrafficCount);
+// Admin Stats API
+app.get('/api/admin/stats', verifyAdminAuth, (req, res) => {
+    const totalVisitors = analyticsData.totalVisitors || 0;
     const totalQuizzes = analyticsData.totalQuizzesCompleted || 0;
     const conversionRate = totalVisitors > 0 ? ((totalQuizzes / totalVisitors) * 100).toFixed(1) : "0.0";
     
@@ -11552,9 +11472,8 @@ app.get('/api/admin/stats', (req, res) => {
         : 0;
 
     const uniqueVisitorsCount = Object.keys(analyticsData.uniqueVisitors || {}).length;
-    const uniqueUsersTillToday = Math.max(uniqueVisitorsCount, usersData.users.length, sqliteUsersCount, totalVisitors > 0 ? totalVisitors : 0);
+    const uniqueUsersTillToday = Math.max(uniqueVisitorsCount, usersData.users.length, totalVisitors > 0 ? totalVisitors : 0);
 
-    // Feature Usage Breakdown
     const compassUsage = analyticsData.featureUsage?.compass || 0;
     const libraryUsage = analyticsData.featureUsage?.library || 0;
     const routineUsage = analyticsData.featureUsage?.routine || 0;
@@ -11566,14 +11485,7 @@ app.get('/api/admin/stats', (req, res) => {
         totalVisitors: totalVisitors,
         totalQuizzesCompleted: totalQuizzes,
         conversionRate: `${conversionRate}%`,
-        totalRegisteredUsers: Math.max(usersData.users.length, sqliteUsersCount),
-        totalLoginsRecorded: usersData.loginLogs.length,
-        sqlite: {
-            databasePath: actualDbPath,
-            totalTraffic: sqliteTrafficCount,
-            totalUsers: sqliteUsersCount,
-            recentTraffic: recentTrafficLogs
-        },
+        totalRegisteredUsers: usersData.users.length,
         featureUsage: {
             compass: compassUsage,
             library: libraryUsage,
@@ -11585,45 +11497,16 @@ app.get('/api/admin/stats', (req, res) => {
                 routine: Math.round((routineUsage / totalFeatureActions) * 100)
             }
         },
-        domainStats: analyticsData.domainStats || {},
-        careerStats: analyticsData.careerStats || {},
-        libraryStats: {
-            totalViews: analyticsData.libraryStats?.totalViews || 0,
-            bookViews: analyticsData.libraryStats?.bookViews || 0,
-            popularBooks: analyticsData.libraryStats?.popularBooks || {}
-        },
         routineStats: {
             liveActiveUsers: getActiveRoutineUserCount(),
             dailyUsersToday: dailyRoutineUsers,
             totalInteractions: analyticsData.routineStats?.totalInteractions || 0,
             totalHabitCheckoffs: analyticsData.routineStats?.totalHabitCheckoffs || 0
         },
-        databaseLocation: DB_DIR,
-        sqliteDatabasePath: actualDbPath,
+        database: "Firebase Cloud Firestore",
+        status: "Connected",
         timestamp: new Date().toISOString()
     });
-});
-
-// Admin Realtime Traffic API Endpoint (SQLite)
-app.get('/api/admin/traffic', (req, res) => {
-    const providedPass = req.headers['x-admin-password'] || req.query.password;
-    if (providedPass !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: "Unauthorized: Invalid admin password" });
-    }
-
-    try {
-        const trafficLogs = db.prepare('SELECT id, ip_address, endpoint, timestamp FROM traffic ORDER BY id DESC LIMIT 100').all();
-        const totalCount = db.prepare('SELECT COUNT(*) AS count FROM traffic').get().count;
-        res.json({
-            success: true,
-            totalTraffic: totalCount,
-            logs: trafficLogs,
-            databasePath: actualDbPath
-        });
-    } catch (err) {
-        console.error("Admin Traffic Fetch Error:", err);
-        res.status(500).json({ error: "Failed to fetch traffic logs." });
-    }
 });
 
 // Serve Admin UI

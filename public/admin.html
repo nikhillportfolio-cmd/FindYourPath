@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRAXiS Admin Studio | Live Telemetry & Database Hub</title>
+    <title>PRAXiS Admin Studio | Realtime Cloud Monitoring & Database Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -17,6 +17,7 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         outfit: ['Outfit', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
                     },
                     colors: {
                         neoBg: '#e6ecf5',
@@ -49,15 +50,12 @@
             --blue-primary: #3b82f6;
             --lavender-primary: #8b5cf6;
             
-            /* Neomorphic Shadows with Soft Minor Ambient Shadow */
             --shadow-extruded: 8px 8px 18px rgba(166, 180, 203, 0.65), -8px -8px 18px rgba(255, 255, 255, 0.75), 0 4px 12px rgba(0, 0, 0, 0.05);
             --shadow-extruded-sm: 4px 4px 10px rgba(166, 180, 203, 0.55), -4px -4px 10px rgba(255, 255, 255, 0.75), 0 2px 6px rgba(0, 0, 0, 0.04);
             --shadow-extruded-lg: 12px 12px 28px rgba(166, 180, 203, 0.7), -12px -12px 28px rgba(255, 255, 255, 0.75), 0 6px 16px rgba(0, 0, 0, 0.07);
             --shadow-inset: inset 4px 4px 8px rgba(166, 180, 203, 0.55), inset -4px -4px 8px rgba(255, 255, 255, 0.6);
-            --shadow-inset-deep: inset 6px 6px 14px rgba(166, 180, 203, 0.65), inset -6px -6px 14px rgba(255, 255, 255, 0.6);
             --shadow-btn-hover: 9px 9px 20px rgba(166, 180, 203, 0.75), -9px -9px 20px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.06);
             --shadow-accent-blue: 5px 5px 15px rgba(59, 130, 246, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.75), 0 2px 8px rgba(59, 130, 246, 0.15);
-            --shadow-accent-lavender: 5px 5px 15px rgba(139, 92, 246, 0.35), -4px -4px 12px rgba(255, 255, 255, 0.75), 0 2px 8px rgba(139, 92, 246, 0.15);
         }
 
         body {
@@ -71,7 +69,6 @@
             font-family: 'Outfit', sans-serif;
         }
 
-        /* Neomorphic Main Card */
         .neo-card {
             background: var(--bg-base);
             border-radius: 1.25rem;
@@ -92,7 +89,6 @@
             border: 1.5px solid #000000;
         }
 
-        /* Interactive Neomorphic Button */
         .neo-btn {
             background: linear-gradient(145deg, #ffffff, #dce4f2);
             box-shadow: var(--shadow-extruded-sm);
@@ -110,14 +106,13 @@
             border-color: #000000;
         }
 
-        .neo-btn:active, .neo-btn.active {
+        .neo-btn:active, .neo-btn.active, .neo-btn.pressed {
             box-shadow: var(--shadow-inset);
             transform: translateY(1px);
             background: #dce4f2;
             border-color: #000000;
         }
 
-        /* Accent Buttons */
         .neo-btn-primary {
             background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
             box-shadow: var(--shadow-accent-blue);
@@ -134,7 +129,6 @@
             border-color: #000000;
         }
 
-        /* Neomorphic Inset Surfaces */
         .neo-inset {
             background: #dce4f2;
             box-shadow: var(--shadow-inset);
@@ -157,7 +151,6 @@
             border-color: #000000;
         }
 
-        /* Neomorphic Pill & Badge */
         .neo-pill {
             background: linear-gradient(145deg, #ffffff, #dce4f2);
             box-shadow: 3px 3px 7px rgba(166, 180, 203, 0.4), -3px -3px 7px rgba(255, 255, 255, 0.75), 0 2px 5px rgba(0, 0, 0, 0.04);
@@ -165,7 +158,6 @@
             border: 1.5px solid #000000;
         }
 
-        /* Extruded Icon Container */
         .neo-icon {
             background: linear-gradient(145deg, #ffffff, #dce4f2);
             box-shadow: 4px 4px 10px rgba(166, 180, 203, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.75), 0 2px 6px rgba(0, 0, 0, 0.04);
@@ -173,7 +165,6 @@
             border: 1.5px solid #000000;
         }
 
-        /* Live Pulsing Dot */
         .live-dot {
             width: 8px;
             height: 8px;
@@ -184,19 +175,18 @@
             animation: pulse-green 2s infinite;
         }
 
+        .live-dot-red {
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
         @keyframes pulse-green {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-            }
-            70% {
-                transform: scale(1.1);
-                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
-            }
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-            }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
         .spinning {
@@ -208,11 +198,7 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Mobile Adaptations */
         @media (max-width: 640px) {
-            html, body {
-                overflow-x: hidden;
-            }
             .neo-card {
                 padding: 1rem !important;
                 border-radius: 1rem !important;
@@ -226,295 +212,330 @@
 
 <body class="p-3 sm:p-5 md:p-8 overflow-x-hidden min-h-screen">
 
-    <!-- LOGIN MODAL / AUTH OVERLAY -->
-    <div id="auth-modal" class="fixed inset-0 bg-slate-900/20 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
+    <!-- ============================================================== -->
+    <!-- AUTHENTICATION OVERLAY / SECURE ADMIN LOGIN MODAL -->
+    <!-- ============================================================== -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
         <div class="neo-card p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden">
-            <div class="w-14 h-14 neo-icon text-softLavender-500 mx-auto flex items-center justify-center mb-5">
+            <div class="w-14 h-14 neo-icon text-softLavender-500 mx-auto flex items-center justify-center mb-4">
                 <svg class="w-7 h-7 text-softBlue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                 </svg>
             </div>
 
             <h2 class="text-2xl font-bold text-slate-800 mb-1">PRAXiS Admin Studio</h2>
-            <p class="text-xs text-slate-500 mb-4 font-medium">Permanent Telemetry & User Database Server</p>
+            <p class="text-xs text-slate-500 mb-4 font-medium">Realtime Cloud Analytics & Management</p>
 
-            <div class="mb-5 p-2.5 neo-inset text-left text-[11px] text-slate-600 font-mono flex items-center gap-2">
-                <span>💾</span>
-                <span class="truncate">Master DB: <strong>F:\Praxis Admin server</strong></span>
+            <div class="mb-5 p-2.5 neo-inset text-left text-[11px] text-slate-700 font-mono flex items-center justify-between">
+                <span class="flex items-center gap-1.5">☁️ Database: <strong>Firebase Firestore</strong></span>
+                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Cloud Live</span>
             </div>
 
-            <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
-                <div>
-                    <input type="password" id="admin-password-input" placeholder="Security Password (default: admin123)" required
-                        class="neo-input w-full px-4 py-3 text-slate-800 placeholder-slate-400 text-center font-medium text-sm">
-                </div>
-                
-                <p id="login-error" class="text-xs text-rose-500 font-medium hidden"></p>
-
-                <button type="submit" class="w-full py-3 px-4 neo-btn-primary font-bold text-sm tracking-wide">
-                    Unlock Admin Studio
+            <!-- Login Choice Tabs: Google Auth vs Admin Email -->
+            <div class="space-y-4">
+                <button type="button" id="btn-admin-google-login" class="w-full py-3 px-4 neo-btn flex items-center justify-center gap-3 font-bold text-xs text-slate-800 hover:bg-white transition-all">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Sign in with Google Admin</span>
                 </button>
-            </form>
-            <div class="mt-6">
+
+                <div class="flex items-center gap-2 my-2 text-xs text-slate-400">
+                    <div class="h-px bg-slate-300 flex-1"></div>
+                    <span>or email credentials</span>
+                    <div class="h-px bg-slate-300 flex-1"></div>
+                </div>
+
+                <form id="admin-login-form" class="space-y-3">
+                    <input type="email" id="admin-email-input" placeholder="Admin Email (e.g. admin@praxis.app)" required
+                        class="neo-input w-full px-4 py-2.5 text-slate-800 placeholder-slate-400 font-medium text-xs">
+                    <input type="password" id="admin-password-input" placeholder="Admin Password" required
+                        class="neo-input w-full px-4 py-2.5 text-slate-800 placeholder-slate-400 font-medium text-xs">
+                    
+                    <p id="login-error" class="text-xs text-rose-600 font-medium hidden p-2 rounded bg-rose-50 border border-rose-200"></p>
+
+                    <button type="submit" id="btn-admin-email-submit" class="w-full py-2.5 px-4 neo-btn-primary font-bold text-xs tracking-wide">
+                        Unlock Admin Studio
+                    </button>
+                </form>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-slate-300/80">
                 <a href="/praxis" class="text-xs font-semibold text-slate-500 hover:text-softBlue-600 transition-colors inline-flex items-center gap-1">
-                    <span>← Return to PRAXiS Main App</span>
+                    <span>← Return to PRAXiS Home</span>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- MAIN ADMIN STUDIO DASHBOARD -->
-    <div id="admin-dashboard" class="max-w-6xl mx-auto hidden space-y-6">
+    <!-- ============================================================== -->
+    <!-- MAIN REALTIME ADMIN STUDIO DASHBOARD -->
+    <!-- ============================================================== -->
+    <div id="admin-dashboard" class="max-w-7xl mx-auto hidden space-y-6">
         
         <!-- HEADER BAR -->
-        <header class="neo-card p-4 sm:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <header class="neo-card p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
             
             <!-- BRANDING & TITLE -->
-            <div class="flex items-center gap-4 w-full md:w-auto">
-                <div class="w-12 h-12 neo-icon flex items-center justify-center font-extrabold text-xl bg-gradient-to-br from-softLavender-400 to-softBlue-500 text-white shrink-0 shadow-inner">
+            <div class="flex items-center gap-3.5 w-full md:w-auto">
+                <div class="w-11 h-11 neo-icon flex items-center justify-center font-extrabold text-xl bg-gradient-to-br from-softLavender-400 to-softBlue-500 text-white shrink-0 shadow-inner">
                     P
                 </div>
                 <div>
                     <div class="flex items-center gap-2.5 flex-wrap">
-                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Admin Studio & Database</h1>
-                        <span class="neo-pill px-3 py-1 text-xs font-semibold text-slate-600 flex items-center gap-2">
-                            <span class="live-dot"></span> Live Sync
+                        <h1 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">PRAXiS Admin Studio</h1>
+                        <span id="realtime-status-pill" class="neo-pill px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 flex items-center gap-1.5 bg-emerald-50">
+                            <span class="live-dot" id="realtime-dot"></span>
+                            <span id="realtime-status-text">Realtime Live</span>
                         </span>
                     </div>
                     <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-0.5 flex-wrap">
-                        <span>Storage:</span>
-                        <span id="db-location-tag" class="font-mono text-[11px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">F:\Praxis Admin server</span>
-                        <span id="sqlite-location-tag" class="font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">SQLite: D:\database\praxis_data.db</span>
+                        <span>Database:</span>
+                        <span class="font-mono text-[11px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 font-bold">Firebase Cloud Firestore</span>
+                        <span id="db-status-badge" class="font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 font-bold">Connected</span>
                     </div>
                 </div>
             </div>
 
-            <!-- ACTION BUTTONS -->
-            <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end flex-wrap">
-                <span id="last-updated-tag" class="text-[11px] sm:text-xs text-slate-500 font-medium">Syncing...</span>
+            <!-- ACTION BUTTONS & ADMIN PROFILE -->
+            <div class="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end flex-wrap">
+                <span id="last-updated-tag" class="text-[11px] text-slate-500 font-medium font-mono">Syncing...</span>
                 
-                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                    <button onclick="fetchAdminStats()" title="Refresh Stats" class="neo-btn p-2 text-slate-600 hover:text-softBlue-600 cursor-pointer">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button id="btn-manual-refresh" title="Force Refresh Realtime Snapshots" class="neo-btn p-2 text-slate-600 hover:text-softBlue-600 cursor-pointer">
                         <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                         </svg>
                     </button>
+
+                    <a href="/coach.html" class="neo-btn px-2.5 py-1.5 text-xs font-semibold text-slate-700 flex items-center gap-1 hover:text-blue-600">
+                        <span>🎙️ Coach</span>
+                    </a>
 
                     <a href="/praxis#compass" class="neo-btn px-2.5 py-1.5 text-xs font-semibold text-slate-700 flex items-center gap-1 hover:text-blue-600">
                         <span>🧭 Compass</span>
                     </a>
 
                     <a href="/routine.html" class="neo-btn px-2.5 py-1.5 text-xs font-semibold text-slate-700 flex items-center gap-1 hover:text-emerald-600">
-                        <span>🔥 Habit Tracker</span>
+                        <span>🔥 Habits</span>
                     </a>
 
-                    <button onclick="handleLogout()" class="neo-btn px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50/50 cursor-pointer">
-                        Exit
+                    <button id="btn-admin-logout" class="neo-btn px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 cursor-pointer">
+                        Exit Studio
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- TOP METRICS GRID (4 CARDS) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- NAVIGATION TABS -->
+        <nav class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-extrabold select-none">
+            <button onclick="switchAdminSection('overview')" id="tab-btn-overview" class="neo-btn px-3.5 py-2 text-blue-600 bg-white shadow-sm flex items-center gap-1.5">
+                <span>📊</span> Overview
+            </button>
+            <button onclick="switchAdminSection('activity')" id="tab-btn-activity" class="neo-btn px-3.5 py-2 text-slate-700 flex items-center gap-1.5">
+                <span>⚡</span> Live Activity (<span id="tab-activity-count">0</span>)
+            </button>
+            <button onclick="switchAdminSection('users')" id="tab-btn-users" class="neo-btn px-3.5 py-2 text-slate-700 flex items-center gap-1.5">
+                <span>👥</span> Users Directory (<span id="tab-user-count">0</span>)
+            </button>
+            <button onclick="switchAdminSection('coach')" id="tab-btn-coach" class="neo-btn px-3.5 py-2 text-slate-700 flex items-center gap-1.5">
+                <span>🎙️</span> Speech Coach Showcase
+            </button>
+            <button onclick="switchAdminSection('features')" id="tab-btn-features" class="neo-btn px-3.5 py-2 text-slate-700 flex items-center gap-1.5">
+                <span>🥧</span> Feature Analytics
+            </button>
+            <button onclick="switchAdminSection('security')" id="tab-btn-security" class="neo-btn px-3.5 py-2 text-slate-700 flex items-center gap-1.5">
+                <span>🔐</span> Security Audit
+            </button>
+        </nav>
+
+        <!-- ============================================================== -->
+        <!-- SECTION 1: OVERVIEW & TOP METRICS -->
+        <!-- ============================================================== -->
+        <div id="section-overview" class="admin-section space-y-6">
             
-            <!-- CARD 1: LIVE ACTIVE USERS -->
-            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
-                <div>
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="live-dot"></span>
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Live Active Users</span>
-                    </div>
-                    <span id="stat-active-users" class="text-3xl sm:text-4xl font-extrabold text-emerald-600">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Live site sessions now</p>
-                </div>
-                <div class="w-12 h-12 neo-icon text-emerald-500 flex items-center justify-center font-bold text-2xl shrink-0">
-                    🟢
-                </div>
-            </div>
-
-            <!-- CARD 2: UNIQUE USERS TILL TODAY -->
-            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
-                <div>
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Unique Users Till Today</span>
-                    </div>
-                    <span id="stat-unique-users" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Total permanent unique users</p>
-                </div>
-                <div class="w-12 h-12 neo-icon text-softBlue-500 flex items-center justify-center font-bold text-2xl shrink-0">
-                    🌐
-                </div>
-            </div>
-
-            <!-- CARD 3: REGISTERED USERS -->
-            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
-                <div>
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registered Accounts</span>
-                    </div>
-                    <span id="stat-total-users" class="text-3xl sm:text-4xl font-extrabold text-indigo-600">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Verified user records</p>
-                </div>
-                <div class="w-12 h-12 neo-icon text-softLavender-500 flex items-center justify-center font-bold text-2xl shrink-0">
-                    👥
-                </div>
-            </div>
-
-            <!-- CARD 4: TOTAL VISITS & LOGINS -->
-            <div class="neo-card p-5 sm:p-6 flex items-center justify-between">
-                <div>
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">SQLite Traffic Hits</span>
-                    </div>
-                    <span id="stat-total-visitors" class="text-3xl sm:text-4xl font-extrabold text-slate-800">0</span>
-                    <p class="text-[11px] text-slate-400 font-medium mt-1">Middleware logged requests</p>
-                </div>
-                <div class="w-12 h-12 neo-icon text-amber-500 flex items-center justify-center font-bold text-2xl shrink-0">
-                    ⚡
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ===================================================================== -->
-        <!-- FEATURE USAGE ANALYTICS & INTERACTIVE PIE CHART SECTION -->
-        <!-- ===================================================================== -->
-        <div class="neo-card p-5 sm:p-7 space-y-6">
-            
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-300/60 pb-4">
-                <div>
-                    <div class="flex items-center gap-2.5">
-                        <span class="text-xl">🥧</span>
-                        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">Feature Adoption & Usage Intelligence</h2>
-                    </div>
-                    <p class="text-xs text-slate-500 font-medium mt-0.5">Real-time comparison showing which feature users are utilizing most</p>
-                </div>
-                <div id="top-feature-badge" class="neo-pill px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 flex items-center gap-1.5">
-                    <span>👑 Most Used Feature:</span>
-                    <span id="top-feature-name" class="font-extrabold text-indigo-900">Calculating...</span>
-                </div>
-            </div>
-
-            <!-- GRID: PIE CHART + FEATURE BREAKDOWN STAT CARDS -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            <!-- TOP 6 METRICS GRID -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 
-                <!-- LEFT: INTERACTIVE PIE CHART CONTAINER (5 COLS) -->
-                <div class="lg:col-span-5 flex flex-col items-center justify-center p-4 neo-inset rounded-2xl relative min-h-[300px]">
-                    <div class="w-full max-w-[280px] h-[280px] relative flex items-center justify-center">
-                        <canvas id="featureUsagePieChart"></canvas>
+                <!-- Active Now -->
+                <div class="neo-card p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Active Now</span>
+                        <span class="live-dot"></span>
                     </div>
-                    <p class="text-[11px] text-slate-500 font-medium mt-3 text-center">Interactive Telemetry Pie Chart &bull; Auto-Synced</p>
+                    <span id="stat-active-users" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-digital">--</span>
+                    <p class="text-[10px] text-slate-400 font-medium mt-1">Live active sessions</p>
                 </div>
 
-                <!-- RIGHT: FEATURE BREAKDOWN CARDS (7 COLS) -->
-                <div class="lg:col-span-7 space-y-4">
-                    
-                    <!-- FEATURE 1: CAREER COMPASS -->
-                    <div class="neo-card-sm p-4 hover:border-blue-500 transition-colors">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg border border-blue-300">
-                                    🧭
-                                </div>
-                                <div>
-                                    <h3 class="font-extrabold text-slate-800 text-sm">Career Compass & Assessments</h3>
-                                    <p class="text-[11px] text-slate-500 font-medium">Domain quizzes & customized career roadmap generation</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span id="usage-compass-count" class="text-base font-extrabold text-blue-600">0</span>
-                                <span class="text-xs text-slate-400 block font-semibold" id="usage-compass-pct">0%</span>
+                <!-- Registered Users -->
+                <div class="neo-card p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Registered</span>
+                        <span>👥</span>
+                    </div>
+                    <span id="stat-total-users" class="text-2xl sm:text-3xl font-extrabold text-indigo-600 font-digital">--</span>
+                    <p class="text-[10px] text-slate-400 font-medium mt-1">Total user accounts</p>
+                </div>
+
+                <!-- Sessions Today -->
+                <div class="neo-card p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sessions Today</span>
+                        <span>🌐</span>
+                    </div>
+                    <span id="stat-sessions-today" class="text-2xl sm:text-3xl font-extrabold text-slate-800 font-digital">--</span>
+                    <p class="text-[10px] text-slate-400 font-medium mt-1">Daily platform visits</p>
+                </div>
+
+                <!-- Coach Drills Today -->
+                <div class="neo-card p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Coach Drills</span>
+                        <span>🎙️</span>
+                    </div>
+                    <span id="stat-coach-today" class="text-2xl sm:text-3xl font-extrabold text-blue-600 font-digital">--</span>
+                    <p class="text-[10px] text-slate-400 font-medium mt-1">Completed speech sessions</p>
+                </div>
+
+                <!-- Feature Uses Today -->
+                <div class="neo-card p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Feature Uses</span>
+                        <span>🔥</span>
+                    </div>
+                    <span id="stat-features-today" class="text-2xl sm:text-3xl font-extrabold text-amber-600 font-digital">--</span>
+                    <p class="text-[10px] text-slate-400 font-medium mt-1">Compass, Habits, Books</p>
+                </div>
+
+                <!-- Error Count Today -->
+                <div class="neo-card p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Errors</span>
+                        <span>🛡️</span>
+                    </div>
+                    <span id="stat-errors-today" class="text-2xl sm:text-3xl font-extrabold text-slate-700 font-digital">0</span>
+                    <p class="text-[10px] text-slate-400 font-medium mt-1">Captured anomalies</p>
+                </div>
+
+            </div>
+
+            <!-- OVERVIEW CHARTS & HIGHLIGHTS -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- STREAMING ACTIVITY PREVIEW (6 COLS) -->
+                <div class="lg:col-span-6 neo-card p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-300/80 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="live-dot"></span>
+                            <h3 class="text-sm font-extrabold text-slate-800">Live Activity Feed (Realtime)</h3>
+                        </div>
+                        <button onclick="switchAdminSection('activity')" class="text-xs font-bold text-blue-600 hover:underline">View All ➔</button>
+                    </div>
+                    <div id="overview-activity-feed" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        <div class="py-8 text-center text-xs text-slate-400 font-semibold">Listening for live events...</div>
+                    </div>
+                </div>
+
+                <!-- FEATURE DISTRIBUTION SUMMARY (6 COLS) -->
+                <div class="lg:col-span-6 neo-card p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-300/80 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span>🥧</span>
+                            <h3 class="text-sm font-extrabold text-slate-800">Feature Adoption Breakdown</h3>
+                        </div>
+                        <button onclick="switchAdminSection('features')" class="text-xs font-bold text-blue-600 hover:underline">Deep Dive ➔</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div class="neo-inset p-3 rounded-xl flex items-center gap-3">
+                            <span class="text-2xl">🎙️</span>
+                            <div>
+                                <span class="text-[11px] text-slate-500 font-bold block">Coach Drills</span>
+                                <span id="overview-count-coach" class="text-base font-extrabold text-blue-600 font-digital">0</span>
                             </div>
                         </div>
-                        <!-- Progress Bar -->
-                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div id="usage-compass-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        <div class="neo-inset p-3 rounded-xl flex items-center gap-3">
+                            <span class="text-2xl">🧭</span>
+                            <div>
+                                <span class="text-[11px] text-slate-500 font-bold block">Career Compass</span>
+                                <span id="overview-count-compass" class="text-base font-extrabold text-indigo-600 font-digital">0</span>
+                            </div>
+                        </div>
+                        <div class="neo-inset p-3 rounded-xl flex items-center gap-3">
+                            <span class="text-2xl">🔥</span>
+                            <div>
+                                <span class="text-[11px] text-slate-500 font-bold block">Habit Tracker</span>
+                                <span id="overview-count-habits" class="text-base font-extrabold text-emerald-600 font-digital">0</span>
+                            </div>
+                        </div>
+                        <div class="neo-inset p-3 rounded-xl flex items-center gap-3">
+                            <span class="text-2xl">📚</span>
+                            <div>
+                                <span class="text-[11px] text-slate-500 font-bold block">Books Reader</span>
+                                <span id="overview-count-library" class="text-base font-extrabold text-amber-600 font-digital">0</span>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- FEATURE 2: RECOMMENDED BOOKS -->
-                    <div class="neo-card-sm p-4 hover:border-indigo-500 transition-colors">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg border border-indigo-300">
-                                    📚
-                                </div>
-                                <div>
-                                    <h3 class="font-extrabold text-slate-800 text-sm">Recommended Books</h3>
-                                    <p class="text-[11px] text-slate-500 font-medium">Curated roadmap reading, chapter breakdowns & digital preview reader</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span id="usage-library-count" class="text-base font-extrabold text-indigo-600">0</span>
-                                <span class="text-xs text-slate-400 block font-semibold" id="usage-library-pct">0%</span>
-                            </div>
-                        </div>
-                        <!-- Progress Bar -->
-                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div id="usage-library-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <!-- FEATURE 3: HABITAT / ROUTINE TRACKER -->
-                    <div class="neo-card-sm p-4 hover:border-emerald-500 transition-colors">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg border border-emerald-300">
-                                    🔥
-                                </div>
-                                <div>
-                                    <h3 class="font-extrabold text-slate-800 text-sm">Habitat / Routine Tracker</h3>
-                                    <p class="text-[11px] text-slate-500 font-medium">Daily habit check-offs, spreadsheet grid & 24/7 push reminders</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span id="usage-routine-count" class="text-base font-extrabold text-emerald-600">0</span>
-                                <span class="text-xs text-slate-400 block font-semibold" id="usage-routine-pct">0%</span>
-                            </div>
-                        </div>
-                        <!-- Progress Bar -->
-                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div id="usage-routine-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-
                 </div>
 
             </div>
 
         </div>
 
-        <!-- ===================================================================== -->
-        <!-- SEPARATE DEDICATED USER SECTION (PROFILES, GMAIL, MOBILE NUMBERS) -->
-        <!-- ===================================================================== -->
-        <section id="user-management-section" class="neo-card p-5 sm:p-7 space-y-6">
-            
-            <!-- SECTION HEADER & TOOLBAR -->
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-300/60 pb-4">
+        <!-- ============================================================== -->
+        <!-- SECTION 2: LIVE ACTIVITY STREAM -->
+        <!-- ============================================================== -->
+        <div id="section-activity" class="admin-section hidden neo-card p-5 sm:p-7 space-y-5">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-300/80 pb-4">
                 <div>
                     <div class="flex items-center gap-2.5">
-                        <span class="text-xl">👤</span>
-                        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">Registered Users & Profiles Database</h2>
+                        <span class="live-dot"></span>
+                        <h2 class="text-lg font-extrabold text-slate-800">Live User Activity Feed</h2>
                     </div>
-                    <p class="text-xs text-slate-500 font-medium mt-0.5">Permanent records of user names, Gmail addresses, mobile numbers, and active routines</p>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Streamed in realtime from Cloud Firestore (bounded to latest 40 events)</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="neo-pill px-3 py-1 text-xs font-bold text-slate-700">
+                        Total Streamed: <span id="live-activity-badge" class="font-extrabold text-blue-600">0</span>
+                    </span>
+                </div>
+            </div>
+
+            <div id="live-activity-container" class="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
+                <div class="py-12 text-center text-xs text-slate-400 font-semibold">Connecting to Firestore live activity stream...</div>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- SECTION 3: REALTIME USERS DIRECTORY -->
+        <!-- ============================================================== -->
+        <div id="section-users" class="admin-section hidden neo-card p-5 sm:p-7 space-y-6">
+            
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-300/80 pb-4">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">👥</span>
+                        <h2 class="text-lg font-extrabold text-slate-800">Realtime Users Showcase</h2>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Live Firestore user accounts, activity states, and roadmap progress</p>
                 </div>
 
-                <!-- RIGHT ACTIONS: SEARCH & CSV EXPORT -->
                 <div class="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
                     <div class="relative flex-grow md:flex-grow-0">
-                        <input type="text" id="user-search-input" oninput="filterUsersTable()" placeholder="Search Name, Gmail, Mobile..."
+                        <input type="text" id="user-search-input" oninput="applyUserFilters()" placeholder="Search Name, Email, Mobile..."
                             class="neo-input px-3.5 py-2 text-xs w-full md:w-64 placeholder-slate-400 font-medium">
                         <span class="absolute right-3 top-2.5 text-slate-400 text-xs">🔍</span>
                     </div>
 
                     <button onclick="exportUsersToCSV()" class="neo-btn px-3 py-2 text-xs font-bold text-slate-700 flex items-center gap-1.5 hover:text-blue-600">
-                        <span>📥 Export CSV</span>
+                        <span>📥 Export Clean CSV</span>
                     </button>
                 </div>
             </div>
 
-            <!-- QUICK FILTER CHIPS -->
+            <!-- FILTER CHIPS -->
             <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold">
                 <button onclick="setUserFilter('all')" id="filter-btn-all" class="px-3 py-1.5 neo-pill text-blue-600 font-bold bg-white shadow-sm">
                     All Users (<span id="count-chip-all">0</span>)
@@ -522,8 +543,8 @@
                 <button onclick="setUserFilter('gmail')" id="filter-btn-gmail" class="px-3 py-1.5 neo-btn text-slate-600">
                     📧 Gmail Users (<span id="count-chip-gmail">0</span>)
                 </button>
-                <button onclick="setUserFilter('mobile')" id="filter-btn-mobile" class="px-3 py-1.5 neo-btn text-slate-600">
-                    📱 Phone Linked (<span id="count-chip-mobile">0</span>)
+                <button onclick="setUserFilter('active')" id="filter-btn-active" class="px-3 py-1.5 neo-btn text-slate-600">
+                    🟢 Active Today (<span id="count-chip-active">0</span>)
                 </button>
                 <button onclick="setUserFilter('roadmap')" id="filter-btn-roadmap" class="px-3 py-1.5 neo-btn text-slate-600">
                     🧭 Has Roadmap (<span id="count-chip-roadmap">0</span>)
@@ -538,77 +559,215 @@
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="border-b border-slate-300/80 text-slate-500 font-extrabold uppercase tracking-wider">
-                            <th class="py-3 px-3">User Profile</th>
-                            <th class="py-3 px-3">Gmail / Contact</th>
-                            <th class="py-3 px-3">Mobile Number</th>
+                            <th class="py-3 px-3 cursor-pointer hover:text-slate-800" onclick="sortUsersTable('name')">User Profile ⇅</th>
+                            <th class="py-3 px-3 cursor-pointer hover:text-slate-800" onclick="sortUsersTable('email')">Email Address ⇅</th>
+                            <th class="py-3 px-3">Role / Status</th>
                             <th class="py-3 px-3">Career Roadmap</th>
                             <th class="py-3 px-3 text-center">Habits Active</th>
-                            <th class="py-3 px-3">Joined Date</th>
-                            <th class="py-3 px-3 text-center">Logins</th>
+                            <th class="py-3 px-3 cursor-pointer hover:text-slate-800" onclick="sortUsersTable('createdAt')">Joined Date ⇅</th>
                             <th class="py-3 px-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-400 font-semibold">Loading permanent user records...</td>
+                            <td colspan="7" class="py-8 text-center text-slate-400 font-semibold">Loading Firestore users...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-        </section>
+        </div>
 
-        <!-- ===================================================================== -->
-        <!-- REALTIME SQLITE TRAFFIC & DATABASE MONITOR SECTION -->
-        <!-- ===================================================================== -->
-        <section class="neo-card p-5 sm:p-7 space-y-4">
+        <!-- ============================================================== -->
+        <!-- SECTION 4: SPEECH COACH ANALYTICS SHOWCASE -->
+        <!-- ============================================================== -->
+        <div id="section-coach" class="admin-section hidden neo-card p-5 sm:p-7 space-y-6">
             
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-300/60 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <span class="text-xl">⚡</span>
-                    <div>
-                        <h2 class="text-base sm:text-lg font-extrabold text-slate-800">SQLite Realtime Traffic Engine</h2>
-                        <p class="text-xs text-slate-500 font-medium">Logged live by Express Global Middleware into SSD SQLite <code id="traffic-db-subtag" class="text-emerald-700 font-mono">praxis_data.db</code></p>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-300/80 pb-4">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">🎙️</span>
+                        <h2 class="text-lg font-extrabold text-slate-800">PRAXiS Speech Coach Intelligence</h2>
                     </div>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Calculated in real-time from completed speaking sessions (No raw audio stored)</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="neo-pill px-3 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 flex items-center gap-1.5">
-                        <span class="live-dot"></span> <span id="sqlite-traffic-count-badge">0</span> Total Traffic Hits
-                    </span>
+                <span class="neo-pill px-3 py-1 text-xs font-bold text-blue-700 bg-blue-50">
+                    Deterministic Diagnostics Engine
+                </span>
+            </div>
+
+            <!-- COACH KPI CARDS (4 COLUMNS) -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                
+                <div class="neo-card-sm p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 block uppercase">Sessions Today</span>
+                    <span id="coach-kpi-sessions" class="text-2xl font-extrabold text-blue-600 font-digital">0</span>
+                </div>
+
+                <div class="neo-card-sm p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 block uppercase">Avg Overall</span>
+                    <span id="coach-kpi-overall" class="text-2xl font-extrabold text-indigo-600 font-digital">--</span>
+                </div>
+
+                <div class="neo-card-sm p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 block uppercase">Avg Fluency</span>
+                    <span id="coach-kpi-fluency" class="text-2xl font-extrabold text-emerald-600 font-digital">--</span>
+                </div>
+
+                <div class="neo-card-sm p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 block uppercase">Avg Grammar</span>
+                    <span id="coach-kpi-grammar" class="text-2xl font-extrabold text-amber-600 font-digital">--</span>
+                </div>
+
+                <div class="neo-card-sm p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 block uppercase">Avg WPM (Pace)</span>
+                    <span id="coach-kpi-wpm" class="text-2xl font-extrabold text-purple-600 font-digital">--</span>
+                </div>
+
+                <div class="neo-card-sm p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-500 block uppercase">Words Analyzed</span>
+                    <span id="coach-kpi-words" class="text-2xl font-extrabold text-slate-800 font-digital">0</span>
+                </div>
+
+            </div>
+
+            <!-- RECENT COMPLETED SPEECH SESSIONS TABLE -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold text-slate-800">Recent Completed Speaking Sessions</h3>
+                    <span class="text-xs text-slate-400 font-medium">Privacy-safe aggregate metrics</span>
+                </div>
+
+                <div class="overflow-x-auto neo-inset p-3 rounded-2xl">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
+                                <th class="py-2.5 px-3">Session Topic</th>
+                                <th class="py-2.5 px-3">User</th>
+                                <th class="py-2.5 px-3 text-center">Overall Score</th>
+                                <th class="py-2.5 px-3 text-center">Fluency</th>
+                                <th class="py-2.5 px-3 text-center">Grammar</th>
+                                <th class="py-2.5 px-3 text-center">Pace (WPM)</th>
+                                <th class="py-2.5 px-3 text-center">Duration</th>
+                                <th class="py-2.5 px-3 text-right">Completed At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coach-sessions-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
+                            <tr>
+                                <td colspan="8" class="py-6 text-center text-slate-400 font-semibold">No speech sessions recorded yet today.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="overflow-x-auto neo-inset p-3 rounded-2xl max-h-80 overflow-y-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
-                            <th class="py-2.5 px-3">Req ID</th>
-                            <th class="py-2.5 px-3">Client IP Address</th>
-                            <th class="py-2.5 px-3">Target Endpoint / URL</th>
-                            <th class="py-2.5 px-3">Timestamp (UTC)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="traffic-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
-                        <tr>
-                            <td colspan="4" class="py-6 text-center text-slate-400 font-semibold">Listening for incoming HTTP requests...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        </div>
 
-        </section>
-
-        <!-- ===================================================================== -->
-        <!-- LOGIN ACTIVITY AUDIT LOGS SECTION -->
-        <!-- ===================================================================== -->
-        <section class="neo-card p-5 sm:p-7 space-y-4">
+        <!-- ============================================================== -->
+        <!-- SECTION 5: FEATURE ANALYTICS & ADOPTION -->
+        <!-- ============================================================== -->
+        <div id="section-features" class="admin-section hidden neo-card p-5 sm:p-7 space-y-6">
             
-            <div class="flex items-center justify-between border-b border-slate-300/60 pb-3">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-300/80 pb-4">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">🥧</span>
+                        <h2 class="text-lg font-extrabold text-slate-800">Feature Adoption & Telemetry</h2>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Aggregated counters across PRAXiS core tools</p>
+                </div>
+                <div id="top-feature-badge" class="neo-pill px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 flex items-center gap-1.5">
+                    <span>👑 Most Used Today:</span>
+                    <span id="top-feature-name" class="font-extrabold text-indigo-900">Calculating...</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                
+                <!-- PIE CHART (5 COLS) -->
+                <div class="lg:col-span-5 flex flex-col items-center justify-center p-4 neo-inset rounded-2xl relative min-h-[280px]">
+                    <div class="w-full max-w-[260px] h-[260px] relative flex items-center justify-center">
+                        <canvas id="featureUsagePieChart"></canvas>
+                    </div>
+                    <p class="text-[11px] text-slate-500 font-medium mt-2 text-center">Realtime Firestore Telemetry</p>
+                </div>
+
+                <!-- PROGRESS BARS (7 COLS) -->
+                <div class="lg:col-span-7 space-y-3.5">
+                    
+                    <!-- Coach -->
+                    <div class="neo-card-sm p-3.5">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-lg">🎙️</span>
+                                <span class="font-bold text-slate-800 text-xs">Speech Coach & Fluency</span>
+                            </div>
+                            <span id="usage-coach-count" class="text-xs font-extrabold text-blue-600 font-digital">0 sessions</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="usage-coach-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Compass -->
+                    <div class="neo-card-sm p-3.5">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-lg">🧭</span>
+                                <span class="font-bold text-slate-800 text-xs">Career Compass Assessments</span>
+                            </div>
+                            <span id="usage-compass-count" class="text-xs font-extrabold text-indigo-600 font-digital">0 uses</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="usage-compass-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Habits -->
+                    <div class="neo-card-sm p-3.5">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-lg">🔥</span>
+                                <span class="font-bold text-slate-800 text-xs">Routine & Habit Tracker</span>
+                            </div>
+                            <span id="usage-routine-count" class="text-xs font-extrabold text-emerald-600 font-digital">0 check-offs</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="usage-routine-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Books -->
+                    <div class="neo-card-sm p-3.5">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-lg">📚</span>
+                                <span class="font-bold text-slate-800 text-xs">Recommended Books Library</span>
+                            </div>
+                            <span id="usage-library-count" class="text-xs font-extrabold text-amber-600 font-digital">0 views</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="usage-library-bar" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- SECTION 6: SECURITY & AUDIT TRAIL -->
+        <!-- ============================================================== -->
+        <div id="section-security" class="admin-section hidden neo-card p-5 sm:p-7 space-y-4">
+            
+            <div class="flex items-center justify-between border-b border-slate-300/80 pb-3">
                 <div class="flex items-center gap-2">
                     <span class="text-xl">🔐</span>
-                    <h2 class="text-base sm:text-lg font-extrabold text-slate-800">Security & Authentication Audit Trail</h2>
+                    <h2 class="text-base sm:text-lg font-extrabold text-slate-800">Security & Administration Audit Trail</h2>
                 </div>
-                <span class="text-xs font-bold text-slate-500">Total Audits: <span id="log-count-badge">0</span></span>
+                <span class="text-xs font-bold text-slate-500">Audit Events: <span id="audit-count-badge">0</span></span>
             </div>
 
             <div class="overflow-x-auto neo-inset p-3 rounded-2xl max-h-80 overflow-y-auto">
@@ -616,35 +775,34 @@
                     <thead>
                         <tr class="border-b border-slate-300/80 text-slate-500 font-bold uppercase tracking-wider">
                             <th class="py-2.5 px-3">Timestamp</th>
-                            <th class="py-2.5 px-3">User / Identity</th>
-                            <th class="py-2.5 px-3">Email Address</th>
-                            <th class="py-2.5 px-3">IP Address</th>
-                            <th class="py-2.5 px-3">Device / User-Agent</th>
-                            <th class="py-2.5 px-3">Status</th>
+                            <th class="py-2.5 px-3">Admin Email</th>
+                            <th class="py-2.5 px-3">Action</th>
+                            <th class="py-2.5 px-3">Target User</th>
+                            <th class="py-2.5 px-3">Details</th>
                         </tr>
                     </thead>
-                    <tbody id="logs-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
+                    <tbody id="audit-table-body" class="divide-y divide-slate-200/80 text-slate-700 font-medium">
                         <tr>
-                            <td colspan="6" class="py-6 text-center text-slate-400 font-semibold">Loading login telemetry logs...</td>
+                            <td colspan="5" class="py-6 text-center text-slate-400 font-semibold">No audit logs recorded yet.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-        </section>
+        </div>
 
         <!-- FOOTER -->
         <footer class="text-center text-xs text-slate-400 py-4 font-medium flex items-center justify-center gap-2">
             <span>PRAXiS Admin Studio</span>
             <span>&bull;</span>
-            <span>Permanent Database: F:\Praxis Admin server</span>
+            <span>Cloud Persistence: Firebase Firestore</span>
         </footer>
 
     </div>
 
-    <!-- ===================================================================== -->
-    <!-- USER DETAILS & EDIT MODAL -->
-    <!-- ===================================================================== -->
+    <!-- ============================================================== -->
+    <!-- USER INSPECTION & EDIT MODAL -->
+    <!-- ============================================================== -->
     <div id="user-inspect-modal" class="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4 hidden">
         <div class="neo-card p-6 max-w-2xl w-full relative max-h-[90vh] overflow-y-auto space-y-5">
             
@@ -652,8 +810,8 @@
                 <div class="flex items-center gap-3">
                     <img id="modal-user-avatar" src="" class="w-12 h-12 rounded-full border border-slate-300 bg-slate-200 object-cover">
                     <div>
-                        <h3 id="modal-user-name" class="text-lg font-extrabold text-slate-800">User Details</h3>
-                        <p id="modal-user-username" class="text-xs text-blue-600 font-bold">@username</p>
+                        <h3 id="modal-user-name" class="text-lg font-extrabold text-slate-800">User Profile</h3>
+                        <p id="modal-user-email" class="text-xs text-blue-600 font-bold">user@email.com</p>
                     </div>
                 </div>
                 <button onclick="closeUserModal()" class="neo-btn w-8 h-8 flex items-center justify-center text-slate-600 font-bold text-base hover:text-rose-600">✕</button>
@@ -665,11 +823,11 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Display Name</label>
                         <input type="text" id="modal-input-name" required class="neo-input w-full px-3.5 py-2 text-xs font-medium">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Gmail / Email</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
                         <input type="email" id="modal-input-email" required class="neo-input w-full px-3.5 py-2 text-xs font-medium">
                     </div>
                     <div>
@@ -677,22 +835,24 @@
                         <input type="tel" id="modal-input-mobile" placeholder="+91 98765 43210" class="neo-input w-full px-3.5 py-2 text-xs font-medium">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Username</label>
-                        <input type="text" id="modal-input-username" class="neo-input w-full px-3.5 py-2 text-xs font-medium">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Account Role</label>
+                        <select id="modal-input-role" class="neo-input w-full px-3.5 py-2 text-xs font-bold text-slate-800">
+                            <option value="student">Student / User</option>
+                            <option value="admin">Administrator</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between pt-2">
-                    <span id="modal-save-status" class="text-xs font-semibold text-emerald-600 hidden">✓ Saved permanently to F:\Praxis Admin server</span>
+                    <span id="modal-save-status" class="text-xs font-semibold text-emerald-600 hidden">✓ Saved to Cloud Firestore</span>
                     <button type="submit" class="neo-btn-primary px-4 py-2 text-xs font-bold ml-auto">
-                        💾 Save Changes Permanently
+                        💾 Save to Cloud
                     </button>
                 </div>
             </form>
 
-            <!-- ROADMAP & HABIT TELEMETRY FOR THIS USER -->
+            <!-- ROADMAP & HABIT TELEMETRY -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-300">
-                <!-- User Roadmap -->
                 <div class="neo-inset p-3.5 rounded-xl">
                     <h4 class="text-xs font-extrabold text-slate-800 mb-2 flex items-center gap-1.5">
                         <span>🧭</span> Career Focus / Roadmap
@@ -702,10 +862,9 @@
                     </div>
                 </div>
 
-                <!-- User Active Habits -->
                 <div class="neo-inset p-3.5 rounded-xl">
                     <h4 class="text-xs font-extrabold text-slate-800 mb-2 flex items-center gap-1.5">
-                        <span>🔥</span> Habitat Tracker Habits (<span id="modal-habits-count">0</span>)
+                        <span>🔥</span> Active Habits (<span id="modal-habits-count">0</span>)
                     </h4>
                     <div id="modal-habits-content" class="text-xs text-slate-600 font-medium max-h-32 overflow-y-auto space-y-1">
                         No active habits tracked.
@@ -716,204 +875,568 @@
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD SCRIPT -->
-    <script>
-        let adminPassword = localStorage.getItem('praxis_admin_pwd') || sessionStorage.getItem('praxis_admin_pwd') || '';
-        let statsInterval = null;
-        let featureChartInstance = null;
+    <!-- FIREBASE CLIENT MODULES -->
+    <script type="module">
+        import { 
+            initFirebase, 
+            getFirestoreDb, 
+            getFirebaseAuth, 
+            loginWithGoogle, 
+            loginWithEmail, 
+            logoutUser, 
+            isUserAdmin,
+            getTodayDateString,
+            recordAdminAudit
+        } from "/app-firebase.js";
+
+        import { 
+            collection, 
+            doc, 
+            getDoc, 
+            getDocs, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            query, 
+            orderBy, 
+            limit, 
+            onSnapshot,
+            where 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        // Global State Variables
+        let db = null;
+        let auth = null;
+        let currentAdminUser = null;
+        let liveUnsubscribes = [];
         let allUsersList = [];
         let currentFilterType = 'all';
+        let currentSortField = 'createdAt';
+        let sortAsc = false;
+        let featureChartInstance = null;
+        let lastSyncTime = Date.now();
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (adminPassword) {
-                verifyAndShowDashboard();
+        // -------------------------------------------------------------
+        // 1. INITIALIZATION & AUTH STATE LISTENER
+        // -------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initFirebase();
+            db = getFirestoreDb();
+            auth = getFirebaseAuth();
+
+            // Bind Login Handlers
+            document.getElementById('btn-admin-google-login')?.addEventListener('click', handleGoogleAdminLogin);
+            document.getElementById('admin-login-form')?.addEventListener('submit', handleEmailAdminLogin);
+            document.getElementById('btn-admin-logout')?.addEventListener('click', handleAdminLogout);
+            document.getElementById('btn-manual-refresh')?.addEventListener('click', forceManualRefresh);
+
+            if (auth) {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        const adminStatus = isUserAdmin(user);
+                        if (adminStatus) {
+                            currentAdminUser = user;
+                            showDashboardUI();
+                            startRealtimeFirestoreListeners();
+                        } else {
+                            // Check role document in Firestore
+                            const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
+                            if (userDoc && userDoc.exists() && userDoc.data().role === 'admin') {
+                                currentAdminUser = user;
+                                showDashboardUI();
+                                startRealtimeFirestoreListeners();
+                            } else {
+                                showLoginError("Access Denied: This Google account does not have Administrator privileges.");
+                                document.getElementById('auth-modal').classList.remove('hidden');
+                                document.getElementById('admin-dashboard').classList.add('hidden');
+                            }
+                        }
+                    } else {
+                        currentAdminUser = null;
+                        stopRealtimeFirestoreListeners();
+                        document.getElementById('auth-modal').classList.remove('hidden');
+                        document.getElementById('admin-dashboard').classList.add('hidden');
+                    }
+                });
             }
+
+            // Start clock ticker for last update
+            setInterval(updateLastUpdatedBadge, 1000);
         });
 
-        async function handleLogin(event) {
-            event.preventDefault();
-            const passwordInput = document.getElementById('admin-password-input');
+        async function handleGoogleAdminLogin() {
             const errorEl = document.getElementById('login-error');
-            const pwd = passwordInput.value.trim();
-
-            if (!pwd) return;
+            if (errorEl) errorEl.classList.add('hidden');
 
             try {
-                const res = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: pwd })
-                });
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    adminPassword = pwd;
-                    localStorage.setItem('praxis_admin_pwd', pwd);
-                    sessionStorage.setItem('praxis_admin_pwd', pwd);
-                    errorEl.classList.add('hidden');
-                    if (data.databaseLocation) {
-                        const dbTag = document.getElementById('db-location-tag');
-                        if (dbTag) dbTag.innerText = data.databaseLocation;
+                const user = await loginWithGoogle();
+                if (user && !isUserAdmin(user)) {
+                    const userDoc = await getDoc(doc(db, "users", user.uid)).catch(() => null);
+                    if (!userDoc || !userDoc.exists() || userDoc.data().role !== 'admin') {
+                        showLoginError("Access Denied: Unauthorized administrator account.");
+                        await logoutUser();
                     }
-                    verifyAndShowDashboard();
-                } else {
-                    errorEl.innerText = data.message || "Invalid Security Password";
-                    errorEl.classList.remove('hidden');
                 }
             } catch (err) {
-                errorEl.innerText = "Connection error. Ensure server is running.";
+                showLoginError(err.message || "Google Sign-In failed.");
+            }
+        }
+
+        async function handleEmailAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('admin-email-input').value.trim();
+            const password = document.getElementById('admin-password-input').value;
+            const submitBtn = document.getElementById('btn-admin-email-submit');
+
+            if (!email || !password) return;
+
+            try {
+                if (submitBtn) submitBtn.innerText = "Authenticating...";
+                const user = await loginWithEmail(email, password);
+                if (user && !isUserAdmin(user)) {
+                    showLoginError("Access Denied: User does not have Administrator role.");
+                    await logoutUser();
+                }
+            } catch (err) {
+                showLoginError("Invalid admin credentials or network error.");
+            } finally {
+                if (submitBtn) submitBtn.innerText = "Unlock Admin Studio";
+            }
+        }
+
+        function showLoginError(msg) {
+            const errorEl = document.getElementById('login-error');
+            if (errorEl) {
+                errorEl.innerText = `⚠️ ${msg}`;
                 errorEl.classList.remove('hidden');
             }
         }
 
-        function verifyAndShowDashboard() {
+        async function handleAdminLogout() {
+            stopRealtimeFirestoreListeners();
+            await logoutUser();
+            window.location.href = "/praxis";
+        }
+
+        function showDashboardUI() {
             document.getElementById('auth-modal').classList.add('hidden');
             document.getElementById('admin-dashboard').classList.remove('hidden');
-            
-            fetchAdminStats();
-
-            if (!statsInterval) {
-                statsInterval = setInterval(fetchAdminStats, 4000);
-            }
+            lastSyncTime = Date.now();
         }
 
-        function handleLogout() {
-            localStorage.removeItem('praxis_admin_pwd');
-            sessionStorage.removeItem('praxis_admin_pwd');
-            adminPassword = '';
-            if (statsInterval) {
-                clearInterval(statsInterval);
-                statsInterval = null;
-            }
-            document.getElementById('admin-dashboard').classList.add('hidden');
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
+        // -------------------------------------------------------------
+        // 2. REALTIME FIRESTORE LISTENERS (ZERO POLLING)
+        // -------------------------------------------------------------
+        function startRealtimeFirestoreListeners() {
+            if (!db) return;
+            stopRealtimeFirestoreListeners();
 
-        async function fetchAdminStats() {
-            if (!adminPassword) return;
+            const today = getTodayDateString();
 
-            const refreshIcon = document.getElementById('refresh-icon');
-            if (refreshIcon) refreshIcon.classList.add('spinning');
-
+            // 1. Daily Analytics Aggregate Listener
             try {
-                const res = await fetch('/api/admin/stats', {
-                    headers: { 'x-admin-password': adminPassword }
-                });
-
-                if (res.status === 401) {
-                    handleLogout();
-                    alert("Admin session expired or password invalid.");
-                    return;
-                }
-
-                const data = await res.json();
-                renderStats(data);
-                renderFeatureUsagePieChart(data.featureUsage);
-
-                // Fetch registered users & login telemetry
-                fetchAdminUsersData();
-
-                const now = new Date();
-                document.getElementById('last-updated-tag').innerText = `Synced ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-            } catch (err) {
-                console.warn("Failed to fetch admin stats:", err);
-                document.getElementById('last-updated-tag').innerText = "Sync Failed";
-            } finally {
-                if (refreshIcon) {
-                    setTimeout(() => refreshIcon.classList.remove('spinning'), 350);
-                }
-            }
-        }
-
-        async function fetchAdminUsersData() {
-            try {
-                const res = await fetch('/api/admin/users', {
-                    headers: { 'x-admin-password': adminPassword }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    allUsersList = data.users || [];
-                    
-                    updateUserFilterChips(allUsersList);
-                    filterUsersTable();
-                    renderLogsTable(data.loginLogs || []);
-                    
-                    const lBadge = document.getElementById('log-count-badge');
-                    if (lBadge) lBadge.innerText = (data.loginLogs || []).length;
-
-                    const statUsers = document.getElementById('stat-total-users');
-                    if (statUsers) statUsers.innerText = allUsersList.length;
-
-                    if (data.databaseLocation) {
-                        const dbTag = document.getElementById('db-location-tag');
-                        if (dbTag) dbTag.innerText = data.databaseLocation;
+                const dailyRef = doc(db, "analyticsDaily", today);
+                const unsubDaily = onSnapshot(dailyRef, (docSnap) => {
+                    lastSyncTime = Date.now();
+                    if (docSnap.exists()) {
+                        renderDailyAnalytics(docSnap.data());
+                    } else {
+                        renderDailyAnalytics({
+                            date: today,
+                            sessions: 0,
+                            coachSessions: 0,
+                            compassUses: 0,
+                            libraryUses: 0,
+                            habitUses: 0,
+                            errors: 0
+                        });
                     }
+                }, (err) => {
+                    handleFirestoreError(err);
+                });
+                liveUnsubscribes.push(unsubDaily);
+            } catch (e) {}
+
+            // 2. Live Activity Feed Listener (Limit 40 items)
+            try {
+                const actQuery = query(collection(db, "liveActivity"), orderBy("timestamp", "desc"), limit(40));
+                const unsubAct = onSnapshot(actQuery, (querySnap) => {
+                    lastSyncTime = Date.now();
+                    const activities = [];
+                    querySnap.forEach(d => activities.push({ id: d.id, ...d.data() }));
+                    renderLiveActivityFeed(activities);
+                }, (err) => {
+                    handleFirestoreError(err);
+                });
+                liveUnsubscribes.push(unsubAct);
+            } catch (e) {}
+
+            // 3. Realtime Users Listener (Order by createdAt desc)
+            try {
+                const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(100));
+                const unsubUsers = onSnapshot(usersQuery, (querySnap) => {
+                    lastSyncTime = Date.now();
+                    const users = [];
+                    querySnap.forEach(d => users.push({ id: d.id, ...d.data() }));
+                    allUsersList = users;
+                    applyUserFilters();
+                }, (err) => {
+                    handleFirestoreError(err);
+                });
+                liveUnsubscribes.push(unsubUsers);
+            } catch (e) {}
+
+            // 4. Speech Coach Recent Sessions Listener (Limit 20)
+            try {
+                const coachQuery = query(collection(db, "coachSessions"), orderBy("createdAt", "desc"), limit(20));
+                const unsubCoach = onSnapshot(coachQuery, (querySnap) => {
+                    lastSyncTime = Date.now();
+                    const sessions = [];
+                    querySnap.forEach(d => sessions.push({ id: d.id, ...d.data() }));
+                    renderCoachShowcase(sessions);
+                }, (err) => {
+                    handleFirestoreError(err);
+                });
+                liveUnsubscribes.push(unsubCoach);
+            } catch (e) {}
+
+            // 5. Admin Security Audit Listener (Limit 30)
+            try {
+                const auditQuery = query(collection(db, "adminAudit"), orderBy("timestamp", "desc"), limit(30));
+                const unsubAudit = onSnapshot(auditQuery, (querySnap) => {
+                    lastSyncTime = Date.now();
+                    const audits = [];
+                    querySnap.forEach(d => audits.push({ id: d.id, ...d.data() }));
+                    renderAuditTrail(audits);
+                }, (err) => {
+                    handleFirestoreError(err);
+                });
+                liveUnsubscribes.push(unsubAudit);
+            } catch (e) {}
+
+            updateConnectionStatus(true);
+        }
+
+        function stopRealtimeFirestoreListeners() {
+            liveUnsubscribes.forEach(unsub => {
+                try { unsub(); } catch(e){}
+            });
+            liveUnsubscribes = [];
+        }
+
+        function handleFirestoreError(err) {
+            console.warn("[PRAXiS Admin] Realtime listener notice:", err.message);
+            updateConnectionStatus(false, err.message);
+        }
+
+        function updateConnectionStatus(isConnected, errorMsg = "") {
+            const dot = document.getElementById('realtime-dot');
+            const pillText = document.getElementById('realtime-status-text');
+            const dbBadge = document.getElementById('db-status-badge');
+
+            if (isConnected) {
+                if (dot) dot.className = "live-dot";
+                if (pillText) pillText.innerText = "Realtime Live";
+                if (dbBadge) {
+                    dbBadge.innerText = "Connected";
+                    dbBadge.className = "font-mono text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 font-bold";
                 }
-            } catch (err) {
-                console.warn("Failed to fetch admin users data:", err);
+            } else {
+                if (dot) dot.className = "live-dot-red";
+                if (pillText) pillText.innerText = "Disconnected / Retrying...";
+                if (dbBadge) {
+                    dbBadge.innerText = "Offline";
+                    dbBadge.className = "font-mono text-[11px] text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-300 font-bold";
+                }
             }
         }
 
-        function updateUserFilterChips(users) {
-            const countAll = users.length;
-            const countGmail = users.filter(u => u.isGmail || (u.email && u.email.toLowerCase().endsWith('@gmail.com'))).length;
-            const countMobile = users.filter(u => u.mobile && u.mobile.trim() !== '').length;
-            const countRoadmap = users.filter(u => u.hasRoadmap || (u.roadmap && u.roadmap.title)).length;
-            const countHabits = users.filter(u => u.habitCount > 0).length;
-
-            const elAll = document.getElementById('count-chip-all');
-            const elGmail = document.getElementById('count-chip-gmail');
-            const elMobile = document.getElementById('count-chip-mobile');
-            const elRoadmap = document.getElementById('count-chip-roadmap');
-            const elHabits = document.getElementById('count-chip-habits');
-
-            if (elAll) elAll.innerText = countAll;
-            if (elGmail) elGmail.innerText = countGmail;
-            if (elMobile) elMobile.innerText = countMobile;
-            if (elRoadmap) elRoadmap.innerText = countRoadmap;
-            if (elHabits) elHabits.innerText = countHabits;
+        function updateLastUpdatedBadge() {
+            const tag = document.getElementById('last-updated-tag');
+            if (!tag) return;
+            const diffSeconds = Math.max(0, Math.floor((Date.now() - lastSyncTime) / 1000));
+            if (diffSeconds < 5) {
+                tag.innerText = "Synced: Just now";
+            } else {
+                tag.innerText = `Synced: ${diffSeconds}s ago`;
+            }
         }
 
-        function setUserFilter(type) {
-            currentFilterType = type;
-            const buttons = ['all', 'gmail', 'mobile', 'roadmap', 'habits'];
+        function forceManualRefresh() {
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('spinning');
+            startRealtimeFirestoreListeners();
+            setTimeout(() => {
+                if (icon) icon.classList.remove('spinning');
+            }, 600);
+        }
+
+        // -------------------------------------------------------------
+        // 3. RENDER METRICS & OVERVIEW
+        // -------------------------------------------------------------
+        function renderDailyAnalytics(data) {
+            const sessions = data.sessions || 0;
+            const coach = data.coachSessions || 0;
+            const compass = data.compassUses || 0;
+            const library = data.libraryUses || 0;
+            const habits = data.habitUses || 0;
+            const errors = data.errors || 0;
+            const totalFeatures = coach + compass + library + habits;
+
+            const elSessions = document.getElementById('stat-sessions-today');
+            const elCoach = document.getElementById('stat-coach-today');
+            const elFeatures = document.getElementById('stat-features-today');
+            const elErrors = document.getElementById('stat-errors-today');
+
+            if (elSessions) elSessions.innerText = sessions;
+            if (elCoach) elCoach.innerText = coach;
+            if (elFeatures) elFeatures.innerText = totalFeatures;
+            if (elErrors) elErrors.innerText = errors;
+
+            // Overview Breakdown Cards
+            const elOverCoach = document.getElementById('overview-count-coach');
+            const elOverCompass = document.getElementById('overview-count-compass');
+            const elOverHabits = document.getElementById('overview-count-habits');
+            const elOverLib = document.getElementById('overview-count-library');
+
+            if (elOverCoach) elOverCoach.innerText = coach;
+            if (elOverCompass) elOverCompass.innerText = compass;
+            if (elOverHabits) elOverHabits.innerText = habits;
+            if (elOverLib) elOverLib.innerText = library;
+
+            // Feature Section Counters & Progress Bars
+            renderFeatureAdoptionUI({ coach, compass, library, habits });
+        }
+
+        function renderFeatureAdoptionUI(features) {
+            const { coach, compass, library, habits } = features;
+            const total = coach + compass + library + habits || 1;
+
+            const elCoachCount = document.getElementById('usage-coach-count');
+            const elCompassCount = document.getElementById('usage-compass-count');
+            const elRoutineCount = document.getElementById('usage-routine-count');
+            const elLibCount = document.getElementById('usage-library-count');
+
+            if (elCoachCount) elCoachCount.innerText = `${coach} sessions (${Math.round((coach / total) * 100)}%)`;
+            if (elCompassCount) elCompassCount.innerText = `${compass} uses (${Math.round((compass / total) * 100)}%)`;
+            if (elRoutineCount) elRoutineCount.innerText = `${habits} check-offs (${Math.round((habits / total) * 100)}%)`;
+            if (elLibCount) elLibCount.innerText = `${library} views (${Math.round((library / total) * 100)}%)`;
+
+            const elCoachBar = document.getElementById('usage-coach-bar');
+            const elCompassBar = document.getElementById('usage-compass-bar');
+            const elRoutineBar = document.getElementById('usage-routine-bar');
+            const elLibBar = document.getElementById('usage-library-bar');
+
+            if (elCoachBar) elCoachBar.style.width = `${(coach / total) * 100}%`;
+            if (elCompassBar) elCompassBar.style.width = `${(compass / total) * 100}%`;
+            if (elRoutineBar) elRoutineBar.style.width = `${(habits / total) * 100}%`;
+            if (elLibBar) elLibBar.style.width = `${(library / total) * 100}%`;
+
+            // Top feature crown
+            const crownEl = document.getElementById('top-feature-name');
+            if (crownEl) {
+                if (coach >= compass && coach >= habits && coach >= library && coach > 0) crownEl.innerText = "🎙️ Speech Coach";
+                else if (compass >= coach && compass >= habits && compass >= library && compass > 0) crownEl.innerText = "🧭 Career Compass";
+                else if (habits >= coach && habits >= compass && habits >= library && habits > 0) crownEl.innerText = "🔥 Routine Tracker";
+                else if (library > 0) crownEl.innerText = "📚 Books Library";
+                else crownEl.innerText = "🎙️ Speech Coach (Active)";
+            }
+
+            renderFeaturePieChart([coach, compass, habits, library]);
+        }
+
+        function renderFeaturePieChart(dataArr) {
+            const ctx = document.getElementById('featureUsagePieChart');
+            if (!ctx) return;
+
+            const chartData = {
+                labels: ['🎙️ Speech Coach', '🧭 Compass', '🔥 Routine Tracker', '📚 Books'],
+                datasets: [{
+                    data: dataArr.map(v => v || 0),
+                    backgroundColor: ['#3b82f6', '#6366f1', '#10b981', '#f59e0b'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            };
+
+            if (featureChartInstance) {
+                featureChartInstance.data.datasets[0].data = dataArr;
+                featureChartInstance.update();
+            } else {
+                featureChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '64%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { family: 'Inter', size: 10, weight: '600' }, color: '#334155', padding: 8 }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // -------------------------------------------------------------
+        // 4. RENDER LIVE ACTIVITY FEED
+        // -------------------------------------------------------------
+        function renderLiveActivityFeed(activities) {
+            const container = document.getElementById('live-activity-container');
+            const overviewFeed = document.getElementById('overview-activity-feed');
+            const badge = document.getElementById('live-activity-badge');
+            const tabBadge = document.getElementById('tab-activity-count');
+
+            if (badge) badge.innerText = activities.length;
+            if (tabBadge) tabBadge.innerText = activities.length;
+
+            if (activities.length === 0) {
+                const emptyHtml = `<div class="py-8 text-center text-xs text-slate-400 font-semibold">No live events recorded yet today.</div>`;
+                if (container) container.innerHTML = emptyHtml;
+                if (overviewFeed) overviewFeed.innerHTML = emptyHtml;
+                return;
+            }
+
+            const html = activities.map(act => {
+                const timeStr = act.timestamp ? formatRelativeTime(act.timestamp) : 'Just now';
+                let icon = '⚡';
+                let badgeColor = 'bg-blue-100 text-blue-800 border-blue-200';
+
+                if (act.type === 'COACH_SESSION') {
+                    icon = '🎙️';
+                    badgeColor = 'bg-indigo-100 text-indigo-800 border-indigo-200';
+                } else if (act.type === 'USER_REGISTER') {
+                    icon = '🎉';
+                    badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                } else if (act.type === 'USER_LOGIN') {
+                    icon = '🔑';
+                    badgeColor = 'bg-slate-100 text-slate-800 border-slate-200';
+                } else if (act.type === 'HABIT_CHECK') {
+                    icon = '🔥';
+                    badgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
+                }
+
+                return `
+                    <div class="neo-card-sm p-3 flex items-center justify-between gap-3 bg-white/70 border border-slate-200/80 hover:border-slate-400 transition-all">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-xl ${badgeColor} border flex items-center justify-center text-sm shrink-0">
+                                ${icon}
+                            </span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">${escapeHtml(act.summary || 'User interaction')}</p>
+                                <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(act.userName || 'Explorer')} &bull; ${escapeHtml(act.type || 'EVENT')}</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono shrink-0">${timeStr}</span>
+                    </div>
+                `;
+            }).join('');
+
+            if (container) container.innerHTML = html;
+            if (overviewFeed) overviewFeed.innerHTML = activities.slice(0, 5).map(act => `
+                <div class="p-2.5 bg-white/60 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                    <span class="font-bold text-slate-800 truncate max-w-[280px]">${escapeHtml(act.summary || '')}</span>
+                    <span class="text-[10px] text-slate-400 font-mono shrink-0 ml-2">${act.timestamp ? formatRelativeTime(act.timestamp) : ''}</span>
+                </div>
+            `).join('');
+        }
+
+        // -------------------------------------------------------------
+        // 5. RENDER USERS DIRECTORY
+        // -------------------------------------------------------------
+        window.setUserFilter = function(filter) {
+            currentFilterType = filter;
+            const buttons = ['all', 'gmail', 'active', 'roadmap', 'habits'];
             buttons.forEach(b => {
                 const btn = document.getElementById(`filter-btn-${b}`);
                 if (btn) {
-                    if (b === type) {
+                    if (b === filter) {
                         btn.className = "px-3 py-1.5 neo-pill text-blue-600 font-bold bg-white shadow-sm";
                     } else {
                         btn.className = "px-3 py-1.5 neo-btn text-slate-600";
                     }
                 }
             });
-            filterUsersTable();
-        }
+            applyUserFilters();
+        };
 
-        function filterUsersTable() {
+        window.sortUsersTable = function(field) {
+            if (currentSortField === field) {
+                sortAsc = !sortAsc;
+            } else {
+                currentSortField = field;
+                sortAsc = true;
+            }
+            applyUserFilters();
+        };
+
+        function applyUserFilters() {
             const searchInput = document.getElementById('user-search-input');
-            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const queryText = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
+            // Filter
             let filtered = allUsersList.slice();
+            const todayStr = getTodayDateString();
 
             if (currentFilterType === 'gmail') {
-                filtered = filtered.filter(u => u.isGmail || (u.email && u.email.toLowerCase().endsWith('@gmail.com')));
-            } else if (currentFilterType === 'mobile') {
-                filtered = filtered.filter(u => u.mobile && u.mobile.trim() !== '');
+                filtered = filtered.filter(u => (u.email || '').toLowerCase().endsWith('@gmail.com'));
+            } else if (currentFilterType === 'active') {
+                filtered = filtered.filter(u => u.lastSeenAt && u.lastSeenAt.startsWith(todayStr));
             } else if (currentFilterType === 'roadmap') {
-                filtered = filtered.filter(u => u.hasRoadmap || (u.roadmap && u.roadmap.title));
+                filtered = filtered.filter(u => !!u.hasRoadmap || !!u.roadmap);
             } else if (currentFilterType === 'habits') {
                 filtered = filtered.filter(u => u.habitCount > 0);
             }
 
-            if (query) {
+            if (queryText) {
                 filtered = filtered.filter(u => 
-                    (u.name && u.name.toLowerCase().includes(query)) ||
-                    (u.email && u.email.toLowerCase().includes(query)) ||
-                    (u.mobile && u.mobile.toLowerCase().includes(query)) ||
-                    (u.username && u.username.toLowerCase().includes(query))
+                    (u.displayName && u.displayName.toLowerCase().includes(queryText)) ||
+                    (u.name && u.name.toLowerCase().includes(queryText)) ||
+                    (u.email && u.email.toLowerCase().includes(queryText)) ||
+                    (u.mobile && u.mobile.toLowerCase().includes(queryText))
                 );
             }
+
+            // Sort
+            filtered.sort((a, b) => {
+                let valA = a[currentSortField] || '';
+                let valB = b[currentSortField] || '';
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+
+            // Update Counts
+            const countAll = allUsersList.length;
+            const countGmail = allUsersList.filter(u => (u.email || '').toLowerCase().endsWith('@gmail.com')).length;
+            const countActive = allUsersList.filter(u => u.lastSeenAt && u.lastSeenAt.startsWith(todayStr)).length;
+            const countRoadmap = allUsersList.filter(u => !!u.hasRoadmap || !!u.roadmap).length;
+            const countHabits = allUsersList.filter(u => u.habitCount > 0).length;
+
+            const elAll = document.getElementById('count-chip-all');
+            const elGmail = document.getElementById('count-chip-gmail');
+            const elActive = document.getElementById('count-chip-active');
+            const elRoadmap = document.getElementById('count-chip-roadmap');
+            const elHabits = document.getElementById('count-chip-habits');
+            const elTotalUsers = document.getElementById('stat-total-users');
+            const elTabUsers = document.getElementById('tab-user-count');
+            const elActiveNow = document.getElementById('stat-active-users');
+
+            if (elAll) elAll.innerText = countAll;
+            if (elGmail) elGmail.innerText = countGmail;
+            if (elActive) elActive.innerText = countActive;
+            if (elRoadmap) elRoadmap.innerText = countRoadmap;
+            if (elHabits) elHabits.innerText = countHabits;
+            if (elTotalUsers) elTotalUsers.innerText = countAll;
+            if (elTabUsers) elTabUsers.innerText = countAll;
+            if (elActiveNow) elActiveNow.innerText = Math.max(1, countActive);
 
             renderUsersTable(filtered);
         }
@@ -923,62 +1446,58 @@
             if (!tbody) return;
 
             if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400 font-semibold">No users match the search filter.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-semibold">No users matching search filters.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = users.map(u => {
-                const isGmail = (u.email && u.email.toLowerCase().endsWith('@gmail.com'));
+                const displayName = u.displayName || u.name || 'Student';
+                const isGmail = (u.email || '').toLowerCase().endsWith('@gmail.com');
                 const emailDisplay = isGmail 
-                    ? `<div class="flex items-center gap-1.5">
-                         <span class="font-mono text-slate-800 font-bold text-[11px]">${escapeHtml(u.email)}</span>
-                         <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-red-100 text-red-700 border border-red-200">Gmail</span>
+                    ? `<div class="flex items-center gap-1.5 font-mono text-[11px] text-slate-800 font-bold">
+                         <span>${escapeHtml(u.email || '')}</span>
+                         <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-red-100 text-red-700 border border-red-200">Gmail</span>
                        </div>`
                     : `<span class="font-mono text-slate-700 text-[11px]">${escapeHtml(u.email || 'N/A')}</span>`;
 
-                const mobileDisplay = u.mobile && u.mobile.trim() !== ''
-                    ? `<div class="flex items-center gap-1.5">
-                         <span class="font-bold text-slate-800">${escapeHtml(u.mobile)}</span>
-                         <a href="https://wa.me/${escapeHtml(u.mobile.replace(/[^0-9]/g, ''))}" target="_blank" title="WhatsApp Message" class="text-[11px] text-emerald-600 hover:underline">💬</a>
-                       </div>`
-                    : `<button onclick="openUserModal('${u.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 hover:bg-blue-100">+ Add Mobile</button>`;
+                const roleBadge = u.role === 'admin'
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300">ADMIN</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">Student</span>`;
 
-                const roadmapDisplay = u.roadmapTitle || (u.roadmap && u.roadmap.title)
-                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                         <span>${u.roadmapIcon || (u.roadmap && u.roadmap.icon) || '🧭'}</span>
-                         <span class="truncate max-w-[120px]">${escapeHtml(u.roadmapTitle || u.roadmap.title)}</span>
+                const roadmapBadge = u.roadmapTitle || (u.roadmap && u.roadmap.title)
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 truncate max-w-[120px]">
+                         <span>🧭</span> <span>${escapeHtml(u.roadmapTitle || u.roadmap.title)}</span>
                        </span>`
-                    : `<span class="text-slate-400 text-[11px] italic">Not selected</span>`;
+                    : `<span class="text-slate-400 text-[11px] italic">None</span>`;
 
                 const habitsDisplay = u.habitCount > 0
-                    ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold rounded-md text-[11px]">${u.habitCount} active</span>`
+                    ? `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold rounded-md text-[10px]">${u.habitCount} active</span>`
                     : `<span class="text-slate-400 text-[11px]">0</span>`;
+
+                const joinedDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
 
                 return `
                     <tr class="hover:bg-slate-100/70 transition-colors">
                         <td class="py-3 px-3">
                             <div class="flex items-center gap-2.5">
-                                <img src="${u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.username || u.name)}`}" class="w-8 h-8 rounded-full object-cover border border-slate-300 bg-slate-200">
+                                <img src="${u.photoURL || u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(displayName)}`}" class="w-8 h-8 rounded-full object-cover border border-slate-300 bg-slate-200">
                                 <div>
-                                    <span class="font-extrabold text-slate-800 block text-xs">${escapeHtml(u.name || 'User')}</span>
-                                    <span class="text-[10px] text-blue-600 font-bold">@${escapeHtml(u.username || 'user')}</span>
+                                    <span class="font-extrabold text-slate-800 block text-xs">${escapeHtml(displayName)}</span>
+                                    <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(u.mobile || '')}</span>
                                 </div>
                             </div>
                         </td>
                         <td class="py-3 px-3">${emailDisplay}</td>
-                        <td class="py-3 px-3">${mobileDisplay}</td>
-                        <td class="py-3 px-3">${roadmapDisplay}</td>
+                        <td class="py-3 px-3">${roleBadge}</td>
+                        <td class="py-3 px-3">${roadmapBadge}</td>
                         <td class="py-3 px-3 text-center">${habitsDisplay}</td>
-                        <td class="py-3 px-3 text-slate-500 font-medium">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
-                        <td class="py-3 px-3 text-center">
-                            <span class="px-2 py-0.5 bg-slate-200/80 font-extrabold text-slate-800 rounded text-xs">${u.loginCount || 1}</span>
-                        </td>
+                        <td class="py-3 px-3 text-slate-500 font-medium">${joinedDate}</td>
                         <td class="py-3 px-3 text-right">
                             <div class="flex items-center justify-end gap-1.5">
                                 <button onclick="openUserModal('${u.id}')" title="Inspect & Edit Profile" class="neo-btn px-2 py-1 text-[11px] font-bold text-slate-700 hover:text-blue-600">
-                                    👁️ Details
+                                    👁️ Inspect
                                 </button>
-                                <button onclick="deleteUserAccount('${u.id}', '${escapeHtml(u.name)}')" title="Delete User" class="neo-btn px-2 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-100">
+                                <button onclick="deleteUserAccount('${u.id}', '${escapeHtml(displayName)}')" title="Delete Account" class="neo-btn px-2 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-100">
                                     🗑️
                                 </button>
                             </div>
@@ -988,354 +1507,277 @@
             }).join('');
         }
 
-        function renderLogsTable(logs) {
-            const tbody = document.getElementById('logs-table-body');
-            if (!tbody) return;
+        // -------------------------------------------------------------
+        // 6. SPEECH COACH SHOWCASE RENDERER
+        // -------------------------------------------------------------
+        function renderCoachShowcase(sessions) {
+            const tableBody = document.getElementById('coach-sessions-table-body');
+            const todayStr = getTodayDateString();
+            const todaySessions = sessions.filter(s => s.createdAt && s.createdAt.startsWith(todayStr));
 
-            if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-semibold">No login activity logs recorded yet.</td></tr>`;
+            const totalSessionsToday = todaySessions.length;
+            const calcAvg = (key) => {
+                const valid = sessions.filter(s => typeof s[key] === 'number');
+                if (valid.length === 0) return '--';
+                const sum = valid.reduce((acc, curr) => acc + curr[key], 0);
+                return Math.round(sum / valid.length);
+            };
+
+            const totalWords = sessions.reduce((acc, curr) => acc + (curr.wordCount || 0), 0);
+
+            // Update KPI cards
+            const elSess = document.getElementById('coach-kpi-sessions');
+            const elOverall = document.getElementById('coach-kpi-overall');
+            const elFluency = document.getElementById('coach-kpi-fluency');
+            const elGrammar = document.getElementById('coach-kpi-grammar');
+            const elWpm = document.getElementById('coach-kpi-wpm');
+            const elWords = document.getElementById('coach-kpi-words');
+
+            if (elSess) elSess.innerText = totalSessionsToday;
+            if (elOverall) elOverall.innerText = calcAvg('overallScore');
+            if (elFluency) elFluency.innerText = `${calcAvg('fluencyScore')} / 10`;
+            if (elGrammar) elGrammar.innerText = `${calcAvg('grammarScore')} / 10`;
+            if (elWpm) elWpm.innerText = calcAvg('wpm');
+            if (elWords) elWords.innerText = totalWords;
+
+            if (!tableBody) return;
+
+            if (sessions.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-400 font-semibold">No speech sessions recorded yet today.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = logs.map(l => {
-                const isSuccess = l.status && l.status.startsWith('SUCCESS');
-                const statusBadge = isSuccess
-                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-300">SUCCESS</span>`
-                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-300">${escapeHtml(l.status)}</span>`;
+            tableBody.innerHTML = sessions.map(s => {
+                const dateStr = s.createdAt ? formatRelativeTime(s.createdAt) : 'Just now';
+                const scoreColor = s.overallScore >= 80 ? 'text-emerald-700 bg-emerald-100 border-emerald-300' : 'text-blue-700 bg-blue-100 border-blue-300';
 
                 return `
                     <tr class="hover:bg-slate-100/60 transition-colors">
-                        <td class="py-2.5 px-3 text-slate-500 font-mono text-[11px]">${l.timestamp ? new Date(l.timestamp).toLocaleString() : 'N/A'}</td>
-                        <td class="py-2.5 px-3 font-bold text-slate-800 text-xs">
-                            ${escapeHtml(l.name || l.username || 'Unknown')}
-                            ${l.username ? `<span class="block text-[10px] text-blue-600 font-semibold">@${escapeHtml(l.username)}</span>` : ''}
+                        <td class="py-2.5 px-3 font-bold text-slate-800">${escapeHtml(s.topic || 'Speech Practice')}</td>
+                        <td class="py-2.5 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(s.userName || s.userEmail || 'Explorer')}</td>
+                        <td class="py-2.5 px-3 text-center">
+                            <span class="px-2 py-0.5 rounded font-extrabold text-xs border ${scoreColor}">${s.overallScore || 0}/100</span>
                         </td>
-                        <td class="py-2.5 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.email || 'N/A')}</td>
-                        <td class="py-2.5 px-3 text-slate-600 font-mono text-[11px]">${escapeHtml(l.ip || '127.0.0.1')}</td>
-                        <td class="py-2.5 px-3 text-slate-500 text-[11px] max-w-[180px] truncate" title="${escapeHtml(l.userAgent || '')}">${escapeHtml(l.userAgent || 'Browser')}</td>
-                        <td class="py-2.5 px-3">${statusBadge}</td>
+                        <td class="py-2.5 px-3 text-center font-bold text-slate-700">${s.fluencyScore || 0}/10</td>
+                        <td class="py-2.5 px-3 text-center font-bold text-indigo-700">${s.grammarScore || 0}/10</td>
+                        <td class="py-2.5 px-3 text-center font-mono font-bold text-purple-700">${s.wpm || 0}</td>
+                        <td class="py-2.5 px-3 text-center font-mono text-slate-500">${s.duration || 60}s</td>
+                        <td class="py-2.5 px-3 text-right text-slate-400 font-mono text-[11px]">${dateStr}</td>
                     </tr>
                 `;
             }).join('');
         }
 
-        // =====================================================================
-        // FEATURE USAGE PIE CHART RENDERING (Chart.js)
-        // =====================================================================
-        function renderFeatureUsagePieChart(featureUsage) {
-            const compass = (featureUsage && featureUsage.compass) || 0;
-            const library = (featureUsage && featureUsage.library) || 0;
-            const routine = (featureUsage && featureUsage.routine) || 0;
-            const total = compass + library + routine || 1;
+        // -------------------------------------------------------------
+        // 7. SECURITY & AUDIT TRAIL RENDERER
+        // -------------------------------------------------------------
+        function renderAuditTrail(audits) {
+            const tbody = document.getElementById('audit-table-body');
+            const badge = document.getElementById('audit-count-badge');
+            if (badge) badge.innerText = audits.length;
 
-            const compassPct = Math.round((compass / total) * 100);
-            const libraryPct = Math.round((library / total) * 100);
-            const routinePct = Math.round((routine / total) * 100);
+            if (!tbody) return;
 
-            // Update Counts and Progress Bars
-            const elCompassCount = document.getElementById('usage-compass-count');
-            const elCompassPct = document.getElementById('usage-compass-pct');
-            const elCompassBar = document.getElementById('usage-compass-bar');
-            if (elCompassCount) elCompassCount.innerText = `${compass} visits`;
-            if (elCompassPct) elCompassPct.innerText = `${compassPct}%`;
-            if (elCompassBar) elCompassBar.style.width = `${compassPct}%`;
-
-            const elLibraryCount = document.getElementById('usage-library-count');
-            const elLibraryPct = document.getElementById('usage-library-pct');
-            const elLibraryBar = document.getElementById('usage-library-bar');
-            if (elLibraryCount) elLibraryCount.innerText = `${library} views`;
-            if (elLibraryPct) elLibraryPct.innerText = `${libraryPct}%`;
-            if (elLibraryBar) elLibraryBar.style.width = `${libraryPct}%`;
-
-            const elRoutineCount = document.getElementById('usage-routine-count');
-            const elRoutinePct = document.getElementById('usage-routine-pct');
-            const elRoutineBar = document.getElementById('usage-routine-bar');
-            if (elRoutineCount) elRoutineCount.innerText = `${routine} check-offs`;
-            if (elRoutinePct) elRoutinePct.innerText = `${routinePct}%`;
-            if (elRoutineBar) elRoutineBar.style.width = `${routinePct}%`;
-
-            // Determine Crown Winner
-            const topFeatureEl = document.getElementById('top-feature-name');
-            if (topFeatureEl) {
-                if (compass >= library && compass >= routine && compass > 0) {
-                    topFeatureEl.innerText = `🧭 Compass (${compassPct}%)`;
-                } else if (library >= compass && library >= routine && library > 0) {
-                    topFeatureEl.innerText = `📚 Library (${libraryPct}%)`;
-                } else if (routine >= compass && routine >= library && routine > 0) {
-                    topFeatureEl.innerText = `🔥 Habitat Tracker (${routinePct}%)`;
-                } else {
-                    topFeatureEl.innerText = `🧭 Compass (Active)`;
-                }
+            if (audits.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-semibold">No administrative audit events recorded yet.</td></tr>`;
+                return;
             }
 
-            // Render Chart.js Canvas
-            const ctx = document.getElementById('featureUsagePieChart');
-            if (!ctx) return;
-
-            const chartData = {
-                labels: ['🧭 Compass', '📚 Recommended Books', '🔥 Habitat Tracker'],
-                datasets: [{
-                    data: [compass || 1, library || 1, routine || 1],
-                    backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981'],
-                    borderColor: '#ffffff',
-                    borderWidth: 3,
-                    hoverOffset: 8
-                }]
-            };
-
-            if (featureChartInstance) {
-                featureChartInstance.data.datasets[0].data = [compass, library, routine];
-                featureChartInstance.update();
-            } else {
-                featureChartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: chartData,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '62%',
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    font: { family: 'Inter', size: 11, weight: '600' },
-                                    color: '#334155',
-                                    padding: 14
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const val = context.raw || 0;
-                                        const pct = total > 0 ? Math.round((val / total) * 100) : 0;
-                                        return ` ${context.label}: ${val} (${pct}%)`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
+            tbody.innerHTML = audits.map(a => {
+                const dateStr = a.timestamp ? new Date(a.timestamp).toLocaleString() : 'N/A';
+                return `
+                    <tr class="hover:bg-slate-100/60 transition-colors">
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${dateStr}</td>
+                        <td class="py-2.5 px-3 font-mono text-xs font-bold text-slate-800">${escapeHtml(a.adminEmail || 'admin')}</td>
+                        <td class="py-2.5 px-3 font-bold text-indigo-700 text-xs">
+                            <span class="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200">${escapeHtml(a.action || 'ACTION')}</span>
+                        </td>
+                        <td class="py-2.5 px-3 font-mono text-xs text-slate-600">${escapeHtml(a.targetUserId || '--')}</td>
+                        <td class="py-2.5 px-3 text-slate-500 text-xs">${escapeHtml(a.details || '')}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        // =====================================================================
-        // USER INSPECTOR & DETAILS MODAL
-        // =====================================================================
-        function openUserModal(userId) {
+        // -------------------------------------------------------------
+        // 8. USER INSPECTOR MODAL & CRUD
+        // -------------------------------------------------------------
+        window.openUserModal = async function(userId) {
             const user = allUsersList.find(u => u.id === userId);
             if (!user) return;
 
             document.getElementById('modal-user-id').value = user.id;
-            document.getElementById('modal-user-avatar').src = user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username || user.name)}`;
-            document.getElementById('modal-user-name').innerText = user.name || 'User Profile';
-            document.getElementById('modal-user-username').innerText = `@${user.username || 'user'}`;
+            document.getElementById('modal-user-avatar').src = user.photoURL || user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.displayName || user.name || 'user')}`;
+            document.getElementById('modal-user-name').innerText = user.displayName || user.name || 'User Profile';
+            document.getElementById('modal-user-email').innerText = user.email || '';
 
-            document.getElementById('modal-input-name').value = user.name || '';
+            document.getElementById('modal-input-name').value = user.displayName || user.name || '';
             document.getElementById('modal-input-email').value = user.email || '';
             document.getElementById('modal-input-mobile').value = user.mobile || '';
-            document.getElementById('modal-input-username').value = user.username || '';
+            document.getElementById('modal-input-role').value = user.role || 'student';
 
-            // User Roadmap Details
+            // Roadmap fetch
             const roadmapContent = document.getElementById('modal-roadmap-content');
-            if (user.roadmap && (user.roadmap.title || user.roadmap.careerTitle)) {
-                const title = user.roadmap.title || user.roadmap.careerTitle;
-                const icon = user.roadmap.icon || '🧭';
-                roadmapContent.innerHTML = `
-                    <div class="p-2 bg-white rounded-lg border border-slate-200">
-                        <div class="font-extrabold text-indigo-700 text-sm flex items-center gap-1.5">
-                            <span>${icon}</span>
-                            <span>${escapeHtml(title)}</span>
+            if (roadmapContent) roadmapContent.innerHTML = `<span class="text-slate-400 italic">Checking Firestore...</span>`;
+
+            try {
+                const rDoc = await getDoc(doc(db, "userRoadmaps", userId)).catch(() => null);
+                if (rDoc && rDoc.exists() && rDoc.data().roadmap) {
+                    const rData = rDoc.data().roadmap;
+                    roadmapContent.innerHTML = `
+                        <div class="p-2 bg-white rounded-lg border border-slate-200">
+                            <div class="font-extrabold text-indigo-700 text-sm flex items-center gap-1.5">
+                                <span>${rData.icon || '🧭'}</span>
+                                <span>${escapeHtml(rData.title || rData.careerTitle || 'Custom Path')}</span>
+                            </div>
                         </div>
-                        <p class="text-[11px] text-slate-500 mt-1">Saved roadmap in Compass Assessment</p>
-                    </div>
-                `;
-            } else {
-                roadmapContent.innerHTML = `<span class="text-slate-400 italic">No career roadmap generated yet.</span>`;
+                    `;
+                } else if (user.roadmap && user.roadmap.title) {
+                    roadmapContent.innerHTML = `<div class="font-bold text-indigo-700">🧭 ${escapeHtml(user.roadmap.title)}</div>`;
+                } else {
+                    roadmapContent.innerHTML = `<span class="text-slate-400 italic">No career roadmap generated yet.</span>`;
+                }
+            } catch (e) {
+                roadmapContent.innerHTML = `<span class="text-slate-400 italic">No roadmap saved.</span>`;
             }
 
-            // User Habits List
+            // Habits fetch
+            const habitsContent = document.getElementById('modal-habits-content');
             const habitsCountEl = document.getElementById('modal-habits-count');
-            const habitsContentEl = document.getElementById('modal-habits-content');
-            const habitsList = Array.isArray(user.habits) ? user.habits : (user.routineTracker && Array.isArray(user.routineTracker.habits) ? user.routineTracker.habits : []);
-
-            if (habitsCountEl) habitsCountEl.innerText = habitsList.length;
-            if (habitsList.length > 0) {
-                habitsContentEl.innerHTML = habitsList.map(h => `
-                    <div class="p-1.5 bg-white rounded border border-slate-200 flex items-center justify-between text-xs">
-                        <span class="font-bold text-slate-800">🔥 ${escapeHtml(h.name || 'Habit')}</span>
-                        <span class="text-[10px] text-emerald-600 font-semibold">${h.scheduledTime || 'Scheduled'}</span>
-                    </div>
-                `).join('');
-            } else {
-                habitsContentEl.innerHTML = `<span class="text-slate-400 italic">No active habits tracked.</span>`;
+            try {
+                const hDoc = await getDoc(doc(db, "userHabits", userId)).catch(() => null);
+                const habitList = (hDoc && hDoc.exists() && Array.isArray(hDoc.data().habits)) ? hDoc.data().habits : [];
+                if (habitsCountEl) habitsCountEl.innerText = habitList.length;
+                if (habitList.length > 0) {
+                    habitsContent.innerHTML = habitList.map(h => `
+                        <div class="p-1.5 bg-white rounded border border-slate-200 flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-800">🔥 ${escapeHtml(h.name || 'Habit')}</span>
+                            <span class="text-[10px] text-emerald-600 font-semibold">${h.scheduledTime || 'Active'}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    habitsContent.innerHTML = `<span class="text-slate-400 italic">No active habits tracked.</span>`;
+                }
+            } catch (e) {
+                habitsContent.innerHTML = `<span class="text-slate-400 italic">No active habits.</span>`;
             }
 
             document.getElementById('modal-save-status').classList.add('hidden');
             document.getElementById('user-inspect-modal').classList.remove('hidden');
-        }
+        };
 
-        function closeUserModal() {
+        window.closeUserModal = function() {
             document.getElementById('user-inspect-modal').classList.add('hidden');
-        }
+        };
 
-        async function saveUserModalChanges(event) {
-            event.preventDefault();
+        window.saveUserModalChanges = async function(e) {
+            e.preventDefault();
             const userId = document.getElementById('modal-user-id').value;
-            const name = document.getElementById('modal-input-name').value.trim();
+            const displayName = document.getElementById('modal-input-name').value.trim();
             const email = document.getElementById('modal-input-email').value.trim();
             const mobile = document.getElementById('modal-input-mobile').value.trim();
-            const username = document.getElementById('modal-input-username').value.trim();
-
+            const role = document.getElementById('modal-input-role').value;
             const statusEl = document.getElementById('modal-save-status');
 
             try {
-                const res = await fetch('/api/admin/user/update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-password': adminPassword
-                    },
-                    body: JSON.stringify({ userId, name, email, mobile, username })
+                const userRef = doc(db, "users", userId);
+                await updateDoc(userRef, {
+                    displayName,
+                    email,
+                    mobile,
+                    role,
+                    updatedAt: new Date().toISOString()
                 });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    statusEl.classList.remove('hidden');
-                    setTimeout(() => {
-                        statusEl.classList.add('hidden');
-                        closeUserModal();
-                        fetchAdminUsersData();
-                    }, 1200);
-                } else {
-                    alert(data.error || "Failed to save user changes.");
-                }
-            } catch (err) {
-                alert("Connection error saving user.");
-            }
-        }
 
-        async function deleteUserAccount(userId, name) {
-            if (!confirm(`Are you sure you want to permanently delete user account "${name}" from F:\\Praxis Admin server database?`)) {
+                recordAdminAudit("USER_UPDATE", userId, `Updated profile for ${displayName} (${email})`);
+
+                statusEl.classList.remove('hidden');
+                setTimeout(() => {
+                    statusEl.classList.add('hidden');
+                    closeUserModal();
+                }, 1000);
+            } catch (err) {
+                alert("Failed to update user profile in Firestore: " + err.message);
+            }
+        };
+
+        window.deleteUserAccount = async function(userId, name) {
+            if (!confirm(`Are you sure you want to permanently delete user account "${name}" from Cloud Firestore?`)) {
                 return;
             }
 
             try {
-                const res = await fetch('/api/admin/user/delete', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-password': adminPassword
-                    },
-                    body: JSON.stringify({ userId })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    fetchAdminUsersData();
-                } else {
-                    alert(data.error || "Failed to delete user.");
-                }
-            } catch (err) {
-                alert("Connection error deleting user.");
-            }
-        }
+                await deleteDoc(doc(db, "users", userId));
+                await deleteDoc(doc(db, "userStats", userId)).catch(() => {});
+                await deleteDoc(doc(db, "userRoadmaps", userId)).catch(() => {});
+                await deleteDoc(doc(db, "userHabits", userId)).catch(() => {});
 
-        // =====================================================================
-        // CSV EXPORT LOGIC (Download User Database)
-        // =====================================================================
-        function exportUsersToCSV() {
+                recordAdminAudit("USER_DELETE", userId, `Permanently deleted account: ${name}`);
+            } catch (err) {
+                alert("Failed to delete user from Firestore: " + err.message);
+            }
+        };
+
+        window.exportUsersToCSV = function() {
             if (!allUsersList || allUsersList.length === 0) {
                 alert("No users to export.");
                 return;
             }
 
-            const headers = ["User ID", "Full Name", "Username", "Gmail / Email", "Mobile Number", "Joined Date", "Logins", "Last Active IP", "Career Roadmap", "Habits Active"];
+            const headers = ["User ID", "Full Name", "Email", "Mobile Number", "Role", "Joined Date", "Last Active"];
             const rows = allUsersList.map(u => [
                 `"${u.id || ''}"`,
-                `"${(u.name || '').replace(/"/g, '""')}"`,
-                `"${(u.username || '').replace(/"/g, '""')}"`,
+                `"${(u.displayName || u.name || '').replace(/"/g, '""')}"`,
                 `"${(u.email || '').replace(/"/g, '""')}"`,
                 `"${(u.mobile || '').replace(/"/g, '""')}"`,
+                `"${u.role || 'student'}"`,
                 `"${u.createdAt ? new Date(u.createdAt).toISOString() : ''}"`,
-                `"${u.loginCount || 1}"`,
-                `"${u.lastLoginIp || ''}"`,
-                `"${(u.roadmapTitle || (u.roadmap && u.roadmap.title) || '').replace(/"/g, '""')}"`,
-                `"${u.habitCount || 0}"`
+                `"${u.lastSeenAt ? new Date(u.lastSeenAt).toISOString() : ''}"`
             ]);
 
             const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `praxis_users_export_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `praxis_users_export_${getTodayDateString()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        };
+
+        // -------------------------------------------------------------
+        // 9. SECTION SWITCHER & UTILITIES
+        // -------------------------------------------------------------
+        window.switchAdminSection = function(sectionId) {
+            document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
+            const target = document.getElementById(`section-${sectionId}`);
+            if (target) target.classList.remove('hidden');
+
+            const tabButtons = ['overview', 'activity', 'users', 'coach', 'features', 'security'];
+            tabButtons.forEach(b => {
+                const btn = document.getElementById(`tab-btn-${b}`);
+                if (btn) {
+                    if (b === sectionId) {
+                        btn.className = "neo-btn px-3.5 py-2 text-blue-600 bg-white shadow-sm flex items-center gap-1.5";
+                    } else {
+                        btn.className = "neo-btn px-3.5 py-2 text-slate-700 flex items-center gap-1.5";
+                    }
+                }
+            });
+        };
+
+        function formatRelativeTime(isoString) {
+            const timestamp = new Date(isoString).getTime();
+            const diffSeconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (diffSeconds < 60) return "Just now";
+            if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+            if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+            return new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
         }
 
         function escapeHtml(str) {
             if (!str) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-        function renderTrafficTable(trafficLogs) {
-            const tbody = document.getElementById('traffic-table-body');
-            if (!tbody) return;
-
-            if (!Array.isArray(trafficLogs) || trafficLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400 font-semibold">No SQLite traffic recorded yet.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = trafficLogs.map(t => {
-                return `
-                    <tr class="hover:bg-slate-100/60 transition-colors">
-                        <td class="py-2.5 px-3 font-mono font-bold text-slate-500 text-[11px]">#${t.id}</td>
-                        <td class="py-2.5 px-3 font-mono font-bold text-indigo-700 text-xs">${escapeHtml(t.ip_address || '127.0.0.1')}</td>
-                        <td class="py-2.5 px-3 font-mono text-emerald-800 font-bold text-xs max-w-[260px] truncate" title="${escapeHtml(t.endpoint || '/')}">
-                            <span class="px-2 py-0.5 rounded bg-slate-200/90 text-slate-800">${escapeHtml(t.endpoint || '/')}</span>
-                        </td>
-                        <td class="py-2.5 px-3 text-slate-500 font-mono text-[11px]">${t.timestamp ? new Date(t.timestamp).toLocaleString() : 'Just now'}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderStats(data) {
-            const activeUsersEl = document.getElementById('stat-active-users');
-            const uniqueUsersEl = document.getElementById('stat-unique-users');
-            const totalUsersEl = document.getElementById('stat-total-users');
-            const totalVisitorsEl = document.getElementById('stat-total-visitors');
-            
-            if (activeUsersEl) activeUsersEl.innerText = data.activeUsers || 0;
-            if (uniqueUsersEl) uniqueUsersEl.innerText = data.uniqueUsersTillToday || 0;
-            if (totalUsersEl && data.totalRegisteredUsers !== undefined) totalUsersEl.innerText = data.totalRegisteredUsers;
-            if (totalVisitorsEl) {
-                const totalTraffic = (data.sqlite && typeof data.sqlite.totalTraffic === 'number') 
-                    ? data.sqlite.totalTraffic 
-                    : (data.totalVisitors || 0);
-                totalVisitorsEl.innerText = totalTraffic;
-            }
-
-            // SQLite Traffic and Path rendering
-            if (data.sqlite) {
-                const trafficBadge = document.getElementById('sqlite-traffic-count-badge');
-                if (trafficBadge) trafficBadge.innerText = data.sqlite.totalTraffic || 0;
-
-                if (Array.isArray(data.sqlite.recentTraffic)) {
-                    renderTrafficTable(data.sqlite.recentTraffic);
-                }
-
-                if (data.sqlite.databasePath) {
-                    const sqliteTag = document.getElementById('sqlite-location-tag');
-                    if (sqliteTag) sqliteTag.innerText = `SQLite: ${data.sqlite.databasePath}`;
-                    const subtag = document.getElementById('traffic-db-subtag');
-                    if (subtag) subtag.innerText = data.sqlite.databasePath;
-                }
-            }
-
-            if (data.databaseLocation) {
-                const dbTag = document.getElementById('db-location-tag');
-                if (dbTag) dbTag.innerText = data.databaseLocation;
-            }
         }
     </script>
 </body>

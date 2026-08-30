@@ -373,6 +373,23 @@
             activeEvaluation = evaluationResult;
             renderEvaluationDashboard(evaluationResult, transcript);
             saveSessionToHistory(evaluationResult, transcript);
+
+            // Cloud Persistence (Minimal metrics ~250 bytes: No raw audio, No transcript bloat)
+            if (window.praxisAuth && typeof window.praxisAuth.recordCoachSession === 'function') {
+                window.praxisAuth.recordCoachSession({
+                    topic: currentTopic ? currentTopic.title : 'Speech Practice',
+                    durationSeconds: durationSpent,
+                    overallScore: evaluationResult.overallScore,
+                    fluencyScore10: evaluationResult.fluencyScore10,
+                    grammarScore10: evaluationResult.grammarScore10,
+                    vocabularyScore10: evaluationResult.vocabularyScore10,
+                    structureScore10: evaluationResult.structureScore10,
+                    wpm: evaluationResult.wpm,
+                    wordCount: evaluationResult.wordCount,
+                    fillerCount: evaluationResult.fillerCount
+                });
+            }
+
             showToast("Speech evaluated successfully!", "✅");
             setUIState('COMPLETE');
         } else {

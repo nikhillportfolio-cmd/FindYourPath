@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model & Schema Directives
+    // ===============================================================
+    //
+    // Collection: users/{userId}
+    //   - displayName: string (required, 1..100 chars)
+    //   - email: string (required, valid email pattern)
+    //   - photoURL: string (optional, <= 500 chars)
+    //   - role: string ('admin' | 'student' | 'user')
+    //   - status: string ('active' | 'inactive')
+    //   - createdAt: string/timestamp
+    //   - lastSeenAt: string/timestamp
+    //   - mobile: string (optional, <= 30 chars)
+    //
+    // Collection: userStats/{userId}
+    //   - lastActiveAt: string/timestamp
+    //   - totalSessions: number
+    //   - coachSessions: number
+    //   - lastLoginAt: string/timestamp
+    //
+    // Collection: userRoadmaps/{userId}
+    //   - roadmap: map
+    //   - updatedAt: string/timestamp
+    //
+    // Collection: userHabits/{userId}
+    //   - habits: list
+    //   - updatedAt: string/timestamp
+    //
+    // Collection: coachSessions/{sessionId}
+    //   - userId: string (matches owner or guest)
+    //   - topic: string (required)
+    //   - overallScore: number (0..100)
+    //   - fluencyScore: number (0..10)
+    //   - grammarScore: number (0..10)
+    //   - vocabularyScore: number (0..10)
+    //   - structureScore: number (0..10)
+    //   - wpm: number (>= 0)
+    //   - wordCount: number (>= 0)
+    //   - fillerCount: number (>= 0)
+    //   - createdAt: string/timestamp
+    //
+    // Collection: analyticsDaily/{date} (YYYY-MM-DD)
+    //   - date: string (required)
+    //   - totalSessions: number
+    //   - coachSessions: number
+    //   - compassUses: number
+    //   - libraryUses: number
+    //   - habitUses: number
+    //   - errors: number
+    //   - lastUpdated: string/timestamp
+    //   - coachAverages: map (optional)
+    //
+    // Collection: liveActivity/{activityId}
+    //   - type: string (required, <= 50 chars)
+    //   - userId: string
+    //   - summary: string (required, <= 250 chars)
+    //   - timestamp: string/timestamp
+    //
+    // Collection: adminAudit/{auditId}
+    //   - adminId: string (required)
+    //   - action: string (required)
+    //   - timestamp: string/timestamp
+    //
+    // ===============================================================
+
+    // ---------------------------------------------------------------
+    // Helper Functions
+    // ---------------------------------------------------------------
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        request.auth.token.email in ['admin@praxis.app', 'nikhil@example.com']
+      );
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() > 3 && email.size() <= 150 && email.matches('^.+@.+\\..+$');
+    }
+
+    // ---------------------------------------------------------------
+    // 1. Users Collection
+    // ---------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      allow create: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+      
+      allow update: if (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))) || isAdmin();
+      
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // 2. User Stats Collection
+    // ---------------------------------------------------------------
+    match /userStats/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // 3. User Roadmaps & Habits Collections
+    // ---------------------------------------------------------------
+    match /userRoadmaps/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /userHabits/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // 4. Speech Coach Sessions (Aggregated minimal session metrics)
+    // ---------------------------------------------------------------
+    match /coachSessions/{sessionId} {
+      allow read: if (isAuthenticated() && (resource.data.userId == request.auth.uid)) || isAdmin();
+      
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // 5. Daily Aggregated Analytics (ReadOnly for users, Read/Write for admin/aggregators)
+    // ---------------------------------------------------------------
+    match /analyticsDaily/{date} {
+      allow read: if isAdmin();
+      allow create, update: if isAuthenticated() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // 6. Live Activity Stream (Capped short-lived feed)
+    // ---------------------------------------------------------------
+    match /liveActivity/{activityId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.summary is string && request.resource.data.summary.size() <= 300;
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------
+    // 7. Administrative Audit Trail
+    // ---------------------------------------------------------------
+    match /adminAudit/{auditId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false; // Immutable audit log
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
