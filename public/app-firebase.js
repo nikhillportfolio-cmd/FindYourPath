@@ -572,6 +572,66 @@ export async function recordCoachSession(evaluationData) {
 }
 
 /**
+ * Records completed Fluency Lab metrics to Firestore (Minimal document: ~200 bytes)
+ * NO raw audio, NO interim speech results, NO full transcript dumps.
+ */
+export async function recordFluencySession(fluencyData) {
+  if (!fluencyData || !db) return null;
+  const u = currentUser || readStoredLocalUser();
+  const sessionId = `fluency_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+  const nowIso = new Date().toISOString();
+
+  const minimalFluencyDoc = {
+    userId: u?.uid || u?.id || 'guest',
+    userEmail: u?.email || 'guest@praxis.app',
+    userName: u?.displayName || u?.name || 'Explorer',
+    exerciseId: String(fluencyData.exerciseId || 'ex_default').slice(0, 40),
+    exerciseType: String(fluencyData.exerciseType || 'smooth_reading').slice(0, 40),
+    level: Number(fluencyData.level || 1),
+    title: String(fluencyData.title || 'Fluency Exercise').slice(0, 80),
+    score: Number(fluencyData.score || 0),
+    pacingScore: Number(fluencyData.pacingScore || 0),
+    pauseScore: Number(fluencyData.pauseScore || 0),
+    fillerScore: Number(fluencyData.fillerScore || 0),
+    continuityScore: Number(fluencyData.continuityScore || 0),
+    completionScore: Number(fluencyData.completionScore || 0),
+    wpm: Number(fluencyData.wpm || 0),
+    fillerCount: Number(fluencyData.fillerCount || 0),
+    longPauseCount: Number(fluencyData.longPauseCount || 0),
+    wordCount: Number(fluencyData.wordCount || 0),
+    duration: Number(fluencyData.duration || 30),
+    createdAt: nowIso
+  };
+
+  try {
+    const sessionRef = doc(db, "fluencySessions", sessionId);
+    await setDoc(sessionRef, minimalFluencyDoc);
+
+    await recordDailyMetric('coachSessions', 1);
+
+    if (u && (u.uid || u.id)) {
+      const statsRef = doc(db, "userStats", u.uid || u.id);
+      await updateDoc(statsRef, {
+        fluencyDrills: increment(1),
+        lastActiveAt: nowIso
+      }).catch(() => {});
+    }
+
+    const scoreBadge = minimalFluencyDoc.score >= 80 ? '⚡' : '🎯';
+    recordLiveActivity(
+      "FLUENCY_DRILL",
+      `${scoreBadge} ${minimalFluencyDoc.userName} practiced Level ${minimalFluencyDoc.level} "${minimalFluencyDoc.title}" (Score: ${minimalFluencyDoc.score}/100, ${minimalFluencyDoc.wpm} WPM)`
+    );
+
+    console.log("[PRAXiS Cloud] Fluency Lab session minimal metrics saved to Firestore.");
+    return sessionId;
+  } catch (err) {
+    console.warn("[PRAXiS Cloud] Could not save fluency session:", err.message);
+    return null;
+  }
+}
+
+/**
  * Records an admin audit event
  */
 export async function recordAdminAudit(action, targetUserId = null, details = "") {
@@ -1006,6 +1066,7 @@ window.praxisAuth = {
   recordDailyMetric,
   recordLiveActivity,
   recordCoachSession,
+  recordFluencySession,
   recordAdminAudit,
   getDb: () => db,
   getAuth: () => auth

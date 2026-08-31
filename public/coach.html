@@ -290,6 +290,20 @@
     <!-- MAIN COACH CONTAINER -->
     <main class="w-full max-w-5xl px-3 sm:px-6 flex flex-col gap-6 sm:gap-8 mt-2" role="main">
 
+        <!-- COACH vs FLUENCY LAB MODE SWITCHER -->
+        <div class="neu-card p-2 sm:p-2.5 flex items-center justify-center gap-2 sm:gap-4 max-w-lg mx-auto w-full z-10" role="tablist" aria-label="Coach Feature Selector">
+            <button type="button" id="tab-switch-coach" onclick="switchCoachMode('coach')" class="neu-btn pressed flex-1 py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-extrabold text-blue-600 flex items-center justify-center gap-2 transition-all cursor-pointer border border-blue-300 shadow-inner">
+                <span>🎙️</span> <span>Communication Coach</span>
+            </button>
+            <button type="button" id="tab-switch-fluency" onclick="switchCoachMode('fluency')" class="neu-btn flex-1 py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-600 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                <span>⚡</span> <span>Fluency Lab</span>
+                <span class="neu-badge px-1.5 py-0.5 text-[9px] font-black uppercase text-emerald-700 bg-emerald-100">New</span>
+            </button>
+        </div>
+
+        <!-- 1. COMMUNICATION COACH STUDIO VIEW -->
+        <div id="coach-studio-view" class="flex flex-col gap-6 sm:gap-8">
+
         <!-- HERO HEADER BANNER -->
         <section class="neu-card p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
             <div class="flex flex-col gap-2.5 max-w-2xl">
@@ -666,6 +680,377 @@
                 <div class="text-xs text-slate-500 py-3 text-center">No past speech sessions recorded yet. Start speaking above!</div>
             </div>
         </section>
+        </div> <!-- End #coach-studio-view -->
+
+        <!-- 2. FLUENCY LAB VIEW CONTAINER (TOGGLED VIA SEPARATE BUTTON) -->
+        <div id="fluency-lab-container" class="hidden flex flex-col gap-6 sm:gap-8">
+            <!-- HERO HEADER BANNER -->
+            <section class="neu-card p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                <div class="flex flex-col gap-2.5 max-w-2xl">
+                    <div class="flex items-center gap-2">
+                        <span class="neu-badge px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50/50">
+                            ⚡ Real-Time Spoken Fluency Lab
+                        </span>
+                        <span class="neu-badge px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100">
+                            Deterministic Engine
+                        </span>
+                    </div>
+                    <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-800 tracking-tight leading-tight">
+                        Fluency <span class="text-gradient">Lab</span>
+                    </h1>
+                    <p class="text-sm sm:text-base text-slate-600 leading-relaxed">
+                        Build smoother English, one sentence at a time. Target natural pacing, seamless phrase chunking, connector usage, and instant spontaneous responses.
+                    </p>
+                </div>
+
+                <!-- QUICK STATS WIDGET -->
+                <div class="neu-card-sm p-4 flex items-center gap-4 shrink-0 bg-gradient-to-br from-slate-50/70 to-blue-50/40 border border-white/60">
+                    <div class="neu-circle w-12 h-12 flex items-center justify-center text-xl text-blue-600 shrink-0">
+                        ⚡
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Fluency Target</div>
+                        <div class="text-lg font-outfit font-extrabold text-slate-800">100–150 <span class="text-xs font-sans text-blue-600 font-semibold">WPM</span></div>
+                        <div class="text-[11px] text-emerald-600 font-medium">&lt; 0.7s Micro-Pauses</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6 PROGRESSIVE DIFFICULTY LEVEL TABS -->
+            <section class="neu-card p-3 sm:p-4 flex flex-col gap-2" aria-label="Fluency Levels">
+                <div class="flex items-center justify-between px-2 pt-1">
+                    <span class="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                        🎯 Progressive Fluency Levels (1–6)
+                    </span>
+                    <span id="fl-personal-best-badge" class="text-xs font-bold text-emerald-600">Personal Best: --</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2" role="tablist">
+                    <button type="button" onclick="selectFluencyLevel(1)" data-level="1" class="fluency-level-tab neu-btn pressed px-3 py-2.5 text-xs font-extrabold text-blue-600 flex flex-col items-center gap-1 text-center cursor-pointer border border-blue-300">
+                        <span class="text-base">📖</span>
+                        <span>L1 Smooth Reading</span>
+                    </button>
+                    <button type="button" onclick="selectFluencyLevel(2)" data-level="2" class="fluency-level-tab neu-btn px-3 py-2.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex flex-col items-center gap-1 text-center cursor-pointer">
+                        <span class="text-base">🧩</span>
+                        <span>L2 Phrase Chunking</span>
+                    </button>
+                    <button type="button" onclick="selectFluencyLevel(3)" data-level="3" class="fluency-level-tab neu-btn px-3 py-2.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex flex-col items-center gap-1 text-center cursor-pointer">
+                        <span class="text-base">📈</span>
+                        <span>L3 Sentence Expansion</span>
+                    </button>
+                    <button type="button" onclick="selectFluencyLevel(4)" data-level="4" class="fluency-level-tab neu-btn px-3 py-2.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex flex-col items-center gap-1 text-center cursor-pointer">
+                        <span class="text-base">🔗</span>
+                        <span>L4 Connect Thoughts</span>
+                    </button>
+                    <button type="button" onclick="selectFluencyLevel(5)" data-level="5" class="fluency-level-tab neu-btn px-3 py-2.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex flex-col items-center gap-1 text-center cursor-pointer">
+                        <span class="text-base">⚡</span>
+                        <span>L5 Quick Response</span>
+                    </button>
+                    <button type="button" onclick="selectFluencyLevel(6)" data-level="6" class="fluency-level-tab neu-btn px-3 py-2.5 text-xs font-bold text-slate-700 hover:text-blue-600 flex flex-col items-center gap-1 text-center cursor-pointer">
+                        <span class="text-base">💼</span>
+                        <span>L6 Situational Speak</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- EXERCISE PRACTICE WORKSPACE -->
+            <section class="grid grid-cols-1 lg:grid-cols-12 gap-6" aria-label="Fluency Exercise Workspace">
+                <!-- LEFT: TARGET SENTENCE / TASK CARD (6 cols) -->
+                <div class="lg:col-span-6 flex flex-col gap-4">
+                    <div class="neu-card p-5 sm:p-6 flex flex-col gap-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span id="fl-level-badge" class="neu-badge px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50/50">
+                                    Level 1 — Smooth Reading
+                                </span>
+                                <span id="fl-topic-badge" class="neu-badge px-2.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">
+                                    Everyday
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="speakFluencyTargetSentence()" class="neu-btn px-2.5 py-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer" title="Listen to model sentence">
+                                    <span>🔊</span> Listen
+                                </button>
+                                <button type="button" onclick="shuffleFluencyExercise()" class="neu-btn px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1 cursor-pointer" title="Load another exercise">
+                                    <span>🎲</span> Shuffle
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h2 id="fl-exercise-title" class="text-base sm:text-lg font-extrabold text-slate-800">
+                                Morning Routine Decision
+                            </h2>
+                            <p id="fl-exercise-instruction" class="text-xs text-slate-500 mt-1">
+                                Read this sentence naturally and smoothly from start to finish.
+                            </p>
+                        </div>
+
+                        <!-- DYNAMIC TARGET DISPLAY BOX (Sentence / Chunks / Expansion Tiers / Connectors / Quick Prompt) -->
+                        <div id="fl-target-display-box" class="flex flex-col gap-2">
+                            <!-- Injected dynamically -->
+                        </div>
+
+                        <!-- EXPANSION STEPPER (VISIBLE ONLY FOR LEVEL 3) -->
+                        <div id="fl-expansion-tier-controls" class="hidden flex items-center justify-between p-2 rounded-xl bg-slate-100 border border-slate-200">
+                            <span class="text-[11px] font-bold text-slate-600">Expansion Tier:</span>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="setFluencyExpansionTier(1)" data-tier="1" class="expansion-tier-btn neu-badge px-2.5 py-0.5 text-xs font-extrabold text-blue-600 border border-blue-300">Tier 1</button>
+                                <button type="button" onclick="setFluencyExpansionTier(2)" data-tier="2" class="expansion-tier-btn neu-badge px-2.5 py-0.5 text-xs font-bold text-slate-600">Tier 2</button>
+                                <button type="button" onclick="setFluencyExpansionTier(3)" data-tier="3" class="expansion-tier-btn neu-badge px-2.5 py-0.5 text-xs font-bold text-slate-600">Tier 3</button>
+                            </div>
+                        </div>
+
+                        <!-- CONNECTOR PRACTICE TIP (VISIBLE FOR LEVEL 4) -->
+                        <div id="fl-connector-guide-box" class="hidden text-xs text-indigo-900 bg-indigo-50/60 p-3 rounded-xl border border-indigo-200/80">
+                            💡 Connect both ideas into one smooth thought using words like <strong>although, because, therefore, however, while</strong>.
+                        </div>
+
+                        <!-- QUICK RESPONSE TIP (VISIBLE FOR LEVEL 5) -->
+                        <div id="fl-quick-timer-box" class="hidden text-xs text-amber-900 bg-amber-50/60 p-3 rounded-xl border border-amber-200/80">
+                            ⚡ Start speaking within 10–15 seconds to train zero-hesitation reflex.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: LIVE RECORDING, TIMER & TRANSCRIPT (6 cols) -->
+                <div class="lg:col-span-6 flex flex-col gap-4">
+                    <div class="neu-card p-5 sm:p-6 flex flex-col gap-4">
+                        <!-- RECORDING BAR & TIMER -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+                            <div class="flex items-center gap-3">
+                                <button type="button" id="btn-fluency-record" onclick="toggleFluencyRecording()" aria-label="Start Speaking" class="neu-btn px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg flex items-center gap-2 cursor-pointer transition-all">
+                                    <span>🎙️</span> <span>Start Speaking</span>
+                                </button>
+                                <div>
+                                    <div id="fl-mic-status-label" class="text-xs font-extrabold text-slate-800" aria-live="polite">
+                                        Click to Start Speaking
+                                    </div>
+                                    <div class="text-[11px] text-slate-500">
+                                        Live speech recognition
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SOUNDWAVE ANIMATION -->
+                            <div id="fl-soundwave-container" class="hidden flex items-center gap-1 h-7 px-3 py-1 rounded-xl bg-blue-50 border border-blue-100" aria-hidden="true">
+                                <div class="soundwave-bar" style="animation-delay: 0.1s;"></div>
+                                <div class="soundwave-bar" style="animation-delay: 0.3s;"></div>
+                                <div class="soundwave-bar" style="animation-delay: 0.5s;"></div>
+                                <div class="soundwave-bar" style="animation-delay: 0.2s;"></div>
+                                <span class="text-[10px] font-bold text-blue-600 ml-1 animate-pulse">LISTENING</span>
+                            </div>
+                        </div>
+
+                        <!-- TIMER DISPLAY STRIP -->
+                        <div class="flex items-center justify-between bg-slate-900 text-white p-3.5 rounded-2xl shadow-inner">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Time Remaining</span>
+                                <span id="fl-timer-display" class="font-digital text-2xl sm:text-3xl font-extrabold text-emerald-400" aria-live="polite">00:30</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-slate-400">
+                                <button type="button" onclick="resetFluencyRecording()" class="neu-btn px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 rounded-lg cursor-pointer" title="Reset">
+                                    ↺ Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
+                            <div id="fl-timer-progress-bar" class="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all duration-300" style="width: 100%;"></div>
+                        </div>
+
+                        <!-- LIVE TRANSCRIPT BOX -->
+                        <div class="flex flex-col gap-1.5 mt-1">
+                            <div class="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
+                                <span>Live Recognized Speech:</span>
+                                <span id="fluency-word-count-badge" class="neu-badge px-2 py-0.5 text-[10px] font-bold text-slate-600">0 words</span>
+                            </div>
+                            <div id="fluency-live-transcript" class="neu-input w-full p-3.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 min-h-[90px] leading-relaxed bg-white/40 select-none">
+                                Transcript will appear here as you speak...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FLUENCY RESULTS DASHBOARD (HIDDEN UNTIL ANALYZED - NO FAKE DATA) -->
+            <section id="fl-results-dashboard" class="hidden flex flex-col gap-6" aria-label="Fluency Results Dashboard">
+                <!-- 1. OVERALL FLUENCY SCORE & PILL -->
+                <div class="neu-card p-6 sm:p-8 flex flex-col gap-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+                        <div>
+                            <span class="neu-badge px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50/50">
+                                Fluency Diagnostics
+                            </span>
+                            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-1">
+                                Your Fluency Scorecard
+                            </h2>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="fl-score-delta-badge" class="hidden neu-badge px-3 py-1 text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200">
+                                +0 Improvement
+                            </span>
+                            <div class="neu-card-sm px-5 py-3 flex items-center gap-3 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200">
+                                <div class="text-right">
+                                    <div class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Fluency Score</div>
+                                    <div id="fl-metric-fluency-score" class="text-2xl font-outfit font-black text-blue-600">-- / 100</div>
+                                </div>
+                                <div class="w-10 h-10 neu-circle flex items-center justify-center text-lg text-amber-500 font-bold">
+                                    🏆
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5 SCORING COMPONENT PILLARS -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div class="neu-card-sm p-3 flex flex-col text-center bg-white/40 border border-slate-200">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Pacing (25%)</span>
+                            <span id="fl-score-pacing" class="text-lg font-outfit font-extrabold text-blue-600">--%</span>
+                            <span class="text-[10px] text-slate-500">Cadence</span>
+                        </div>
+                        <div class="neu-card-sm p-3 flex flex-col text-center bg-white/40 border border-slate-200">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Pauses (25%)</span>
+                            <span id="fl-score-pause" class="text-lg font-outfit font-extrabold text-indigo-600">--%</span>
+                            <span class="text-[10px] text-slate-500">Control</span>
+                        </div>
+                        <div class="neu-card-sm p-3 flex flex-col text-center bg-white/40 border border-slate-200">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Fillers (20%)</span>
+                            <span id="fl-score-filler" class="text-lg font-outfit font-extrabold text-emerald-600">--%</span>
+                            <span class="text-[10px] text-slate-500">Cleanliness</span>
+                        </div>
+                        <div class="neu-card-sm p-3 flex flex-col text-center bg-white/40 border border-slate-200">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Continuity (20%)</span>
+                            <span id="fl-score-continuity" class="text-lg font-outfit font-extrabold text-purple-600">--%</span>
+                            <span class="text-[10px] text-slate-500">Smoothness</span>
+                        </div>
+                        <div class="neu-card-sm p-3 flex flex-col text-center bg-white/40 border border-slate-200 col-span-2 sm:col-span-1">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Completion (10%)</span>
+                            <span id="fl-score-completion" class="text-lg font-outfit font-extrabold text-blue-700">--%</span>
+                            <span class="text-[10px] text-slate-500">Sentence Goal</span>
+                        </div>
+                    </div>
+
+                    <!-- DETERMINISTIC REAL METRICS STRIP -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                        <div class="neu-badge p-3 flex flex-col text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Speaking Speed</span>
+                            <span class="text-base font-outfit font-extrabold text-slate-800"><span id="fl-metric-wpm">--</span> <span class="text-xs text-blue-600">WPM</span></span>
+                            <span id="fl-metric-pace-status" class="text-[10px] font-semibold text-emerald-600">--</span>
+                        </div>
+                        <div class="neu-badge p-3 flex flex-col text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Long Pauses (>1.5s)</span>
+                            <span id="fl-metric-long-pauses" class="text-base font-outfit font-extrabold text-red-600">-- detected</span>
+                            <span class="text-[10px] text-slate-500">Hesitation gaps</span>
+                        </div>
+                        <div class="neu-badge p-3 flex flex-col text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Filler Words</span>
+                            <span id="fl-metric-filler-count" class="text-base font-outfit font-extrabold text-amber-600">--</span>
+                            <span class="text-[10px] text-slate-500">Um, uh, basically</span>
+                        </div>
+                        <div class="neu-badge p-3 flex flex-col text-center">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Target Word Coverage</span>
+                            <span id="fl-metric-coverage" class="text-base font-outfit font-extrabold text-blue-600">--%</span>
+                            <span class="text-[10px] text-slate-500">Accuracy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. SPEECH FLOW VISUALIZER TIMELINE -->
+                <div class="neu-card p-6 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-blue-600">📊</span>
+                            <h3 class="text-base font-extrabold text-slate-800">Your Speech Flow Timeline</h3>
+                        </div>
+                        <span class="text-[11px] text-slate-500 hidden sm:inline">Short gaps (&lt;0.7s) are natural. Long gaps (&gt;1.5s) are highlighted in red.</span>
+                    </div>
+                    <div id="fl-speech-flow-timeline" class="neu-card-sm p-4 flex flex-wrap items-center gap-2 bg-white/50 min-h-[50px]">
+                        <!-- Speech blocks and pause gap chips injected dynamically -->
+                    </div>
+                </div>
+
+                <!-- 3. TOP 3 IMPROVEMENTS & STRENGTHS (Side by Side) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- TOP 3 IMPROVEMENTS (7 cols) -->
+                    <div class="lg:col-span-7 neu-card p-6 flex flex-col gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-amber-600">🎯</span>
+                            <h3 class="text-base font-extrabold text-slate-800">Your Top 3 Improvements</h3>
+                        </div>
+                        <div id="fl-top-improvements-list" class="flex flex-col gap-2.5">
+                            <!-- Dynamic Top Improvements -->
+                        </div>
+                    </div>
+
+                    <!-- KEY STRENGTHS (5 cols) -->
+                    <div class="lg:col-span-5 neu-card p-6 flex flex-col gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-emerald-600">🌟</span>
+                            <h3 class="text-base font-extrabold text-slate-800">Strengths</h3>
+                        </div>
+                        <ul id="fl-strengths-list" class="flex flex-col gap-2.5">
+                            <!-- Dynamic Strengths -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 4. RETRY CHALLENGE HERO CARD (THE CORE LOOP) -->
+                <div class="neu-card p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-br from-indigo-50/60 to-blue-50/60 border border-blue-200">
+                    <div class="flex flex-col gap-2 max-w-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="neu-badge px-2.5 py-0.5 text-[10px] font-black uppercase text-indigo-700 bg-indigo-100">
+                                ⚡ Core Loop
+                            </span>
+                            <span class="text-xs font-bold text-slate-700">RETRY CHALLENGE</span>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-extrabold text-slate-900">
+                            "Speak the same sentence again."
+                        </h3>
+                        <div id="fl-retry-goal-text" class="text-xs sm:text-sm font-semibold text-blue-900 bg-white/70 p-3 rounded-xl border border-blue-200/80">
+                            Goal: Fewer than 1 long pause, zero fillers, maintain comfortable 110–140 WPM pace.
+                        </div>
+                        <div id="fl-retry-comparison-box" class="mt-1">
+                            <!-- Comparison text -->
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2 shrink-0">
+                        <button type="button" onclick="retryFluencyChallenge()" class="neu-btn px-6 py-3 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <span>🎯</span> <span>Take Retry Challenge</span>
+                        </button>
+                        <button type="button" onclick="shuffleFluencyExercise()" class="neu-btn px-4 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center justify-center gap-1.5 cursor-pointer">
+                            <span>Next Exercise</span> <span>➔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5. ANNOTATED TRANSCRIPT REVIEW -->
+                <div class="neu-card p-6 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-blue-600">📝</span>
+                            <h3 class="text-base font-extrabold text-slate-800">Spoken Anatomy & Transcript</h3>
+                        </div>
+                        <div class="flex items-center gap-3 text-[11px]">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-red-300"></span> Fillers</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-blue-300"></span> Connectors</span>
+                        </div>
+                    </div>
+                    <div id="fl-annotated-transcript" class="neu-card-sm p-4 text-xs sm:text-sm text-slate-800 bg-white/50 leading-relaxed min-h-[50px]">
+                        <!-- Transcript review -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- FLUENCY SESSIONS HISTORY -->
+            <section class="neu-card p-6 flex flex-col gap-4" aria-label="Fluency History">
+                <div class="flex items-center gap-2">
+                    <span class="neu-circle w-8 h-8 flex items-center justify-center text-sm text-slate-700">📜</span>
+                    <h3 class="text-base font-extrabold text-slate-800">Recent Fluency Lab Drills</h3>
+                </div>
+                <div id="fl-history-list" class="flex flex-col gap-2.5">
+                    <div class="text-xs text-slate-500 py-3 text-center">No past Fluency Lab sessions recorded yet. Start speaking above!</div>
+                </div>
+            </section>
+        </div> <!-- End #fluency-lab-container -->
 
     </main>
 
@@ -683,5 +1068,60 @@
     <script src="/js/speechDiagnostics.js"></script>
     <script src="/js/speechRecognition.js"></script>
     <script src="/js/coachUI.js"></script>
+    <script src="/js/fluencyLabData.js"></script>
+    <script src="/js/fluencyLab.js"></script>
+    <script src="/js/fluencyUI.js"></script>
+
+    <!-- COACH / FLUENCY LAB VIEW SWITCHER CONTROLLER -->
+    <script>
+        function switchCoachMode(mode) {
+            const coachView = document.getElementById('coach-studio-view');
+            const fluencyView = document.getElementById('fluency-lab-container');
+            const tabCoach = document.getElementById('tab-switch-coach');
+            const tabFluency = document.getElementById('tab-switch-fluency');
+
+            if (mode === 'fluency') {
+                if (coachView) coachView.classList.add('hidden');
+                if (fluencyView) fluencyView.classList.remove('hidden');
+
+                if (tabFluency) {
+                    tabFluency.classList.add('pressed', 'text-blue-600', 'border', 'border-blue-300', 'shadow-inner');
+                    tabFluency.classList.remove('text-slate-700');
+                }
+                if (tabCoach) {
+                    tabCoach.classList.remove('pressed', 'text-blue-600', 'border', 'border-blue-300', 'shadow-inner');
+                    tabCoach.classList.add('text-slate-700');
+                }
+
+                // If recognition is running on coach side, stop it
+                if (window.clearTranscript) {
+                    // safe state
+                }
+            } else {
+                if (coachView) coachView.classList.remove('hidden');
+                if (fluencyView) fluencyView.classList.add('hidden');
+
+                if (tabCoach) {
+                    tabCoach.classList.add('pressed', 'text-blue-600', 'border', 'border-blue-300', 'shadow-inner');
+                    tabCoach.classList.remove('text-slate-700');
+                }
+                if (tabFluency) {
+                    tabFluency.classList.remove('pressed', 'text-blue-600', 'border', 'border-blue-300', 'shadow-inner');
+                    tabFluency.classList.add('text-slate-700');
+                }
+            }
+        }
+
+        // Auto-detect URL query or hash for Fluency Lab on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewParam = urlParams.get('view');
+            const hash = window.location.hash.toLowerCase();
+
+            if (viewParam === 'fluency' || hash === '#fluency' || hash === '#fluency-lab') {
+                switchCoachMode('fluency');
+            }
+        });
+    </script>
 </body>
 </html>

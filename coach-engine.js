@@ -142,7 +142,7 @@ const PRACTICE_TOPICS = {
 // =====================================================================
 
 function initCoachEngine(app, db) {
-    // 1. Initialize SQLite Table for speech history
+    // 1. Initialize SQLite Table for speech history & Fluency Lab history
     try {
         if (db && typeof db.exec === 'function') {
             db.exec(`
@@ -163,11 +163,33 @@ function initCoachEngine(app, db) {
                     feedback_json TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 );
+
+                CREATE TABLE IF NOT EXISTS fluency_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_email TEXT,
+                    exercise_id TEXT,
+                    exercise_type TEXT,
+                    level INTEGER,
+                    title TEXT,
+                    score INTEGER,
+                    pacing_score INTEGER,
+                    pause_score INTEGER,
+                    filler_score INTEGER,
+                    continuity_score INTEGER,
+                    completion_score INTEGER,
+                    wpm INTEGER,
+                    filler_count INTEGER,
+                    long_pause_count INTEGER,
+                    word_count INTEGER,
+                    duration INTEGER,
+                    feedback_json TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
             `);
-            console.log("💾 Communication Coach SQLite table verified.");
+            console.log("💾 Communication Coach & Fluency Lab SQLite tables verified.");
         }
     } catch (dbErr) {
-        console.warn("⚠️ Could not init speech_sessions SQLite table:", dbErr.message);
+        console.warn("⚠️ Could not init coach/fluency SQLite tables:", dbErr.message);
     }
 
     // 2. Serve Dedicated Coach HTML Page
@@ -187,7 +209,80 @@ function initCoachEngine(app, db) {
         }
     });
 
-    // 4. API: Evaluate Speech (100% Local Deterministic Diagnostics Engine)
+    // 4. API: Fluency Lab Exercises
+    app.get('/api/fluency/exercises', (req, res) => {
+        try {
+            const FluencyLabData = require('./public/js/fluencyLabData');
+            res.json({
+                success: true,
+                levels: FluencyLabData.EXERCISE_LEVELS,
+                exercises: FluencyLabData.EXERCISES
+            });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // 5. API: Log Fluency Session (Compact Record)
+    app.post('/api/fluency/evaluate', (req, res) => {
+        try {
+            const session = req.body.session || req.body;
+            const userEmail = req.body.userEmail || req.headers['x-user-email'] || 'guest@praxis.app';
+
+            if (db && typeof db.prepare === 'function' && session) {
+                const stmt = db.prepare(`
+                    INSERT INTO fluency_sessions
+                    (user_email, exercise_id, exercise_type, level, title, score, pacing_score, pause_score, filler_score, continuity_score, completion_score, wpm, filler_count, long_pause_count, word_count, duration, feedback_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `);
+                stmt.run(
+                    userEmail,
+                    session.exerciseId || 'default',
+                    session.exerciseType || 'smooth_reading',
+                    Number(session.level) || 1,
+                    session.title || 'Fluency Drill',
+                    Number(session.score) || 0,
+                    Number(session.pacingScore) || 0,
+                    Number(session.pauseScore) || 0,
+                    Number(session.fillerScore) || 0,
+                    Number(session.continuityScore) || 0,
+                    Number(session.completionScore) || 0,
+                    Number(session.wpm) || 0,
+                    Number(session.fillerCount) || 0,
+                    Number(session.longPauseCount) || 0,
+                    Number(session.wordCount) || 0,
+                    Number(session.duration) || 30,
+                    JSON.stringify(session)
+                );
+            }
+
+            res.json({ success: true });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // 6. API: Get Fluency Lab History
+    app.get('/api/fluency/history', (req, res) => {
+        try {
+            const userEmail = req.query.email || 'guest@praxis.app';
+            let sessions = [];
+            if (db && typeof db.prepare === 'function') {
+                const stmt = db.prepare(`
+                    SELECT * FROM fluency_sessions
+                    WHERE user_email = ?
+                    ORDER BY created_at DESC
+                    LIMIT 25
+                `);
+                sessions = stmt.all(userEmail);
+            }
+            res.json({ success: true, sessions });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // 7. API: Evaluate Speech (100% Local Deterministic Diagnostics Engine)
     app.post('/api/coach/evaluate', (req, res) => {
         try {
             const { transcript, mode = 'express', topic = '', timeSpentSeconds = 60, targetStructure = 'PREP' } = req.body;
@@ -258,7 +353,7 @@ function initCoachEngine(app, db) {
         }
     });
 
-    // 5. API: Get User Speech History & Stats
+    // 8. API: Get User Speech History & Stats
     app.get('/api/coach/history', (req, res) => {
         try {
             const userEmail = req.query.email || 'guest@praxis.app';
@@ -281,7 +376,7 @@ function initCoachEngine(app, db) {
         }
     });
 
-    console.log("🎙️ Communication Coach & Speech Engine initialized (Deterministic Local Engine).");
+    console.log("🎙️ Communication Coach & Fluency Lab Engine initialized (Deterministic Local Engine).");
 }
 
 module.exports = {

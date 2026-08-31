@@ -28,7 +28,11 @@
             this.interimTranscript = '';
             this.startTime = 0;
             this.endTime = 0;
+            this.firstSpeechTime = 0;
             this.actualSpeakingDuration = 0;
+            this.speechEvents = []; // Array of { timestamp, text, isFinal }
+            this.lastEventTime = 0;
+            this.detectedPauses = []; // Array of { startTime, duration, type }
             this.restartAttempts = 0;
             this.maxRestartAttempts = 5;
             this.restartTimeout = null;
@@ -69,12 +73,35 @@
             };
 
             this.recognition.onresult = (event) => {
+                const now = Date.now();
+                if (!this.firstSpeechTime) {
+                    this.firstSpeechTime = now;
+                }
+
+                if (this.lastEventTime > 0) {
+                    const gapSec = Number(((now - this.lastEventTime) / 1000).toFixed(2));
+                    if (gapSec >= 0.7) {
+                        const pauseType = gapSec >= 1.5 ? 'long' : 'noticeable';
+                        this.detectedPauses.push({
+                            timestamp: now,
+                            durationSeconds: gapSec,
+                            type: pauseType
+                        });
+                    }
+                }
+                this.lastEventTime = now;
+
                 let currentInterim = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     const result = event.results[i];
                     const transcriptPiece = result[0].transcript;
                     if (result.isFinal) {
                         this.finalTranscript += (this.finalTranscript ? ' ' : '') + transcriptPiece.trim();
+                        this.speechEvents.push({
+                            timestamp: now,
+                            text: transcriptPiece.trim(),
+                            isFinal: true
+                        });
                     } else {
                         currentInterim += transcriptPiece;
                     }
@@ -86,7 +113,8 @@
                     this.onTranscriptUpdate({
                         finalTranscript: this.finalTranscript,
                         interimTranscript: this.interimTranscript,
-                        fullTranscript: fullLiveText
+                        fullTranscript: fullLiveText,
+                        timing: this.getTimingMetrics()
                     });
                 }
             };
@@ -163,7 +191,8 @@
 
                 this.emitState('STOPPED', {
                     finalTranscript: this.finalTranscript,
-                    durationSeconds: this.actualSpeakingDuration
+                    durationSeconds: this.actualSpeakingDuration,
+                    timing: this.getTimingMetrics()
                 });
             };
         }
@@ -180,6 +209,10 @@
             this.interimTranscript = '';
             this.startTime = Date.now();
             this.endTime = 0;
+            this.firstSpeechTime = 0;
+            this.lastEventTime = 0;
+            this.speechEvents = [];
+            this.detectedPauses = [];
             this.actualSpeakingDuration = 0;
             this.isIntentionalStop = false;
             this.isRecording = true;
@@ -238,7 +271,8 @@
 
             return {
                 finalTranscript: this.finalTranscript,
-                durationSeconds: this.actualSpeakingDuration
+                durationSeconds: this.actualSpeakingDuration,
+                timing: this.getTimingMetrics()
             };
         }
 
@@ -248,6 +282,10 @@
             this.interimTranscript = '';
             this.startTime = 0;
             this.endTime = 0;
+            this.firstSpeechTime = 0;
+            this.lastEventTime = 0;
+            this.speechEvents = [];
+            this.detectedPauses = [];
             this.actualSpeakingDuration = 0;
             this.emitState('READY');
         }
@@ -266,6 +304,41 @@
                 return Math.max(1, Math.round((Date.now() - this.startTime) / 1000));
             }
             return this.actualSpeakingDuration || 0;
+        }
+
+        getTimingMetrics() {
+            const now = this.endTime || (this.isRecording ? Date.now() : this.startTime);
+            const totalDurationSec = this.startTime > 0 ? Math.max(0.1, (now - this.startTime) / 1000) : 0;
+            const firstSpeechDelay = (this.startTime > 0 && this.firstSpeechTime > 0)
+                ? Math.max(0, (this.firstSpeechTime - this.startTime) / 1000)
+                : 0;
+
+            let totalPauseTime = 0;
+            let longPauseCount = 0;
+            let pauseCount = this.detectedPauses.length;
+
+            this.detectedPauses.forEach(p => {
+                totalPauseTime += p.durationSeconds;
+                if (p.type === 'long') {
+                    longPauseCount++;
+                }
+            });
+
+            const avgPauseTime = pauseCount > 0 ? Number((totalPauseTime / pauseCount).toFixed(2)) : 0;
+            const activeSpeakingSec = Math.max(0.1, Number((totalDurationSec - totalPauseTime).toFixed(2)));
+
+            return {
+                totalDurationSeconds: Number(totalDurationSec.toFixed(2)),
+                activeSpeakingSeconds: activeSpeakingSec,
+                firstSpeechDelaySeconds: Number(firstSpeechDelay.toFixed(2)),
+                pauses: this.detectedPauses,
+                pauseCount,
+                longPauseCount,
+                totalPauseTime: Number(totalPauseTime.toFixed(2)),
+                averagePauseTime: avgPauseTime,
+                speechEventsCount: this.speechEvents.length,
+                hasSpeechEvents: this.speechEvents.length > 0 || !!this.finalTranscript
+            };
         }
 
         emitState(state, payload = {}) {
