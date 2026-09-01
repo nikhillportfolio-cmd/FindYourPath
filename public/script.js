@@ -5192,6 +5192,9 @@ window.renderSavedRoutineTracker = function(routineData) {
     if (typeof updateGrowthCharts === "function") updateGrowthCharts();
     if (typeof updateStats === "function") updateStats();
     if (typeof updateFloatingBadge === "function") updateFloatingBadge();
+    if (window.PraxisRoutine && typeof window.PraxisRoutine.init === "function") {
+        try { window.PraxisRoutine.init(); } catch (e) {}
+    }
     console.log("[PRAXiS UI] Routine Tracker safely merged and synced with Cloud/Server.");
 };
 

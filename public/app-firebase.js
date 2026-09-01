@@ -707,6 +707,8 @@ export async function saveRoutineTracker(userId, routineData) {
       const habitsRef = doc(db, "userHabits", uid);
       await setDoc(habitsRef, {
         habits: Array.isArray(routineData.habits) ? routineData.habits : [],
+        dailyLogs: routineData.dailyLogs || {},
+        focusSessions: Array.isArray(routineData.focusSessions) ? routineData.focusSessions.slice(-60) : [],
         updatedAt: nowIso
       }, { merge: true });
       recordDailyMetric('habitUses', 1);
@@ -753,8 +755,8 @@ export async function fetchUserDataOnLogin(userId) {
 
       if (habitsSnap && habitsSnap.exists()) {
         const hData = habitsSnap.data();
-        if (hData.habits && typeof window.renderSavedRoutineTracker === "function") {
-          window.renderSavedRoutineTracker({ habits: hData.habits });
+        if (typeof window.renderSavedRoutineTracker === "function") {
+          window.renderSavedRoutineTracker(hData);
         }
       }
     } catch (err) {
