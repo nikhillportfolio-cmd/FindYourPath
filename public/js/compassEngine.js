@@ -17,7 +17,10 @@
         mode: null, // 'preference' | 'discovery'
         preferenceDomain: null, // domainId if selected
         currentQuestionIndex: 0,
+        selectedOptionIndex: null,
         activeQuestions: [],
+        adaptivePool: [],
+        adaptiveAdded: false,
         dimensionScores: {},
         answersHistory: [],
         calculatedProfile: null,
@@ -133,8 +136,10 @@
         state.mode = mode; // 'preference' or 'discovery'
         state.preferenceDomain = chosenDomain;
         state.currentQuestionIndex = 0;
+        state.selectedOptionIndex = null;
         state.dimensionScores = {};
         state.answersHistory = [];
+        state.adaptiveAdded = false;
         state.startTime = Date.now();
 
         // Initialize all dimensions to zero
@@ -148,22 +153,49 @@
             ? [...root.COMPASS_QUESTIONS]
             : getFallbackQuestions();
 
-        // 10-12 questions sequence
-        // Shuffle within tiers to ensure freshness
-        const coreQuestions = allQuestions.filter(q => q.stage === 'core').sort(() => 0.5 - Math.random());
-        const adaptiveQuestions = allQuestions.filter(q => q.stage === 'adaptive').sort(() => 0.5 - Math.random());
-        const depthQuestions = allQuestions.filter(q => q.stage === 'depth').sort(() => 0.5 - Math.random());
+        const coreQuestions = allQuestions.filter(q => q.stage === 'core');
+        const adaptiveQuestions = allQuestions.filter(q => q.stage === 'adaptive');
 
-        // Build 10 question assessment pool
-        state.activeQuestions = [
-            ...coreQuestions.slice(0, 4),
-            ...adaptiveQuestions.slice(0, 4),
-            ...depthQuestions.slice(0, 2)
-        ];
+        // Start with 12 core questions (student-friendly sequence)
+        state.activeQuestions = [...coreQuestions.slice(0, 12)];
+        state.adaptivePool = [...adaptiveQuestions];
 
         if (typeof root.renderCurrentQuestion === 'function') {
             root.renderCurrentQuestion();
         }
+    }
+
+    function selectOption(optionIndex) {
+        state.selectedOptionIndex = optionIndex;
+        if (typeof root.updateQuestionSelectionUI === 'function') {
+            root.updateQuestionSelectionUI(optionIndex);
+        }
+    }
+
+    function confirmCurrentAnswer() {
+        if (state.selectedOptionIndex === null || state.selectedOptionIndex === undefined) return;
+        recordAnswer(state.selectedOptionIndex);
+    }
+
+    function goBack() {
+        if (state.currentQuestionIndex <= 0) return false;
+
+        const lastAnswer = state.answersHistory.pop();
+        if (lastAnswer && lastAnswer.signals) {
+            Object.entries(lastAnswer.signals).forEach(([dim, pts]) => {
+                state.dimensionScores[dim] = Math.max(0, (state.dimensionScores[dim] || 0) - pts);
+            });
+        }
+
+        state.currentQuestionIndex--;
+        state.selectedOptionIndex = (lastAnswer && typeof lastAnswer.optionIndex === 'number')
+            ? lastAnswer.optionIndex
+            : null;
+
+        if (typeof root.renderCurrentQuestion === 'function') {
+            root.renderCurrentQuestion();
+        }
+        return true;
     }
 
     function recordAnswer(optionIndex) {
@@ -182,11 +214,19 @@
         state.answersHistory.push({
             questionId: currentQ.id,
             category: currentQ.category,
+            optionIndex: optionIndex,
             optionText: selectedOption.text,
+            signals: selectedOption.signals || {},
             traits: selectedOption.traits || []
         });
 
+        // Trigger adaptive questions injection after core questions (at index 11)
+        if (state.currentQuestionIndex === 11 && !state.adaptiveAdded) {
+            injectAdaptiveQuestions();
+        }
+
         state.currentQuestionIndex++;
+        state.selectedOptionIndex = null;
 
         if (state.currentQuestionIndex < state.activeQuestions.length) {
             if (typeof root.renderCurrentQuestion === 'function') {
@@ -197,12 +237,116 @@
         }
     }
 
+    // Dynamic adaptive question injection based on provisional matching and trait uncertainties
+    function injectAdaptiveQuestions() {
+        if (state.adaptiveAdded) return;
+        state.adaptiveAdded = true;
+
+        const pool = state.adaptivePool || [];
+        if (pool.length === 0) return;
+
+        const provisional = calculateProvisionalMatches();
+        const topCareers = (provisional && provisional.all) ? provisional.all.slice(0, 4) : [];
+        const topDomainIds = new Set(topCareers.map(c => c.domainId));
+
+        const selectedAdaptive = [];
+
+        // 1. Separate competing career directions
+        const hasTechDataProduct = topDomainIds.has('tech_ai') || topDomainIds.has('data_analytics') || topDomainIds.has('business_management') || topDomainIds.has('design_creative');
+        const hasSciEngHealth = topDomainIds.has('engineering') || topDomainIds.has('science_research') || topDomainIds.has('healthcare') || topDomainIds.has('emerging_interdisciplinary');
+        const hasBizLawMedia = topDomainIds.has('entrepreneurship') || topDomainIds.has('law') || topDomainIds.has('marketing_sales') || topDomainIds.has('media_communication') || topDomainIds.has('education');
+
+        if (hasTechDataProduct) {
+            const q = pool.find(p => p.id === 'ad01');
+            if (q && !selectedAdaptive.includes(q)) selectedAdaptive.push(q);
+        }
+        if (hasSciEngHealth && selectedAdaptive.length < 3) {
+            const q = pool.find(p => p.id === 'ad02');
+            if (q && !selectedAdaptive.includes(q)) selectedAdaptive.push(q);
+        }
+        if (hasBizLawMedia && selectedAdaptive.length < 3) {
+            const q = pool.find(p => p.id === 'ad03');
+            if (q && !selectedAdaptive.includes(q)) selectedAdaptive.push(q);
+        }
+
+        // 2. Separate trait uncertainties
+        const scores = state.dimensionScores;
+        const diffIndepLead = Math.abs((scores.independence || 0) - (scores.leadership || 0));
+        const diffExecRisk = Math.abs((scores.execution || 0) - (scores.riskTolerance || 0));
+        const diffValVent = Math.abs((scores.careerValues || 0) - (scores.riskTolerance || 0));
+
+        if (selectedAdaptive.length < 3 && diffIndepLead <= 2) {
+            const q = pool.find(p => p.id === 'ad04');
+            if (q && !selectedAdaptive.includes(q)) selectedAdaptive.push(q);
+        }
+        if (selectedAdaptive.length < 3 && diffExecRisk <= 2) {
+            const q = pool.find(p => p.id === 'ad05');
+            if (q && !selectedAdaptive.includes(q)) selectedAdaptive.push(q);
+        }
+        if (selectedAdaptive.length < 3 && diffValVent <= 2) {
+            const q = pool.find(p => p.id === 'ad06');
+            if (q && !selectedAdaptive.includes(q)) selectedAdaptive.push(q);
+        }
+
+        // Fill remaining slots up to 3 questions from pool
+        for (const q of pool) {
+            if (selectedAdaptive.length >= 3) break;
+            if (!selectedAdaptive.includes(q)) {
+                selectedAdaptive.push(q);
+            }
+        }
+
+        state.activeQuestions.push(...selectedAdaptive);
+    }
+
+    function calculateProvisionalMatches() {
+        const careers = root.COMPASS_CAREERS || [];
+        const userScores = state.dimensionScores || {};
+        const prefDomain = state.preferenceDomain;
+
+        const scoredList = careers.map(career => {
+            const targets = career.targetDimensions || {};
+            let dimensionMatchTotal = 0;
+            let targetPointsTotal = 0;
+
+            Object.entries(targets).forEach(([dimKey, targetVal]) => {
+                const userVal = userScores[dimKey] || 0;
+                targetPointsTotal += targetVal;
+
+                const diff = Math.abs(userVal - targetVal);
+                if (diff <= 1) {
+                    dimensionMatchTotal += targetVal;
+                } else if (userVal < targetVal - 1) {
+                    dimensionMatchTotal += Math.max(0, targetVal - diff * 0.8);
+                } else {
+                    dimensionMatchTotal += targetVal * 0.85;
+                }
+            });
+
+            let fitRatio = targetPointsTotal > 0 ? (dimensionMatchTotal / targetPointsTotal) : 0.5;
+            if (prefDomain && career.domainId === prefDomain) {
+                fitRatio = Math.min(1.0, fitRatio + 0.12);
+            }
+
+            return {
+                id: career.id,
+                domainId: career.domainId,
+                title: career.title,
+                fitRatio
+            };
+        });
+
+        scoredList.sort((a, b) => b.fitRatio - a.fitRatio);
+        return { all: scoredList };
+    }
+
     function getEstimatedMinutesRemaining() {
-        const remainingQuestions = state.activeQuestions.length - state.currentQuestionIndex;
-        // Assume ~20 seconds per question
-        const secondsRemaining = remainingQuestions * 20;
+        const remainingQuestions = Math.max(0, state.activeQuestions.length - state.currentQuestionIndex);
+        if (remainingQuestions <= 0) return "Under 1 min";
+        // ~15-20 seconds per question
+        const secondsRemaining = remainingQuestions * 18;
         const mins = Math.ceil(secondsRemaining / 60);
-        return mins <= 1 ? "Under 1 min" : `~${mins} mins`;
+        return mins <= 1 ? "About 1 min left" : `About ${mins} mins left`;
     }
 
     // -------------------------------------------------------------
@@ -221,40 +365,55 @@
 
         // Determine Thinking Archetype
         let thinkingStyle = "Balanced Systems Thinker";
+        let thinkingDesc = "You balance logic and creativity to find practical, smart solutions to everyday challenges.";
         if (scores.analyticalReasoning >= scores.creativity && scores.analyticalReasoning >= scores.systemsThinking) {
             thinkingStyle = "Empirical & Quantitative Investigator";
+            thinkingDesc = "You enjoy solving problems on your own, looking at facts and data, and figuring out how things work.";
         } else if (scores.creativity > scores.analyticalReasoning && scores.creativity >= scores.systemsThinking) {
             thinkingStyle = "Divergent & Conceptual Innovator";
+            thinkingDesc = "You love imagining fresh ideas, thinking outside the box, and finding creative solutions.";
         } else if (scores.systemsThinking >= scores.analyticalReasoning) {
             thinkingStyle = "Architectural & Holistic Systems Strategist";
+            thinkingDesc = "You naturally connect the dots, understand how big systems fit together, and build organized solutions.";
         }
 
         // Determine Work Style Archetype
         let workStyleSummary = "Collaborative Execution";
+        let workStyleDesc = "You thrive when working closely with others, sharing ideas, and achieving great results together.";
         if ((scores.independence || 0) >= 4) {
             workStyleSummary = "High Autonomy with Deep Focus Intervals";
+            workStyleDesc = "You do your best work when you have quiet time to focus deeply and solve challenges on your own.";
         } else if ((scores.leadership || 0) >= 4) {
             workStyleSummary = "Strategic Facilitation & Team Direction";
+            workStyleDesc = "You naturally step up, help make decisions, and guide a team toward finishing important goals.";
         } else if ((scores.collaboration || 0) >= 4) {
             workStyleSummary = "Cross-Functional Synergy & Shared Accountability";
+            workStyleDesc = "You thrive when working closely with others, sharing ideas, and achieving great results together.";
         }
 
         // Determine Primary Motivation
         let motivationSummary = "Mastery & Technical Craft";
+        let motivationDesc = "You are driven by getting really good at what you do and achieving high-quality results.";
         if ((scores.careerValues || 0) >= 4) {
             motivationSummary = "High Societal Impact & Civic Purpose";
+            motivationDesc = "You are motivated by helping people, doing good, and making a positive difference in the world.";
         } else if ((scores.riskTolerance || 0) >= 4) {
             motivationSummary = "Venture Creation, Commercial Autonomy & High Upside";
+            motivationDesc = "You get excited by taking bold risks, starting new projects, and building things from scratch.";
         } else if ((scores.curiosity || 0) >= 4) {
             motivationSummary = "Frontier Discovery & Relentless Curiosity";
+            motivationDesc = "You love exploring new frontiers, asking deep questions, and learning how the world works.";
         }
 
         // Determine Environment Preference
         let environmentSummary = "Modern Hybrid & Asynchronous Focus";
+        let environmentDesc = "You work best in a flexible, modern environment where you have independence over your space and schedule.";
         if ((scores.workEnvironment || 0) >= 3) {
             environmentSummary = "Fluid, Remote-First or Lab-Centric Workspace";
+            environmentDesc = "You perform at your peak in flexible workspaces where you can move freely and experiment.";
         } else {
             environmentSummary = "Structured Team Office with Predictable Cadence";
+            environmentDesc = "You do best with a clear structure, steady teamwork, and a supportive, organized environment.";
         }
 
         const profile = {
@@ -264,7 +423,7 @@
             thinking: {
                 label: "Thinking",
                 archetype: thinkingStyle,
-                description: `You gravitate toward ${thinkingStyle.toLowerCase()}, dissecting complex problems through structured logic and creative hypotheses.`,
+                description: thinkingDesc,
                 topDimensions: [
                     { name: "Analytical Reasoning", score: scores.analyticalReasoning || 0, max: 8 },
                     { name: "Systems Thinking", score: scores.systemsThinking || 0, max: 8 },
@@ -274,7 +433,7 @@
             workStyle: {
                 label: "Work Style",
                 archetype: workStyleSummary,
-                description: `Your execution thrives best with ${workStyleSummary.toLowerCase()}, balancing accountability with self-directed velocity.`,
+                description: workStyleDesc,
                 topDimensions: [
                     { name: "Autonomy & Independence", score: scores.independence || 0, max: 8 },
                     { name: "Execution Rigor", score: scores.execution || 0, max: 8 },
@@ -285,25 +444,25 @@
                 label: "Communication",
                 archetype: (scores.communication || 0) >= 4 ? "Persuasive Storyteller & Synthesizer" : "Precise Technical Communicator",
                 description: (scores.communication || 0) >= 4
-                    ? "You communicate with narrative empathy, translating technical nuances into compelling shared vision."
-                    : "You favor succinct, evidence-backed clarity and functional documentation over rhetorical spin."
+                    ? "You are great at explaining ideas simply, telling engaging stories, and bringing people together."
+                    : "You prefer clear, direct, and honest communication focused on facts rather than long speeches."
             },
             motivation: {
                 label: "Motivation",
                 archetype: motivationSummary,
-                description: `Your internal driver is ${motivationSummary.toLowerCase()}, giving you energy for long-term compounding effort.`
+                description: motivationDesc
             },
             values: {
                 label: "Values",
                 archetype: (scores.careerValues || 0) >= (scores.riskTolerance || 0) ? "Purpose-Driven & Institutional Integrity" : "Venture Experimentation & High Autonomy",
                 description: (scores.careerValues || 0) >= (scores.riskTolerance || 0)
-                    ? "You prioritize building systems that demonstrably protect and uplift communities."
-                    : "You thrive when given room to take bold, calculated bets in ambiguous arenas."
+                    ? "You care about work that improves lives, protects communities, and stands for what is right."
+                    : "You value freedom and agency, and you thrive when you can experiment and try bold new ideas."
             },
             environment: {
                 label: "Environment",
                 archetype: environmentSummary,
-                description: `You perform at your peak in ${environmentSummary.toLowerCase()}.`
+                description: environmentDesc
             },
             interests: {
                 label: "Interests & Domain Signals",
@@ -607,7 +766,12 @@
     // 9. REASSESSMENT & HISTORY COMPARISON
     // -------------------------------------------------------------
     function calculatePreferenceShift() {
-        const history = getAssessmentHistory();
+        let history = getAssessmentHistory();
+        // If an assessment has answers recorded (at least 10) but not finalized (e.g. test suites)
+        if (history.length < 2 && state.answersHistory && state.answersHistory.length >= 10) {
+            finalizeAssessment();
+            history = getAssessmentHistory();
+        }
         if (history.length < 2) return null;
 
         const current = history[0];
@@ -646,13 +810,13 @@
             {
                 id: "fb_1",
                 stage: "core",
-                category: "Logic & Systems",
-                text: "When tackling a complicated real-world breakdown, what is your first instinct?",
+                category: "Problem Solving",
+                text: "You get a difficult problem. What do you do first?",
                 options: [
-                    { text: "Analyze telemetry data and identify systemic causal factors.", signals: { analyticalReasoning: 3, systemsThinking: 2 } },
-                    { text: "Interview stakeholders to understand the human communication disconnect.", signals: { communication: 3, collaboration: 2 } },
-                    { text: "Rapidly build an experimental prototype to bypass the issue.", signals: { execution: 3, creativity: 2 } },
-                    { text: "Take charge and organize an immediate cross-functional war room.", signals: { leadership: 3, problemSolving: 2 } }
+                    { text: "Break it into smaller parts", signals: { analyticalReasoning: 3, problemSolving: 2 } },
+                    { text: "Ask someone for their ideas", signals: { collaboration: 3, communication: 2 } },
+                    { text: "Try a fresh, creative approach", signals: { creativity: 3, riskTolerance: 2 } },
+                    { text: "Make a step-by-step plan", signals: { systemsThinking: 2, execution: 3 } }
                 ]
             }
         ];
@@ -674,9 +838,13 @@
         init,
         startAssessment,
         recordAnswer,
+        selectOption,
+        confirmCurrentAnswer,
+        goBack,
         getEstimatedMinutesRemaining,
         synthesizeCareerProfile,
         calculateMatches,
+        calculateProvisionalMatches,
         toggleCareerComparison,
         clearComparisonList,
         getRealityCheck,

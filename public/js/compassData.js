@@ -149,339 +149,659 @@
     // Non-obvious, realistic situations testing multi-dimensional trade-offs.
     // -------------------------------------------------------------
     const COMPASS_QUESTIONS = [
+        // =========================================================
+        // CORE ASSESSMENT QUESTIONS (Simple, Conversational, 8-15 Words)
+        // =========================================================
         {
-            id: "scen_1",
+            id: "q01",
             stage: "core",
-            category: "Problem Discovery",
-            text: "Your team launches a new product feature, but initial user adoption is 40% below projections. Where do you instinctively focus your energy first?",
+            category: "Problem Solving",
+            type: "problem_solving",
+            text: "You get a difficult problem. What do you do first?",
+            question: "You get a difficult problem. What do you do first?",
             options: [
                 {
-                    text: "Dig deep into user telemetry logs, funnel drop-off metrics, and behavioral cohort data.",
-                    signals: { analyticalReasoning: 3, problemSolving: 2, independence: 1 },
-                    traits: ["Analytical", "Data-Informed"]
+                    text: "Break it into smaller parts",
+                    signals: { analyticalReasoning: 3, problemSolving: 2 },
+                    traits: ["Analytical", "Logical"]
                 },
                 {
-                    text: "Conduct 1-on-1 qualitative interviews with confused users to uncover emotional friction points.",
-                    signals: { communication: 3, collaboration: 2, curiosity: 1 },
-                    traits: ["Empathetic", "Communicative"]
+                    text: "Ask someone for their ideas",
+                    signals: { collaboration: 3, communication: 2 },
+                    traits: ["Collaborative", "Social"]
                 },
                 {
-                    text: "Audit the overall user journey and interface affordances to reimagine a more intuitive flow.",
-                    signals: { creativity: 3, systemsThinking: 2 },
-                    traits: ["Creative", "Product-Minded"]
+                    text: "Try a fresh, creative approach",
+                    signals: { creativity: 3, riskTolerance: 2 },
+                    traits: ["Creative", "Inventive"]
                 },
                 {
-                    text: "Assemble the engineering and design leads into a war room to prioritize immediate tactical patches.",
-                    signals: { leadership: 3, execution: 2, collaboration: 1 },
-                    traits: ["Decisive", "Action-Oriented"]
+                    text: "Make a step-by-step plan",
+                    signals: { systemsThinking: 2, execution: 3 },
+                    traits: ["Organized", "Methodical"]
                 }
             ]
         },
         {
-            id: "scen_2",
+            id: "q02",
             stage: "core",
-            category: "Work Preference",
-            text: "Imagine an ideal, high-impact Tuesday at work. Which environment gives you the highest state of flow?",
+            category: "Work Style",
+            type: "work_style",
+            text: "What kind of work environment helps you focus best?",
+            question: "What kind of work environment helps you focus best?",
             options: [
                 {
-                    text: "Four hours of unbroken focus with headphones on, untangling an intricate logical or structural puzzle.",
-                    signals: { independence: 3, analyticalReasoning: 2, motivation: 2 },
-                    traits: ["Deep Focus", "Autonomous"]
+                    text: "A quiet desk working on my own",
+                    signals: { independence: 4, analyticalReasoning: 1, workEnvironment: 2 },
+                    traits: ["Independent", "Focused"]
                 },
                 {
-                    text: "A fast-paced whiteboard session orchestrating high-stakes strategy and aligning diverse stakeholders.",
-                    signals: { leadership: 2, communication: 3, collaboration: 2 },
-                    traits: ["Facilitator", "High-Energy"]
+                    text: "A lively room with a team",
+                    signals: { collaboration: 4, communication: 2, workEnvironment: 2 },
+                    traits: ["Collaborative", "Outgoing"]
                 },
                 {
-                    text: "Hands-on building: writing code, sketching prototypes, or experimenting with tangible tools.",
-                    signals: { execution: 3, problemSolving: 2, creativity: 1 },
-                    traits: ["Builder", "Hands-On"]
+                    text: "A workshop building real things",
+                    signals: { execution: 3, problemSolving: 2, workEnvironment: 3 },
+                    traits: ["Hands-On", "Builder"]
                 },
                 {
-                    text: "Mentoring colleagues, mediating conflicting viewpoints, and helping someone breakthrough a roadblock.",
-                    signals: { collaboration: 3, communication: 2, careerValues: 2 },
-                    traits: ["Mentoring", "People-Centered"]
+                    text: "A flexible space with lots of variety",
+                    signals: { riskTolerance: 3, curiosity: 2, workEnvironment: 3 },
+                    traits: ["Adaptable", "Dynamic"]
                 }
             ]
         },
         {
-            id: "scen_3",
+            id: "q03",
             stage: "core",
-            category: "Systems & Structure",
-            text: "When confronted with a sprawling, disorganized project with missing documentation, what is your natural reaction?",
+            category: "Organization",
+            type: "situational",
+            text: "Your team project is messy and unorganized. What do you do?",
+            question: "Your team project is messy and unorganized. What do you do?",
             options: [
                 {
-                    text: "I map out the end-to-end architecture, dependency graph, and establish clean modular boundaries.",
-                    signals: { systemsThinking: 3, analyticalReasoning: 2 },
-                    traits: ["Architectural", "Structured"]
+                    text: "Map out how all parts connect",
+                    signals: { systemsThinking: 4, analyticalReasoning: 2 },
+                    traits: ["Systems Thinker", "Structured"]
                 },
                 {
-                    text: "I embrace the ambiguity, dive into the messy core, and build a working proof-of-concept to cut through theory.",
-                    signals: { riskTolerance: 3, execution: 2, problemSolving: 2 },
-                    traits: ["Pragmatic", "Resilient"]
+                    text: "Take charge and assign clear tasks",
+                    signals: { leadership: 4, execution: 2 },
+                    traits: ["Leader", "Decisive"]
                 },
                 {
-                    text: "I interview key domain experts to capture tacit tribal knowledge and synthesize it into clear guides.",
-                    signals: { communication: 3, curiosity: 2, collaboration: 1 },
-                    traits: ["Synthesizer", "Inquisitive"]
+                    text: "Talk to everyone to clear confusion",
+                    signals: { communication: 3, collaboration: 3 },
+                    traits: ["Communicator", "Diplomatic"]
                 },
                 {
-                    text: "I establish clear milestone deadlines, assign accountability, and track velocity systematically.",
-                    signals: { leadership: 2, execution: 3, problemSolving: 1 },
-                    traits: ["Operational", "Accountable"]
+                    text: "Jump right in and start fixing things",
+                    signals: { problemSolving: 3, execution: 3 },
+                    traits: ["Action-Oriented", "Pragmatic"]
                 }
             ]
         },
         {
-            id: "scen_4",
+            id: "q04",
             stage: "core",
-            category: "Decision Making Under Pressure",
-            text: "You have two days before a major deadline. A flaw is discovered that doesn't break the system, but degrades quality. What is your call?",
+            category: "Problem Solving",
+            type: "situational",
+            text: "You find a mistake right before a deadline. What do you do?",
+            question: "You find a mistake right before a deadline. What do you do?",
             options: [
                 {
-                    text: "Perform a rapid risk-matrix assessment to calculate probability and impact before making a calculated call.",
-                    signals: { analyticalReasoning: 3, riskTolerance: 1, systemsThinking: 2 },
-                    traits: ["Methodical", "Risk-Aware"]
+                    text: "Trace the root cause and fix it",
+                    signals: { analyticalReasoning: 3, problemSolving: 3, execution: 1 },
+                    traits: ["Troubleshooter", "Calm"]
                 },
                 {
-                    text: "Pull an all-out sprint with the core team to fix the flaw so the release meets the highest craftsmanship standard.",
-                    signals: { execution: 3, motivation: 2, leadership: 1 },
-                    traits: ["Excellence-Driven", "Intense"]
+                    text: "Rally the team to fix it together",
+                    signals: { leadership: 2, collaboration: 4 },
+                    traits: ["Team-First", "Supportive"]
                 },
                 {
-                    text: "Transparently communicate the trade-off to stakeholders and renegotiate scope or timeline collaboratively.",
-                    signals: { communication: 3, leadership: 2, careerValues: 1 },
-                    traits: ["Transparent", "Diplomatic"]
+                    text: "Find a clever workaround quickly",
+                    signals: { creativity: 3, problemSolving: 2 },
+                    traits: ["Resourceful", "Quick Thinker"]
                 },
                 {
-                    text: "Devise a clever workaround or fallback mode that isolates the flaw without delaying the rollout.",
-                    signals: { creativity: 3, problemSolving: 3 },
-                    traits: ["Ingenious", "Adaptive"]
+                    text: "Tell everyone honestly and adjust the plan",
+                    signals: { communication: 3, careerValues: 3 },
+                    traits: ["Honest", "Transparent"]
                 }
             ]
         },
         {
-            id: "scen_5",
+            id: "q05",
             stage: "core",
-            category: "Motivation & Impact",
-            text: "Looking back at a project 5 years from now, which achievement would give you the deepest sense of professional pride?",
+            category: "Learning Style",
+            type: "learning_preference",
+            text: "How do you prefer to learn a brand-new topic?",
+            question: "How do you prefer to learn a brand-new topic?",
             options: [
                 {
-                    text: "The underlying architecture was so resilient and elegant that it effortlessly scaled 100x without downtime.",
-                    signals: { systemsThinking: 3, motivation: 3, analyticalReasoning: 2 },
-                    traits: ["Craftsman", "Scalability"]
-                },
-                {
-                    text: "It directly improved the everyday lives, health, or financial wellbeing of thousands of vulnerable people.",
-                    signals: { careerValues: 4, motivation: 2 },
-                    traits: ["Mission-Driven", "Impactful"]
-                },
-                {
-                    text: "It broke conventional industry wisdom, establishing an entirely new category or patented innovation.",
-                    signals: { creativity: 3, riskTolerance: 3, curiosity: 2 },
-                    traits: ["Pioneer", "Disruptor"]
-                },
-                {
-                    text: "It generated strong financial returns and established an enduring, profitable enterprise or team.",
-                    signals: { leadership: 3, execution: 2, riskTolerance: 2 },
-                    traits: ["Commercial", "Strategic"]
-                }
-            ]
-        },
-        {
-            id: "scen_6",
-            stage: "adaptive",
-            category: "Cognitive Style",
-            text: "When exploring an unfamiliar subject (e.g. quantum cryptography, behavioral economics, bio-materials), how do you best absorb it?",
-            options: [
-                {
-                    text: "Reading foundational research papers, textbook chapters, and understanding mathematical/first principles.",
+                    text: "Read the theory and understand the logic",
                     signals: { analyticalReasoning: 3, curiosity: 3, independence: 2 },
-                    traits: ["Academic", "Rigorous"]
+                    traits: ["Logical", "Thorough"]
                 },
                 {
-                    text: "Dissecting real-world case studies, post-mortems, and historical breakdowns of success and failure.",
-                    signals: { systemsThinking: 2, problemSolving: 2, curiosity: 2 },
-                    traits: ["Empirical", "Practical"]
+                    text: "Build a small project to test it",
+                    signals: { execution: 3, problemSolving: 3, creativity: 1 },
+                    traits: ["Hands-On", "Experimental"]
                 },
                 {
-                    text: "Building a toy simulation, experiment, or sandbox project to see cause-and-effect firsthand.",
-                    signals: { execution: 3, creativity: 2, problemSolving: 2 },
-                    traits: ["Experimental", "Kinesthetic"]
+                    text: "Discuss and debate ideas with others",
+                    signals: { communication: 3, collaboration: 3, curiosity: 1 },
+                    traits: ["Interactive", "Social"]
                 },
                 {
-                    text: "Engaging in debates, asking questions to practitioners, and explaining concepts back to peers.",
-                    signals: { communication: 3, collaboration: 2, curiosity: 2 },
-                    traits: ["Interactive", "Verbal"]
+                    text: "Study real-world examples of success",
+                    signals: { systemsThinking: 3, curiosity: 2, interests: 2 },
+                    traits: ["Observant", "Strategic"]
                 }
             ]
         },
         {
-            id: "scen_7",
-            stage: "adaptive",
-            category: "Work Dynamics",
-            text: "Which type of organizational friction drains your energy the fastest?",
+            id: "q06",
+            stage: "core",
+            category: "Creativity",
+            type: "creativity",
+            text: "When you need a new idea, what helps you most?",
+            question: "When you need a new idea, what helps you most?",
             options: [
                 {
-                    text: "Vague, emotionally driven decisions made without quantitative evidence or rigorous reasoning.",
-                    signals: { analyticalReasoning: 3, systemsThinking: 1 },
-                    traits: ["Values Evidence", "Objective"]
+                    text: "Looking at facts and patterns for clues",
+                    signals: { analyticalReasoning: 3, systemsThinking: 2 },
+                    traits: ["Data-Driven", "Investigative"]
                 },
                 {
-                    text: "Rigid bureaucratic gatekeepers, endless approval forms, and refusal to test new ideas.",
-                    signals: { creativity: 2, riskTolerance: 3, independence: 2 },
-                    traits: ["Values Autonomy", "Dynamic"]
+                    text: "Connecting two completely unrelated topics",
+                    signals: { creativity: 4, interests: 3 },
+                    traits: ["Imaginative", "Lateral Thinker"]
                 },
                 {
-                    text: "Poor interpersonal dynamics, toxic politics, and a lack of empathy among team members.",
-                    signals: { collaboration: 3, communication: 2, careerValues: 2 },
-                    traits: ["Values Empathy", "Harmonious"]
+                    text: "Bouncing ideas back and forth with friends",
+                    signals: { communication: 3, collaboration: 3 },
+                    traits: ["Collaborative", "Open"]
                 },
                 {
-                    text: "Endless meetings and theoretical talk with zero tangible deliverables or real execution progress.",
-                    signals: { execution: 3, problemSolving: 2, motivation: 2 },
-                    traits: ["Values Output", "Pragmatic"]
+                    text: "Sketching or building something rough immediately",
+                    signals: { execution: 2, creativity: 2, problemSolving: 2 },
+                    traits: ["Prototyper", "Action-Oriented"]
                 }
             ]
         },
         {
-            id: "scen_8",
-            stage: "adaptive",
-            category: "Risk & Ambiguity",
-            text: "You are invited to join one of two initiatives with equal compensation. Which feels more compelling to you?",
+            id: "q07",
+            stage: "core",
+            category: "Leadership",
+            type: "leadership",
+            text: "Your team needs to pick a project direction. What do you do?",
+            question: "Your team needs to pick a project direction. What do you do?",
             options: [
                 {
-                    text: "Initiative A: An early-stage, undefined venture where the roadmap changes weekly, but you have huge creative autonomy.",
-                    signals: { riskTolerance: 4, independence: 2, creativity: 2 },
-                    traits: ["Tolerates Ambiguity", "Entrepreneurial"]
+                    text: "Weigh the pros and cons using facts",
+                    signals: { analyticalReasoning: 3, systemsThinking: 2 },
+                    traits: ["Analytical", "Fair"]
                 },
                 {
-                    text: "Initiative B: A critical system at scale where reliability is paramount, process is structured, and mistakes are costly.",
-                    signals: { execution: 3, systemsThinking: 3, analyticalReasoning: 2 },
-                    traits: ["High Reliability", "Structured"]
+                    text: "Take charge and guide the team",
+                    signals: { leadership: 4, communication: 2 },
+                    traits: ["Leader", "Decisive"]
                 },
                 {
-                    text: "Initiative C: A human-centric mission directly advocating for marginalized communities or educational access.",
+                    text: "Make sure everyone feels included and heard",
+                    signals: { collaboration: 4, careerValues: 2 },
+                    traits: ["Empathetic", "Supportive"]
+                },
+                {
+                    text: "Suggest a bold and unexpected direction",
+                    signals: { creativity: 3, riskTolerance: 4 },
+                    traits: ["Bold", "Visionary"]
+                }
+            ]
+        },
+        {
+            id: "q08",
+            stage: "core",
+            category: "Interests",
+            type: "quick_preference",
+            text: "You have a free afternoon. Which sounds most fun?",
+            question: "You have a free afternoon. Which sounds most fun?",
+            options: [
+                {
+                    text: "Solving strategy puzzles, coding, or gaming",
+                    signals: { analyticalReasoning: 2, systemsThinking: 2, motivation: 3 },
+                    traits: ["Strategic", "Focused"]
+                },
+                {
+                    text: "Drawing, writing stories, or making music",
+                    signals: { creativity: 4, independence: 2 },
+                    traits: ["Creative", "Artistic"]
+                },
+                {
+                    text: "Helping someone learn or volunteering nearby",
+                    signals: { careerValues: 4, communication: 3 },
+                    traits: ["Helpful", "Purpose-Driven"]
+                },
+                {
+                    text: "Working on a side project or business",
+                    signals: { leadership: 2, execution: 2, riskTolerance: 3 },
+                    traits: ["Enterprising", "Driven"]
+                }
+            ]
+        },
+        {
+            id: "q09",
+            stage: "core",
+            category: "Communication",
+            type: "communication",
+            text: "When explaining a hard idea, what is your style?",
+            question: "When explaining a hard idea, what is your style?",
+            options: [
+                {
+                    text: "Use clear diagrams and clean logic",
+                    signals: { systemsThinking: 3, analyticalReasoning: 3 },
+                    traits: ["Logical", "Clear"]
+                },
+                {
+                    text: "Tell an engaging story with simple examples",
+                    signals: { communication: 4, creativity: 2 },
+                    traits: ["Storyteller", "Engaging"]
+                },
+                {
+                    text: "Show a practical example they can try",
+                    signals: { problemSolving: 2, execution: 2, communication: 2 },
+                    traits: ["Practical", "Direct"]
+                },
+                {
+                    text: "Listen first to find where they are stuck",
+                    signals: { communication: 3, collaboration: 3, careerValues: 1 },
+                    traits: ["Patient", "Empathetic"]
+                }
+            ]
+        },
+        {
+            id: "q10",
+            stage: "core",
+            category: "Motivation",
+            type: "trade_off",
+            text: "Which kind of challenge sounds more exciting to you?",
+            question: "Which kind of challenge sounds more exciting to you?",
+            options: [
+                {
+                    text: "Mastering a difficult skill with high precision",
+                    signals: { motivation: 4, execution: 3, independence: 2 },
+                    traits: ["Craftsman", "Disciplined"]
+                },
+                {
+                    text: "Trying a risky new idea that might fail",
+                    signals: { riskTolerance: 4, creativity: 2, curiosity: 2 },
+                    traits: ["Adventurous", "Bold"]
+                },
+                {
+                    text: "Guiding a group to complete a big goal",
+                    signals: { leadership: 3, systemsThinking: 2, collaboration: 2 },
+                    traits: ["Organizer", "Driver"]
+                },
+                {
+                    text: "Solving problems that help your community directly",
                     signals: { careerValues: 4, communication: 2 },
-                    traits: ["Public Interest", "Altruistic"]
-                },
-                {
-                    text: "Initiative D: An interdisciplinary lab blending creative art, storytelling, and emerging physical-digital technology.",
-                    signals: { creativity: 4, interests: 3, curiosity: 2 },
-                    traits: ["Interdisciplinary", "Imaginative"]
+                    traits: ["Community-Minded", "Caring"]
                 }
             ]
         },
         {
-            id: "scen_9",
-            stage: "adaptive",
-            category: "Communication & Influence",
-            text: "You need to convince a skeptical board or committee to invest in a major technical or strategic upgrade. How do you prepare?",
+            id: "q11",
+            stage: "core",
+            category: "Work Style",
+            type: "quick_preference",
+            text: "What type of task gives you the most satisfaction?",
+            question: "What type of task gives you the most satisfaction?",
             options: [
                 {
-                    text: "Build an ironclad financial model and quantitative benchmark deck showcasing measurable ROI.",
-                    signals: { analyticalReasoning: 3, communication: 2, systemsThinking: 1 },
-                    traits: ["Quant-Driven", "Business-Savvy"]
+                    text: "Untangling a complicated puzzle or fixing errors",
+                    signals: { problemSolving: 4, analyticalReasoning: 3 },
+                    traits: ["Troubleshooter", "Persistent"]
                 },
                 {
-                    text: "Craft a compelling narrative focused on customer stories, market evolution, and future vision.",
-                    signals: { communication: 4, creativity: 2, leadership: 2 },
-                    traits: ["Storyteller", "Visionary"]
-                },
-                {
-                    text: "Present a live, working prototype or live demo so they can experience the difference immediately.",
-                    signals: { execution: 3, problemSolving: 2, creativity: 2 },
-                    traits: ["Show Not Tell", "Demonstrator"]
-                },
-                {
-                    text: "Meet key decision-makers 1-on-1 beforehand to understand their individual reservations and build quiet consensus.",
-                    signals: { collaboration: 3, communication: 3, leadership: 2 },
-                    traits: ["Diplomatic", "Consensus Builder"]
-                }
-            ]
-        },
-        {
-            id: "scen_10",
-            stage: "adaptive",
-            category: "Creative vs Execution Trade-off",
-            text: "When you look at a successful product or institution, what commands your highest respect?",
-            options: [
-                {
-                    text: "The sheer visual beauty, brand voice, and emotional resonance of the user experience.",
+                    text: "Designing something beautiful that people enjoy",
                     signals: { creativity: 4, communication: 2 },
-                    traits: ["Aesthetic", "Design-Centric"]
+                    traits: ["Designer", "User-Focused"]
                 },
                 {
-                    text: "The bulletproof operational reliability, safety margins, and engineering precision behind the scenes.",
-                    signals: { systemsThinking: 3, execution: 3, problemSolving: 2 },
-                    traits: ["Reliability", "Precision"]
+                    text: "Organizing chaotic work so it runs smoothly",
+                    signals: { systemsThinking: 3, execution: 3 },
+                    traits: ["Organizer", "Efficient"]
                 },
                 {
-                    text: "The ethical integrity, positive policy impact, and societal value created for the community.",
-                    signals: { careerValues: 4, leadership: 1 },
-                    traits: ["Ethical", "Civic-Minded"]
-                },
-                {
-                    text: "The market adaptability, lean execution, and rapid distribution speed compared to competitors.",
-                    signals: { execution: 2, riskTolerance: 3, leadership: 2 },
-                    traits: ["Agile", "Market-Focused"]
+                    text: "Inspiring and motivating people to reach a goal",
+                    signals: { leadership: 3, communication: 3 },
+                    traits: ["Motivator", "People-Centered"]
                 }
             ]
         },
         {
-            id: "scen_11",
-            stage: "depth",
-            category: "Detail vs Big Picture",
-            text: "In your day-to-day thinking, are you naturally drawn to the microscope or the telescope?",
+            id: "q12",
+            stage: "core",
+            category: "Cognitive Style",
+            type: "trade_off",
+            text: "When working on something, what do you notice first?",
+            question: "When working on something, what do you notice first?",
             options: [
                 {
-                    text: "Microscope: I take pride in zeroing in on subtle nuances, edge-case bugs, or precise mathematical constants.",
-                    signals: { analyticalReasoning: 3, execution: 3, independence: 2 },
-                    traits: ["Detail-Oriented", "Precision"]
+                    text: "Small details and tiny flaws others miss",
+                    signals: { analyticalReasoning: 2, execution: 4, independence: 2 },
+                    traits: ["Detail-Oriented", "Precise"]
                 },
                 {
-                    text: "Telescope: I instinctively zoom out to see macroeconomic shifts, societal trends, and long-term ecosystem trajectories.",
-                    signals: { systemsThinking: 3, leadership: 2, curiosity: 3 },
-                    traits: ["Strategic", "Big Picture"]
+                    text: "The big picture and how everything connects",
+                    signals: { systemsThinking: 4, curiosity: 2, interests: 2 },
+                    traits: ["Big Picture", "Strategic"]
                 },
                 {
-                    text: "Kaleidoscope: I like recombining disparate perspectives from psychology, art, and tech into unexpected hybrids.",
-                    signals: { creativity: 3, interests: 3, curiosity: 2 },
-                    traits: ["Synthesizer", "Lateral Thinker"]
+                    text: "How the final result will make people feel",
+                    signals: { careerValues: 3, communication: 3 },
+                    traits: ["Empathetic", "Human-Centered"]
                 },
                 {
-                    text: "Bridge: I enjoy acting as the translator connecting the visionary thinkers with the precision executors.",
-                    signals: { communication: 3, collaboration: 3, problemSolving: 2 },
-                    traits: ["Integrator", "Translator"]
+                    text: "Clever shortcuts to get it done faster",
+                    signals: { problemSolving: 3, creativity: 2 },
+                    traits: ["Resourceful", "Fast Mover"]
                 }
             ]
         },
         {
-            id: "scen_12",
-            stage: "depth",
-            category: "Career Core Driver",
-            text: "If you had total financial freedom, what kind of work would you choose to spend your mornings on?",
+            id: "q13",
+            stage: "core",
+            category: "Curiosity",
+            type: "learning_preference",
+            text: "If you could look behind the scenes, what would you pick?",
+            question: "If you could look behind the scenes, what would you pick?",
             options: [
                 {
-                    text: "Conducting scientific or technical research pushing the boundary of human capability.",
-                    signals: { curiosity: 4, analyticalReasoning: 3, motivation: 3 },
-                    traits: ["Researcher", "Pioneer"]
+                    text: "How cutting-edge AI and computer systems work",
+                    signals: { curiosity: 4, systemsThinking: 3, analyticalReasoning: 2 },
+                    traits: ["Tech-Curious", "Logical"]
                 },
                 {
-                    text: "Writing, designing, composing, or creating media that moves people and sparks debate.",
-                    signals: { creativity: 4, communication: 3, independence: 2 },
-                    traits: ["Creator", "Artistic"]
+                    text: "How medical scientists discover life-saving treatments",
+                    signals: { careerValues: 3, curiosity: 3, analyticalReasoning: 2 },
+                    traits: ["Science-Minded", "Impact-Driven"]
                 },
                 {
-                    text: "Founding projects, backing visionary builders, and taking calculated strategic risks.",
-                    signals: { riskTolerance: 4, leadership: 3, execution: 2 },
-                    traits: ["Venture", "Leader"]
+                    text: "How creative studios make animations and games",
+                    signals: { creativity: 4, curiosity: 2, interests: 2 },
+                    traits: ["Creative", "Curious"]
                 },
                 {
-                    text: "Advising, counseling, or teaching individuals to overcome hurdles and achieve personal growth.",
-                    signals: { careerValues: 4, communication: 3, collaboration: 2 },
-                    traits: ["Counselor", "Educator"]
+                    text: "How successful founders build fast-growing companies",
+                    signals: { leadership: 3, execution: 2, riskTolerance: 2 },
+                    traits: ["Business-Minded", "Strategic"]
+                }
+            ]
+        },
+        {
+            id: "q14",
+            stage: "core",
+            category: "Values",
+            type: "values",
+            text: "Years from now, what would make you proudest of your work?",
+            question: "Years from now, what would make you proudest of your work?",
+            options: [
+                {
+                    text: "Building reliable systems that millions of people trust",
+                    signals: { systemsThinking: 3, motivation: 3, execution: 2 },
+                    traits: ["System Builder", "High Standard"]
+                },
+                {
+                    text: "Creating something genuinely original and innovative",
+                    signals: { creativity: 4, riskTolerance: 2 },
+                    traits: ["Original", "Innovator"]
+                },
+                {
+                    text: "Helping people improve their health and daily lives",
+                    signals: { careerValues: 4, communication: 2 },
+                    traits: ["Caring", "Impactful"]
+                },
+                {
+                    text: "Building a thriving organization from the ground up",
+                    signals: { leadership: 3, riskTolerance: 3, execution: 2 },
+                    traits: ["Founder", "Achiever"]
+                }
+            ]
+        },
+
+        // =========================================================
+        // ADAPTIVE DISCRIMINATOR QUESTIONS (Separating Competing Fields)
+        // =========================================================
+        {
+            id: "ad01",
+            stage: "adaptive",
+            category: "Tech & Digital",
+            type: "discriminator",
+            discriminates: ["tech_ai", "data_analytics", "business_management", "design_creative"],
+            text: "Which type of day sounds most exciting to you?",
+            question: "Which type of day sounds most exciting to you?",
+            options: [
+                {
+                    text: "Building software and making code work",
+                    signals: { systemsThinking: 3, problemSolving: 2, analyticalReasoning: 1 },
+                    boostDomain: "tech_ai",
+                    traits: ["Software Engineer", "Builder"]
+                },
+                {
+                    text: "Finding hidden patterns in numbers and data",
+                    signals: { analyticalReasoning: 4, curiosity: 2 },
+                    boostDomain: "data_analytics",
+                    traits: ["Data Analyst", "Investigator"]
+                },
+                {
+                    text: "Deciding what a product should do and why",
+                    signals: { leadership: 2, communication: 3, systemsThinking: 1 },
+                    boostDomain: "business_management",
+                    traits: ["Product Manager", "Strategist"]
+                },
+                {
+                    text: "Designing visual screens and easy user interfaces",
+                    signals: { creativity: 4, communication: 2 },
+                    boostDomain: "design_creative",
+                    traits: ["UI/UX Designer", "Visual"]
+                }
+            ]
+        },
+        {
+            id: "ad02",
+            stage: "adaptive",
+            category: "Science & Making",
+            type: "discriminator",
+            discriminates: ["engineering", "science_research", "healthcare", "emerging_interdisciplinary"],
+            text: "Which real-world problem would you rather tackle?",
+            question: "Which real-world problem would you rather tackle?",
+            options: [
+                {
+                    text: "Designing robots, machines, or physical structures",
+                    signals: { execution: 3, systemsThinking: 2, problemSolving: 3 },
+                    boostDomain: "engineering",
+                    traits: ["Engineer", "Maker"]
+                },
+                {
+                    text: "Running experiments to discover new scientific facts",
+                    signals: { curiosity: 4, analyticalReasoning: 3 },
+                    boostDomain: "science_research",
+                    traits: ["Researcher", "Scientist"]
+                },
+                {
+                    text: "Treating patients and improving human health",
+                    signals: { careerValues: 4, communication: 2, problemSolving: 2 },
+                    boostDomain: "healthcare",
+                    traits: ["Healthcare", "Empathetic"]
+                },
+                {
+                    text: "Developing clean energy and environmental solutions",
+                    signals: { careerValues: 3, systemsThinking: 3, interests: 2 },
+                    boostDomain: "emerging_interdisciplinary",
+                    traits: ["Climate Tech", "Systems"]
+                }
+            ]
+        },
+        {
+            id: "ad03",
+            stage: "adaptive",
+            category: "Business & Society",
+            type: "discriminator",
+            discriminates: ["entrepreneurship", "law", "marketing_sales", "media_communication", "education"],
+            text: "Where would you rather use your voice?",
+            question: "Where would you rather use your voice?",
+            options: [
+                {
+                    text: "Negotiating deals and growing a new company",
+                    signals: { leadership: 3, riskTolerance: 3, execution: 1 },
+                    boostDomain: "entrepreneurship",
+                    traits: ["Entrepreneur", "Deal-Maker"]
+                },
+                {
+                    text: "Debating rules, justice, and public policy",
+                    signals: { communication: 3, analyticalReasoning: 3, careerValues: 2 },
+                    boostDomain: "law",
+                    traits: ["Advocate", "Debater"]
+                },
+                {
+                    text: "Creating marketing campaigns that grab attention",
+                    signals: { creativity: 3, communication: 3, riskTolerance: 1 },
+                    boostDomain: "marketing_sales",
+                    traits: ["Marketer", "Storyteller"]
+                },
+                {
+                    text: "Reporting important stories and educating people",
+                    signals: { curiosity: 3, communication: 4, independence: 1 },
+                    boostDomain: "media_communication",
+                    traits: ["Journalist", "Educator"]
+                }
+            ]
+        },
+        {
+            id: "ad04",
+            stage: "adaptive",
+            category: "Work Roles",
+            type: "discriminator",
+            uncertainTrait: "independence_vs_leadership",
+            text: "In a group project, which role feels most natural?",
+            question: "In a group project, which role feels most natural?",
+            options: [
+                {
+                    text: "The specialist who solves the hardest technical part",
+                    signals: { independence: 3, analyticalReasoning: 2, motivation: 2 },
+                    traits: ["Deep Specialist", "Expert"]
+                },
+                {
+                    text: "The coordinator who keeps the team on schedule",
+                    signals: { leadership: 3, execution: 2, communication: 2 },
+                    traits: ["Coordinator", "Manager"]
+                },
+                {
+                    text: "The teammate who supports and connects everyone",
+                    signals: { collaboration: 4, communication: 2 },
+                    traits: ["Team Anchor", "Harmonizer"]
+                },
+                {
+                    text: "The creative who challenges standard thinking",
+                    signals: { creativity: 3, riskTolerance: 3 },
+                    traits: ["Idea Generator", "Challenger"]
+                }
+            ]
+        },
+        {
+            id: "ad05",
+            stage: "adaptive",
+            category: "Pacing & Style",
+            type: "discriminator",
+            uncertainTrait: "execution_vs_risk",
+            text: "Which sounds closer to how you like to work?",
+            question: "Which sounds closer to how you like to work?",
+            options: [
+                {
+                    text: "Taking time to make sure every detail is right",
+                    signals: { execution: 4, analyticalReasoning: 2 },
+                    traits: ["Precise", "Careful"]
+                },
+                {
+                    text: "Moving quickly, testing ideas, and adjusting fast",
+                    signals: { riskTolerance: 4, problemSolving: 2 },
+                    traits: ["Fast Mover", "Experimental"]
+                },
+                {
+                    text: "Making a solid plan before taking any action",
+                    signals: { systemsThinking: 3, execution: 2 },
+                    traits: ["Planner", "Structured"]
+                },
+                {
+                    text: "Diving right in and learning by doing",
+                    signals: { riskTolerance: 2, problemSolving: 3 },
+                    traits: ["Pragmatic", "Hands-On"]
+                }
+            ]
+        },
+        {
+            id: "ad06",
+            stage: "adaptive",
+            category: "Impact & Goals",
+            type: "discriminator",
+            uncertainTrait: "values_vs_venture",
+            text: "What kind of organization would you rather be part of?",
+            question: "What kind of organization would you rather be part of?",
+            options: [
+                {
+                    text: "A fast-growing tech startup with huge upside",
+                    signals: { riskTolerance: 3, leadership: 2, motivation: 3 },
+                    traits: ["Startup", "High-Growth"]
+                },
+                {
+                    text: "A public service or non-profit helping people",
+                    signals: { careerValues: 4, collaboration: 2 },
+                    traits: ["Public Good", "Service"]
+                },
+                {
+                    text: "A research lab discovering new knowledge",
+                    signals: { systemsThinking: 2, curiosity: 4, motivation: 2 },
+                    traits: ["Research", "Discovery"]
+                },
+                {
+                    text: "A creative studio producing media and art",
+                    signals: { creativity: 4, interests: 2 },
+                    traits: ["Studio", "Creative"]
+                }
+            ]
+        },
+        {
+            id: "ad07",
+            stage: "adaptive",
+            category: "Thinking Style",
+            type: "discriminator",
+            uncertainTrait: "analytical_vs_execution",
+            text: "Which type of day-to-day work sounds more satisfying?",
+            question: "Which type of day-to-day work sounds more satisfying?",
+            options: [
+                {
+                    text: "Analyzing complex problems and designing models",
+                    signals: { analyticalReasoning: 4, curiosity: 2 },
+                    traits: ["Analyst", "Theoretical"]
+                },
+                {
+                    text: "Building physical objects or repairing equipment",
+                    signals: { execution: 4, problemSolving: 3 },
+                    traits: ["Craftsman", "Physical"]
+                },
+                {
+                    text: "Coaching people and helping them succeed",
+                    signals: { communication: 3, careerValues: 3, collaboration: 2 },
+                    traits: ["Coach", "Mentor"]
+                },
+                {
+                    text: "Organizing large events and leading campaigns",
+                    signals: { leadership: 3, collaboration: 2, execution: 2 },
+                    traits: ["Organizer", "Public"]
                 }
             ]
         }

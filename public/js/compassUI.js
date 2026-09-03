@@ -26,6 +26,44 @@
                 filterDomainCards(e.target.value);
             });
         }
+
+        // Keyboard navigation for the question assessment flow
+        document.addEventListener('keydown', (e) => {
+            const quizSection = document.getElementById('quiz-section');
+            if (!quizSection || quizSection.classList.contains('hidden')) return;
+
+            // Ignore when typing inside input elements
+            const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (activeTag === 'input' || activeTag === 'textarea') return;
+
+            if (e.key >= '1' && e.key <= '4') {
+                const idx = parseInt(e.key, 10) - 1;
+                selectOption(idx);
+                e.preventDefault();
+            } else if (['a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'].includes(e.key)) {
+                const idx = e.key.toLowerCase().charCodeAt(0) - 97;
+                selectOption(idx);
+                e.preventDefault();
+            } else if (e.key === 'Enter') {
+                confirmAndContinue();
+                e.preventDefault();
+            } else if (e.key === 'Backspace') {
+                goBack();
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                const state = root.CompassEngine ? root.CompassEngine.getState() : {};
+                const currentIdx = typeof state.selectedOptionIndex === 'number' ? state.selectedOptionIndex : -1;
+                const nextIdx = Math.min(3, currentIdx + 1);
+                selectOption(nextIdx);
+                e.preventDefault();
+            } else if (e.key === 'ArrowUp') {
+                const state = root.CompassEngine ? root.CompassEngine.getState() : {};
+                const currentIdx = typeof state.selectedOptionIndex === 'number' ? state.selectedOptionIndex : 1;
+                const prevIdx = Math.max(0, currentIdx - 1);
+                selectOption(prevIdx);
+                e.preventDefault();
+            }
+        });
     }
 
     // -------------------------------------------------------------
@@ -112,7 +150,7 @@
     }
 
     // -------------------------------------------------------------
-    // 2. ADAPTIVE QUESTION RENDERER
+    // 2. ADAPTIVE QUESTION RENDERER & INTERACTION HANDLERS
     // -------------------------------------------------------------
     function renderCurrentQuestion() {
         if (!root.CompassEngine) return;
@@ -122,7 +160,7 @@
 
         const totalQ = state.activeQuestions.length;
         const currentIdx = state.currentQuestionIndex;
-        const progress = (currentIdx / totalQ) * 100;
+        const progress = ((currentIdx) / totalQ) * 100;
 
         // Progress indicators
         const countBadge = document.getElementById('question-count');
@@ -131,50 +169,152 @@
         const timeBadge = document.getElementById('question-time-estimate');
         const categoryBadge = document.getElementById('question-category-badge');
 
-        if (countBadge) countBadge.innerText = `Question ${currentIdx + 1} of ${totalQ}`;
+        if (countBadge) countBadge.innerText = `QUESTION ${currentIdx + 1} OF ${totalQ}`;
         if (percentLabel) percentLabel.innerText = `${Math.round(progress)}% Complete`;
         if (bar) bar.style.width = `${progress}%`;
-        if (timeBadge) timeBadge.innerText = root.CompassEngine.getEstimatedMinutesRemaining();
-        if (categoryBadge) categoryBadge.innerText = currentQ.category || "Scenario Inquiry";
+        if (timeBadge) timeBadge.innerText = `⏱️ ${root.CompassEngine.getEstimatedMinutesRemaining()}`;
+        if (categoryBadge) categoryBadge.innerText = currentQ.category || "Preference";
 
-        // Question text
+        // Question scenario & prompt text
+        const qScenario = document.getElementById('question-scenario');
+        if (qScenario) {
+            if (currentQ.scenario) {
+                qScenario.innerText = currentQ.scenario;
+                qScenario.classList.remove('hidden');
+            } else {
+                qScenario.classList.add('hidden');
+            }
+        }
         const qText = document.getElementById('question-text');
-        if (qText) qText.innerText = currentQ.text;
+        if (qText) qText.innerText = currentQ.text || currentQ.question;
 
         // Options container
         const container = document.getElementById('options-container');
         if (!container) return;
         container.innerHTML = "";
 
+        const selectedIdx = state.selectedOptionIndex;
+
         currentQ.options.forEach((opt, idx) => {
+            const isSelected = selectedIdx === idx;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'neu-btn w-full text-left p-4 sm:p-5 font-medium text-slate-700 hover:text-blue-600 transition-all duration-200 fade-in flex items-center justify-between group cursor-pointer border border-white/60';
-            btn.style.animationDelay = `${idx * 70}ms`;
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+            btn.setAttribute('aria-label', `Option ${String.fromCharCode(65 + idx)}: ${opt.text}`);
+            btn.tabIndex = 0;
+
+            const baseClass = isSelected
+                ? 'neu-btn pressed w-full text-left p-3.5 sm:p-4.5 font-medium border-2 border-blue-600 bg-blue-50/90 text-blue-900 ring-2 ring-blue-400/30 transition-all duration-150 flex items-center justify-between group cursor-pointer shadow-inner rounded-xl'
+                : 'neu-btn w-full text-left p-3.5 sm:p-4.5 font-medium text-slate-700 hover:text-blue-600 hover:border-blue-300 transition-all duration-150 flex items-center justify-between group cursor-pointer border border-white/80 rounded-xl';
+
+            btn.className = baseClass;
+            btn.style.animationDelay = `${idx * 40}ms`;
+
+            const letterPillClass = isSelected
+                ? 'opt-letter-pill w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-black flex items-center justify-center shrink-0 shadow-xs'
+                : 'opt-letter-pill w-7 h-7 neu-circle text-[11px] font-black text-slate-500 group-hover:text-blue-600 flex items-center justify-center shrink-0';
+
+            const checkIconHtml = isSelected
+                ? `<div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>`
+                : `<div class="w-6 h-6 neu-circle text-slate-300 group-hover:text-blue-400 flex items-center justify-center shrink-0"><span class="w-2 h-2 rounded-full bg-transparent group-hover:bg-blue-300 transition-colors"></span></div>`;
 
             btn.innerHTML = `
-                <div class="flex items-start gap-3 min-w-0 pr-3">
-                    <span class="w-6 h-6 neu-circle text-[11px] font-black text-slate-500 group-hover:text-blue-600 flex items-center justify-center shrink-0 mt-0.5">${String.fromCharCode(65 + idx)}</span>
+                <div class="flex items-center gap-3 min-w-0 pr-2">
+                    <span class="${letterPillClass}">${String.fromCharCode(65 + idx)}</span>
                     <span class="text-xs sm:text-sm md:text-base font-semibold leading-snug">${escapeHtml(opt.text)}</span>
                 </div>
-                <div class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-slate-400 group-hover:text-blue-600 shrink-0 group-hover:translate-x-1 transition-all">
-                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
-                    </svg>
+                <div class="opt-check-icon shrink-0">
+                    ${checkIconHtml}
                 </div>
             `;
 
             btn.onclick = () => {
-                btn.classList.add('pressed');
-                setTimeout(() => {
-                    root.CompassEngine.recordAnswer(idx);
-                }, 130);
+                if (state.selectedOptionIndex === idx) {
+                    confirmAndContinue();
+                } else {
+                    selectOption(idx);
+                }
             };
 
             container.appendChild(btn);
         });
+
+        // Update nav buttons
+        const prevBtn = document.getElementById('compass-prev-btn');
+        if (prevBtn) {
+            prevBtn.disabled = currentIdx === 0;
+        }
+
+        const nextBtn = document.getElementById('compass-next-btn');
+        if (nextBtn) {
+            nextBtn.disabled = (selectedIdx === null || selectedIdx === undefined);
+        }
     }
+
+    function selectOption(idx) {
+        if (!root.CompassEngine) return;
+        root.CompassEngine.selectOption(idx);
+        updateQuestionSelectionUI(idx);
+    }
+
+    function confirmAndContinue() {
+        if (!root.CompassEngine) return;
+        const state = root.CompassEngine.getState();
+        if (state.selectedOptionIndex === null || state.selectedOptionIndex === undefined) return;
+        const nextBtn = document.getElementById('compass-next-btn');
+        if (nextBtn) nextBtn.classList.add('pressed');
+        setTimeout(() => {
+            if (nextBtn) nextBtn.classList.remove('pressed');
+            root.CompassEngine.confirmCurrentAnswer();
+        }, 110);
+    }
+
+    function goBack() {
+        if (!root.CompassEngine) return;
+        root.CompassEngine.goBack();
+    }
+
+    function updateQuestionSelectionUI(idx) {
+        const container = document.getElementById('options-container');
+        if (!container) return;
+        const cards = container.querySelectorAll('button[role="radio"]');
+        cards.forEach((card, i) => {
+            const isSelected = i === idx;
+            card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+            const letterPill = card.querySelector('.opt-letter-pill');
+            const checkIcon = card.querySelector('.opt-check-icon');
+
+            if (isSelected) {
+                card.className = 'neu-btn pressed w-full text-left p-3.5 sm:p-4.5 font-medium border-2 border-blue-600 bg-blue-50/90 text-blue-900 ring-2 ring-blue-400/30 transition-all duration-150 flex items-center justify-between group cursor-pointer shadow-inner rounded-xl';
+                if (letterPill) {
+                    letterPill.className = 'opt-letter-pill w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-black flex items-center justify-center shrink-0 shadow-xs';
+                }
+                if (checkIcon) {
+                    checkIcon.innerHTML = `<div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>`;
+                }
+            } else {
+                card.className = 'neu-btn w-full text-left p-3.5 sm:p-4.5 font-medium text-slate-700 hover:text-blue-600 hover:border-blue-300 transition-all duration-150 flex items-center justify-between group cursor-pointer border border-white/80 rounded-xl';
+                if (letterPill) {
+                    letterPill.className = 'opt-letter-pill w-7 h-7 neu-circle text-[11px] font-black text-slate-500 group-hover:text-blue-600 flex items-center justify-center shrink-0';
+                }
+                if (checkIcon) {
+                    checkIcon.innerHTML = `<div class="w-6 h-6 neu-circle text-slate-300 group-hover:text-blue-400 flex items-center justify-center shrink-0"><span class="w-2 h-2 rounded-full bg-transparent group-hover:bg-blue-300 transition-colors"></span></div>`;
+                }
+            }
+        });
+
+        const nextBtn = document.getElementById('compass-next-btn');
+        if (nextBtn) {
+            nextBtn.disabled = (idx === null || idx === undefined);
+        }
+    }
+
     root.renderCurrentQuestion = renderCurrentQuestion;
+    root.updateQuestionSelectionUI = updateQuestionSelectionUI;
+    root.selectOption = selectOption;
+    root.confirmAndContinue = confirmAndContinue;
+    root.goBack = goBack;
 
     // -------------------------------------------------------------
     // 3. RESULTS VIEW CONTROLLER (Profile + Matches + History)
@@ -247,13 +387,13 @@
         container.innerHTML = "";
 
         const insights = [
-            { key: 'thinking', icon: '🧠', data: profile.thinking, badge: 'Cognitive Architecture' },
-            { key: 'workStyle', icon: '⚡', data: profile.workStyle, badge: 'Operating Cadence' },
-            { key: 'communication', icon: '🎙️', data: profile.communication, badge: 'Articulation' },
+            { key: 'thinking', icon: '🧠', data: profile.thinking, badge: 'Thinking Style' },
+            { key: 'workStyle', icon: '⚡', data: profile.workStyle, badge: 'Work Style' },
+            { key: 'communication', icon: '🎙️', data: profile.communication, badge: 'Communication' },
             { key: 'motivation', icon: '🎯', data: profile.motivation, badge: 'Core Driver' },
-            { key: 'values', icon: '🌱', data: profile.values, badge: 'Decision Values' },
-            { key: 'environment', icon: '🌐', data: profile.environment, badge: 'Workspace Context' },
-            { key: 'interests', icon: '🧭', data: profile.interests, badge: 'Domain Signals' }
+            { key: 'values', icon: '🌱', data: profile.values, badge: 'Personal Values' },
+            { key: 'environment', icon: '🌐', data: profile.environment, badge: 'Ideal Environment' },
+            { key: 'interests', icon: '🧭', data: profile.interests, badge: 'Interests & Passions' }
         ];
 
         insights.forEach((item, idx) => {
@@ -1113,6 +1253,10 @@
     root.selectDiscoveryMode = selectDiscoveryMode;
     root.startAdaptiveAssessment = startAdaptiveAssessment;
     root.renderCurrentQuestion = renderCurrentQuestion;
+    root.updateQuestionSelectionUI = updateQuestionSelectionUI;
+    root.selectOption = selectOption;
+    root.confirmAndContinue = confirmAndContinue;
+    root.goBack = goBack;
     root.renderCompassResultsView = renderCompassResultsView;
     root.switchResultTab = switchResultTab;
     root.inspectCareerRoadmap = inspectCareerRoadmap;
@@ -1132,5 +1276,34 @@
     root.closeAddToRoutineModal = closeAddToRoutineModal;
     root.recordMilestoneReflection = recordMilestoneReflection;
     root.retakeCompassAssessment = retakeCompassAssessment;
+
+    root.CompassUI = {
+        selectDiscoveryMode,
+        startAdaptiveAssessment,
+        renderCurrentQuestion,
+        updateQuestionSelectionUI,
+        selectOption,
+        confirmAndContinue,
+        goBack,
+        renderCompassResultsView,
+        switchResultTab,
+        inspectCareerRoadmap,
+        backToMatches,
+        toggleRoadmapTask,
+        setResourceFilter,
+        launchCommunicationCoach,
+        openRealityCheckModal,
+        submitRealityAnswer,
+        recordRealityReaction,
+        closeRealityCheckModal,
+        toggleCareerComparisonUI,
+        openComparisonModal,
+        closeComparisonModal,
+        openAddToRoutineModal,
+        saveRoadmapToRoutineFromModal,
+        closeAddToRoutineModal,
+        recordMilestoneReflection,
+        retakeCompassAssessment
+    };
 
 })(typeof window !== 'undefined' ? window : global);

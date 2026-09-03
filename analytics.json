@@ -9,19 +9,21 @@
       "visitCount": 1
     }
   },
-  "totalQuizzesCompleted": 4,
+  "totalQuizzesCompleted": 8,
   "featureUsage": {
-    "compass": 4,
+    "compass": 8,
     "library": 1,
     "routine": 2
   },
   "domainStats": {
-    "TechAI": 4
+    "TechAI": 8
   },
   "careerStats": {
     "Cybersecurity & Ethical Hacker": 1,
     "AI / Machine Learning Engineer": 1,
-    "UI/UX Product Designer": 1
+    "UI/UX Product Designer": 1,
+    "Cybersecurity Specialist & Ethical Hacker": 1,
+    "Cloud Architect & Platform Specialist": 1
   },
   "libraryStats": {
     "totalViews": 1,

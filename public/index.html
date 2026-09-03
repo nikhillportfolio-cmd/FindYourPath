@@ -1204,7 +1204,7 @@
 
                 <!-- SUBTITLE -->
                 <p class="text-xs sm:text-base md:text-lg text-slate-600 mb-8 sm:mb-10 font-medium max-w-2xl leading-relaxed px-2 sm:px-0 relative z-10">
-                    Stop guessing your path. PRAXiS combines <strong>AI-Driven Psychometrics</strong>, <strong>Phase-by-Phase Career Roadmaps</strong>, <strong>30-Day Routine & Habit Discipline</strong>, and <strong>Communication Coaching</strong> into one unified operating system.
+                    Stop guessing your path. PRAXiS combines <strong>Multi-Factor Career Matching</strong>, <strong>Phase-by-Phase Career Roadmaps</strong>, <strong>30-Day Routine & Habit Discipline</strong>, and <strong>Communication Coaching</strong> into one unified operating system.
                 </p>
 
                 <!-- ECOSYSTEM QUICK JUMP ANCHORS (4 CORE MODULE PILLS) -->
@@ -1254,7 +1254,7 @@
                         Map Your Mind to <br><span class="text-gradient">Your Dream Career.</span>
                     </h2>
                     <p class="text-xs sm:text-base text-slate-600 font-medium leading-relaxed">
-                        Forget confusing, generic questionnaires. Our behavioral algorithm translates your psychological problem-solving style into concrete, actionable milestones.
+                        Forget confusing, generic questionnaires. Our conversational assessment translates your natural problem-solving preferences into concrete, actionable career milestones.
                     </p>
                 </div>
 
@@ -1270,7 +1270,7 @@
                                 🧠
                             </div>
                             <div>
-                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Behavioral Psychometric Synthesis</h3>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Multi-Factor Career Matching</h3>
                                 <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
                                     Measures analytical inclination, creative impulse, leadership drivers, and execution grit through quick intuitive scenarios.
                                 </p>
@@ -1330,7 +1330,7 @@
                                     </div>
                                 </div>
                                 <span class="neu-badge text-[9px] font-extrabold text-emerald-600 px-2 py-0.5">
-                                    98% Precision
+                                    Multi-Factor Match
                                 </span>
                             </div>
 
@@ -1353,7 +1353,7 @@
                                     <div class="flex items-center gap-2.5">
                                         <span class="w-6 h-6 rounded-lg bg-sky-50 border border-sky-200 text-sky-600 font-black text-[10px] flex items-center justify-center">02</span>
                                         <div>
-                                            <div class="text-xs font-black text-slate-800 font-outfit">Psychometric Synthesis</div>
+                                            <div class="text-xs font-black text-slate-800 font-outfit">Preference Synthesis</div>
                                             <div class="text-[9px] text-slate-500">Cognitive style & execution drivers</div>
                                         </div>
                                     </div>
@@ -1844,15 +1844,15 @@
                 <div class="flex items-center justify-between mb-3 sm:mb-4 gap-2 flex-wrap">
                     <div class="flex items-center gap-2">
                         <span id="question-count" class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-blue-600 neu-badge px-2.5 py-1">
-                            Question 1 of 10
+                            Question 1 of 15
                         </span>
                         <span id="question-category-badge" class="neu-badge text-[10px] font-extrabold text-slate-500 uppercase px-2 py-0.5">
-                            Scenario Inquiry
+                            Problem Solving
                         </span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span id="question-time-estimate" class="neu-badge text-[10px] font-bold text-slate-600 px-2.5 py-1 font-digital">
-                            ⏱️ ~3 mins remaining
+                            ⏱️ About 3 minutes left
                         </span>
                         <span id="progress-percent" class="text-xs font-extrabold text-slate-600 font-digital">
                             0% Complete
@@ -1864,13 +1864,36 @@
                     <div id="progress-bar" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
                 </div>
 
-                <div class="neu-card p-4 sm:p-7 mb-6 border border-white/80">
-                    <h2 id="question-text" class="text-base sm:text-xl md:text-2xl font-bold text-slate-800 font-outfit leading-relaxed">
-                        Loading scenario inquiry...
+                <div class="neu-card p-4 sm:p-7 mb-5 border border-white/80">
+                    <div id="question-scenario" class="text-xs sm:text-sm font-bold text-blue-600 mb-1.5 hidden font-outfit uppercase tracking-wider"></div>
+                    <h2 id="question-text" class="text-base sm:text-xl md:text-2xl font-bold text-slate-800 font-outfit leading-snug">
+                        Loading question...
                     </h2>
                 </div>
 
-                <div id="options-container" class="space-y-3 sm:space-y-4 mb-6"></div>
+                <div id="options-container" role="radiogroup" aria-labelledby="question-text" class="space-y-2.5 sm:space-y-3 mb-6"></div>
+
+                <!-- NAVIGATION BAR (Back & Continue with accessibility and keyboard cues) -->
+                <div class="flex items-center justify-between gap-3 pt-3 sm:pt-4 border-t border-slate-200/80">
+                    <button type="button" id="compass-prev-btn" onclick="CompassUI.goBack()"
+                        class="neu-btn px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-extrabold text-slate-600 hover:text-slate-800 flex items-center gap-1.5 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                        aria-label="Go to previous question">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                        <span>Back</span>
+                    </button>
+
+                    <div class="flex items-center gap-3">
+                        <span id="compass-keyboard-hint" class="hidden sm:inline-block text-[11px] text-slate-400 font-semibold select-none">
+                            Keys 1–4 or Enter &crarr;
+                        </span>
+                        <button type="button" id="compass-next-btn" onclick="CompassUI.confirmAndContinue()"
+                            class="neu-btn px-5 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-md hover:scale-[1.02] active:scale-98 transition-all flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                            aria-label="Continue to next question">
+                            <span>Continue</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- ============================================================== -->
