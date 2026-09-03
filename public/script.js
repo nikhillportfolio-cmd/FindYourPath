@@ -184,6 +184,10 @@ function startQuiz(interest) {
         }
         return;
     }
+    if (typeof window.startAdaptiveAssessment === "function") {
+        window.startAdaptiveAssessment(interest ? 'preference' : 'discovery', interest);
+        return;
+    }
     userInterest = interest; 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     landingIntro.classList.add("fade-out");

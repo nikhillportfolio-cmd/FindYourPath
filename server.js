@@ -10200,6 +10200,49 @@ app.post('/api/calculate-result', (req, res) => {
 });
 
 // =====================================================================
+// 4B. CAREER COMPASS INTELLIGENT DISCOVERY APIS
+// =====================================================================
+const compassData = require('./public/js/compassData');
+
+app.get('/api/compass/domains', (req, res) => {
+    res.json({ success: true, domains: compassData.COMPASS_DOMAINS });
+});
+
+app.get('/api/compass/questions', (req, res) => {
+    res.json({ success: true, questions: compassData.COMPASS_QUESTIONS });
+});
+
+app.get('/api/compass/careers', (req, res) => {
+    const { domain } = req.query;
+    let list = compassData.COMPASS_CAREERS;
+    if (domain) {
+        list = list.filter(c => c.domainId === domain);
+    }
+    res.json({ success: true, careers: list });
+});
+
+app.post('/api/compass/evaluate', (req, res) => {
+    try {
+        const { dimensionScores, preferenceDomain, answers } = req.body || {};
+        
+        // Update Analytics: feature usage and total quizzes
+        analyticsData.totalQuizzesCompleted = (analyticsData.totalQuizzesCompleted || 0) + 1;
+        analyticsData.featureUsage = analyticsData.featureUsage || { compass: 0, library: 0, routine: 0 };
+        analyticsData.featureUsage.compass = (analyticsData.featureUsage.compass || 0) + 1;
+        if (preferenceDomain) {
+            analyticsData.domainStats = analyticsData.domainStats || {};
+            analyticsData.domainStats[preferenceDomain] = (analyticsData.domainStats[preferenceDomain] || 0) + 1;
+        }
+        saveAnalytics();
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Compass evaluation error:", err);
+        res.status(500).json({ error: "Failed to process evaluation" });
+    }
+});
+
+// =====================================================================
 // 5. REAL-TIME TRACKING & ADMIN ENDPOINTS
 // =====================================================================
 

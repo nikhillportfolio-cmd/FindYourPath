@@ -1754,202 +1754,531 @@
         </div>
 
     <!-- MAIN APP CONTAINER (CAREER COMPASS VIEW - OPENS ON CLICK) -->
-    <div id="app-wrapper" class="w-full flex justify-center pb-16 sm:pb-20 px-3 sm:px-4 relative z-10 max-w-4xl hidden">
+    <div id="app-wrapper" class="w-full flex justify-center pb-16 sm:pb-20 px-3 sm:px-4 relative z-10 max-w-5xl hidden">
         <div class="neu-card p-4 sm:p-8 md:p-12 w-full transition-all duration-500">
 
             <!-- BACK TO SHOWCASE NAV BAR -->
-            <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-200/80">
+            <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-200/80 gap-2 flex-wrap">
                 <button type="button" onclick="backToShowcase()" class="neu-btn px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold text-slate-700 hover:text-blue-600 flex items-center gap-1.5 transition-all cursor-pointer">
                     <span>&larr;</span>
                     <span>Back to Platform Showcase</span>
                 </button>
-                <div class="neu-badge text-[10px] font-black text-blue-600 uppercase px-2.5 py-1">
-                    🧭 Career Compass
+                <div class="flex items-center gap-2">
+                    <div class="neu-badge text-[10px] font-black text-blue-600 uppercase px-2.5 py-1">
+                        🧭 Career Compass
+                    </div>
                 </div>
             </div>
 
-            <!-- PHASE 1: INTEREST SELECTION -->
+            <!-- ============================================================== -->
+            <!-- PHASE 1: DISCOVERY & ENTRY MODE SELECTION                     -->
+            <!-- ============================================================== -->
             <div id="interest-section">
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 text-center mb-2 sm:mb-3 font-outfit tracking-tight">
-                    CAREER COMPASS
-                </h1>
-                <p class="text-slate-500 text-center mb-6 sm:mb-10 font-medium text-xs sm:text-sm">
-                    Select your primary area of interest to begin your tailored assessment.
-                </p>
+                <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 font-outfit tracking-tight mb-2">
+                        CAREER COMPASS
+                    </h1>
+                    <p class="text-slate-500 font-medium text-xs sm:text-sm leading-relaxed">
+                        An intelligent career-discovery system: discover your natural thinking style, assess multi-factor trade-offs, test real tasks with 60-second reality checks, and generate structured daily roadmaps.
+                    </p>
+                </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <!-- 1. TECH & AI -->
-                    <button onclick="startQuiz('TechAI')" class="neu-btn p-4 sm:p-6 text-left group">
-                        <div class="flex items-center justify-between mb-3 sm:mb-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-blue-600 group-hover:scale-110 transition-transform shrink-0">
-                                💻
+                <!-- DUAL DISCOVERY ENTRY MODES -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                    <!-- MODE A: I have a field in mind -->
+                    <div class="neu-card p-5 sm:p-7 flex flex-col justify-between border border-white/70 hover:scale-[1.01] transition-transform">
+                        <div>
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-blue-600 mb-3">
+                                🎯
                             </div>
-                            <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
+                            <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit mb-1.5">"I know what field interests me"</h3>
+                            <p class="text-xs text-slate-500 font-medium leading-relaxed mb-4">
+                                Select your area of interest (e.g. AI, Healthcare, Finance, Design). We'll treat this as a preference signal while still evaluating your holistic fit across adjacent fields.
+                            </p>
                         </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit group-hover:text-blue-600 transition-colors">Tech & AI</h3>
-                        <p class="text-xs text-slate-500 mt-1.5 sm:mt-2 font-medium">Software, AI Systems, Cybersecurity & Cloud.</p>
-                    </button>
+                        <button type="button" onclick="selectDiscoveryMode('preference')"
+                            class="neu-btn w-full py-2.5 sm:py-3 text-xs sm:text-sm font-extrabold text-blue-600 hover:text-blue-700 flex items-center justify-center gap-2 cursor-pointer">
+                            <span>Select My Preferred Field</span> &rarr;
+                        </button>
+                    </div>
 
-                    <!-- 2. ART & MUSIC -->
-                    <button onclick="startQuiz('ArtMusic')" class="neu-btn p-4 sm:p-6 text-left group">
-                        <div class="flex items-center justify-between mb-3 sm:mb-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-indigo-600 group-hover:scale-110 transition-transform shrink-0">
-                                🎨
+                    <!-- MODE B: Help me discover broadly -->
+                    <div class="neu-card p-5 sm:p-7 flex flex-col justify-between border border-white/70 hover:scale-[1.01] transition-transform bg-gradient-to-br from-blue-50/30 to-indigo-50/30">
+                        <div>
+                            <div class="w-12 h-12 neu-circle flex items-center justify-center text-2xl text-indigo-600 mb-3">
+                                🧭
                             </div>
-                            <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
+                            <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit mb-1.5">"I'm not sure — help me discover"</h3>
+                            <p class="text-xs text-slate-500 font-medium leading-relaxed mb-4">
+                                Start with an open canvas. Our scenario-based assessment explores your natural thinking, work style, motivation, and values across 20+ disciplines with zero bias.
+                            </p>
                         </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit group-hover:text-indigo-600 transition-colors">Art & Creative</h3>
-                        <p class="text-xs text-slate-500 mt-1.5 sm:mt-2 font-medium">Visual Design, Audio Production & Media.</p>
-                    </button>
+                        <button type="button" onclick="selectDiscoveryMode('discovery')"
+                            class="neu-btn w-full py-2.5 sm:py-3 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                            <span>Start Broad Discovery</span> &rarr;
+                        </button>
+                    </div>
+                </div>
 
-                    <!-- 3. HEALTHCARE -->
-                    <button onclick="startQuiz('Healthcare')" class="neu-btn p-4 sm:p-6 text-left group">
-                        <div class="flex items-center justify-between mb-3 sm:mb-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-emerald-600 group-hover:scale-110 transition-transform shrink-0">
-                                🩺
-                            </div>
-                            <svg class="w-5 h-5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
+                <!-- EXPANDABLE DOMAIN PREFERENCE PICKER (FOR MODE A) -->
+                <div id="compass-preference-picker" class="hidden neu-card p-4 sm:p-6 mb-6 border border-blue-200/80 bg-slate-100/60 fade-in">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200">
+                        <div>
+                            <h4 class="text-sm sm:text-base font-extrabold text-slate-800 font-outfit">Choose Your Domain Signal (20+ Categories)</h4>
+                            <p class="text-[11px] text-slate-500 font-medium">This guides your assessment without rigidly locking you into a single silo.</p>
                         </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit group-hover:text-emerald-600 transition-colors">Healthcare</h3>
-                        <p class="text-xs text-slate-500 mt-1.5 sm:mt-2 font-medium">Medicine, Therapy, Research & Diagnostics.</p>
-                    </button>
+                        <input type="text" id="compass-domain-search" placeholder="Search fields (e.g. AI, Law, Sports)..."
+                            class="neu-input px-3 py-1.5 text-xs text-slate-700 w-full sm:w-60" />
+                    </div>
 
-                    <!-- 4. GOV SERVICES -->
-                    <button onclick="startQuiz('GovServices')" class="neu-btn p-4 sm:p-6 text-left group">
-                        <div class="flex items-center justify-between mb-3 sm:mb-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-amber-600 group-hover:scale-110 transition-transform shrink-0">
-                                🏛️
-                            </div>
-                            <svg class="w-5 h-5 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit group-hover:text-amber-600 transition-colors">Gov & Policy</h3>
-                        <p class="text-xs text-slate-500 mt-1.5 sm:mt-2 font-medium">Public Policy, Urban Planning & Civil Service.</p>
-                    </button>
-
-                    <!-- 5. ENTREPRENEURSHIP -->
-                    <button onclick="startQuiz('Entrepreneurship')" class="neu-btn p-4 sm:p-6 text-left group">
-                        <div class="flex items-center justify-between mb-3 sm:mb-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-purple-600 group-hover:scale-110 transition-transform shrink-0">
-                                🚀
-                            </div>
-                            <svg class="w-5 h-5 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit group-hover:text-purple-600 transition-colors">Entrepreneurship</h3>
-                        <p class="text-xs text-slate-500 mt-1.5 sm:mt-2 font-medium">Startups, Scaling Ventures & Product Strategy.</p>
-                    </button>
-
-                    <!-- 6. LAW -->
-                    <button onclick="startQuiz('Law')" class="neu-btn p-4 sm:p-6 text-left group">
-                        <div class="flex items-center justify-between mb-3 sm:mb-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 neu-circle flex items-center justify-center text-xl sm:text-2xl text-rose-600 group-hover:scale-110 transition-transform shrink-0">
-                                ⚖️
-                            </div>
-                            <svg class="w-5 h-5 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-800 font-outfit group-hover:text-rose-600 transition-colors">Law & Advocacy</h3>
-                        <p class="text-xs text-slate-500 mt-1.5 sm:mt-2 font-medium">Corporate Law, Criminal Justice & Advocacy.</p>
-                    </button>
+                    <div id="compass-domains-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-80 overflow-y-auto custom-scrollbar p-1">
+                        <!-- Populated dynamically by compassUI.js -->
+                    </div>
                 </div>
             </div>
 
-            <!-- PHASE 2: QUIZ SECTION -->
+            <!-- ============================================================== -->
+            <!-- PHASE 2: ADAPTIVE SCENARIO-BASED QUIZ SECTION                 -->
+            <!-- ============================================================== -->
             <div id="quiz-section" class="hidden">
-                <div class="flex items-center justify-between mb-4 sm:mb-6">
-                    <span id="question-count" class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-blue-600 neu-badge px-2.5 py-1">
-                        Question 1
-                    </span>
-                    <span id="progress-percent" class="text-xs font-extrabold text-slate-600">
-                        0% Complete
-                    </span>
+                <div class="flex items-center justify-between mb-3 sm:mb-4 gap-2 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <span id="question-count" class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-blue-600 neu-badge px-2.5 py-1">
+                            Question 1 of 10
+                        </span>
+                        <span id="question-category-badge" class="neu-badge text-[10px] font-extrabold text-slate-500 uppercase px-2 py-0.5">
+                            Scenario Inquiry
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="question-time-estimate" class="neu-badge text-[10px] font-bold text-slate-600 px-2.5 py-1 font-digital">
+                            ⏱️ ~3 mins remaining
+                        </span>
+                        <span id="progress-percent" class="text-xs font-extrabold text-slate-600 font-digital">
+                            0% Complete
+                        </span>
+                    </div>
                 </div>
 
                 <div class="w-full neu-trench h-2.5 sm:h-3 mb-6 sm:mb-8 overflow-hidden p-0.5">
-                    <div id="progress-bar" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
                 </div>
 
-                <h2 id="question-text" class="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-slate-800 font-outfit leading-snug">
-                    Loading question...
-                </h2>
-                <div id="options-container" class="space-y-3 sm:space-y-4"></div>
+                <div class="neu-card p-4 sm:p-7 mb-6 border border-white/80">
+                    <h2 id="question-text" class="text-base sm:text-xl md:text-2xl font-bold text-slate-800 font-outfit leading-relaxed">
+                        Loading scenario inquiry...
+                    </h2>
+                </div>
+
+                <div id="options-container" class="space-y-3 sm:space-y-4 mb-6"></div>
             </div>
 
-            <!-- PHASE 3: RESULTS -->
+            <!-- ============================================================== -->
+            <!-- PHASE 3: RESULTS & CAREER EXPLORATION SYSTEM                   -->
+            <!-- ============================================================== -->
             <div id="result-section" class="hidden">
 
-                <!-- VIEW 1: Matches Overview (Grid) -->
-                <div id="matches-overview" class="fade-in">
-                    <div class="mb-2 sm:mb-3 text-[10px] sm:text-xs font-bold text-blue-600 text-center tracking-[0.2em] neu-badge inline-block px-3 py-1 sm:px-4 sm:py-1.5 mx-auto">
-                        ANALYSIS COMPLETE
+                <!-- FLOATING / PERSISTENT CAREER COMPARISON TRAY -->
+                <div id="compass-compare-tray" class="hidden mb-6 neu-card p-3 sm:p-4 bg-gradient-to-r from-indigo-50/90 via-blue-50/90 to-sky-50/90 border border-indigo-200/80 flex items-center justify-between gap-3 flex-wrap shadow-md fade-in">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 neu-circle flex items-center justify-center text-sm text-indigo-600">⚖️</div>
+                        <div>
+                            <h4 class="text-xs sm:text-sm font-black text-slate-800 font-outfit">Career Comparison Tray</h4>
+                            <p id="compass-compare-count" class="text-[11px] text-indigo-600 font-extrabold font-digital">0/3 Selected</p>
+                        </div>
                     </div>
-                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 text-center mb-2 font-outfit">Your Top Career Matches</h2>
-                    <p class="text-slate-500 text-center mb-6 sm:mb-10 font-medium text-xs sm:text-sm">Select any career below to inspect your step-by-step roadmap.</p>
-
-                    <div id="matches-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <!-- Clickable Match Cards injected here -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="CompassEngine.clearComparisonList()" class="neu-btn px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-red-500 cursor-pointer">
+                            Clear
+                        </button>
+                        <button type="button" id="compass-compare-open-btn" onclick="openComparisonModal()"
+                            class="neu-btn px-3.5 py-1.5 text-xs font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-transform cursor-pointer">
+                            <span>Compare Side-by-Side</span> &rarr;
+                        </button>
                     </div>
                 </div>
 
-                <!-- VIEW 2: Detailed Career View -->
+                <!-- RESULTS VIEW TABS (Profile | Matches | History) -->
+                <div class="flex items-center justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8 flex-wrap">
+                    <button type="button" id="tab-btn-compass-profile" onclick="switchResultTab('profile')"
+                        class="neu-btn px-3 sm:px-4 py-2 text-xs sm:text-sm font-black transition-all cursor-pointer">
+                        🎯 Your Career Profile
+                    </button>
+                    <button type="button" id="tab-btn-compass-matches" onclick="switchResultTab('matches')"
+                        class="neu-btn px-3 sm:px-4 py-2 text-xs sm:text-sm font-black transition-all cursor-pointer">
+                        🧭 Career Matches
+                    </button>
+                    <button type="button" id="tab-btn-compass-history" onclick="switchResultTab('history')"
+                        class="neu-btn px-3 sm:px-4 py-2 text-xs sm:text-sm font-black transition-all cursor-pointer">
+                        📜 Assessment History
+                    </button>
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- VIEW 1: OVERVIEW & TABS CONTAINER                              -->
+                <!-- ============================================================== -->
+                <div id="matches-overview">
+
+                    <!-- TAB 1: YOUR CAREER PROFILE (7 INSIGHT GROUPS) -->
+                    <div id="compass-view-profile" class="fade-in">
+                        <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
+                            <span class="neu-badge text-[10px] font-extrabold text-blue-600 uppercase px-3 py-1 mb-2 inline-block">
+                                Discovery Synthesis
+                            </span>
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 font-outfit mb-2">
+                                Your Career Profile
+                            </h2>
+                            <p id="compass-profile-disclaimer" class="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed">
+                                Based on your responses. Current preferences indicate these tendencies — preferences can evolve as you gain practical experience.
+                            </p>
+                        </div>
+
+                        <!-- 7 INSIGHT CARDS GRID -->
+                        <div id="compass-profile-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+                            <!-- Injected dynamically by compassUI.js -->
+                        </div>
+
+                        <button type="button" onclick="switchResultTab('matches')"
+                            class="neu-btn w-full py-3.5 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer">
+                            <span>Explore Recommended Careers Based on This Profile</span> &rarr;
+                        </button>
+                    </div>
+
+                    <!-- TAB 2: CATEGORIZED CAREER MATCHES -->
+                    <div id="compass-view-matches" class="hidden fade-in">
+                        <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
+                            <span class="neu-badge text-[10px] font-extrabold text-indigo-600 uppercase px-3 py-1 mb-2 inline-block">
+                                Multi-Factor Matching
+                            </span>
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 font-outfit mb-2">
+                                Personalized Career Recommendations
+                            </h2>
+                            <p class="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed">
+                                Every recommendation explains <strong>why</strong> it matches your strengths, work style, and values, alongside potential friction points. Select any career to inspect its full roadmap.
+                            </p>
+                        </div>
+
+                        <!-- 1. STRONG MATCHES -->
+                        <div class="mb-8 sm:mb-12">
+                            <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                                <span class="w-6 h-6 neu-circle flex items-center justify-center text-xs text-emerald-600">⭐</span>
+                                <h3 class="text-lg sm:text-xl font-black text-slate-800 font-outfit">Strong Matches</h3>
+                                <span class="neu-badge text-[9px] font-black text-emerald-700 bg-emerald-100/80 px-2 py-0.5">Top Options</span>
+                            </div>
+                            <div id="compass-grid-strong" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"></div>
+                        </div>
+
+                        <!-- 2. WORTH EXPLORING -->
+                        <div class="mb-8 sm:mb-12">
+                            <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                                <span class="w-6 h-6 neu-circle flex items-center justify-center text-xs text-blue-600">🔍</span>
+                                <h3 class="text-lg sm:text-xl font-black text-slate-800 font-outfit">Worth Exploring</h3>
+                                <span class="neu-badge text-[9px] font-black text-blue-700 bg-blue-100/80 px-2 py-0.5">High Potential</span>
+                            </div>
+                            <div id="compass-grid-exploring" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"></div>
+                        </div>
+
+                        <!-- 3. YOU MIGHT ALSO ENJOY -->
+                        <div class="mb-8">
+                            <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                                <span class="w-6 h-6 neu-circle flex items-center justify-center text-xs text-purple-600">💡</span>
+                                <h3 class="text-lg sm:text-xl font-black text-slate-800 font-outfit">You Might Also Enjoy</h3>
+                                <span class="neu-badge text-[9px] font-black text-purple-700 bg-purple-100/80 px-2 py-0.5">Interdisciplinary & Adjacent</span>
+                            </div>
+                            <div id="compass-grid-adjacent" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"></div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: ASSESSMENT HISTORY & EVOLUTION -->
+                    <div id="compass-view-history" class="hidden fade-in">
+                        <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
+                            <span class="neu-badge text-[10px] font-extrabold text-slate-600 uppercase px-3 py-1 mb-2 inline-block">
+                                Longitudinal Snapshots
+                            </span>
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 font-outfit mb-2">
+                                Assessment History & Growth
+                            </h2>
+                            <p class="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed">
+                                Career exploration is dynamic. Track how your reported preferences and cognitive traits evolve over time with practical experience.
+                            </p>
+                        </div>
+                        <div id="compass-history-list" class="space-y-4 mb-6"></div>
+                    </div>
+
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- VIEW 2: DETAILED CAREER VIEW & 5-STAGE ROADMAP                 -->
+                <!-- ============================================================== -->
                 <div id="career-details" class="hidden fade-in">
-                    <button onclick="backToMatches()" class="mb-6 sm:mb-8 neu-btn px-4 py-2.5 sm:px-5 sm:py-3 text-slate-700 font-bold text-xs sm:text-sm flex items-center gap-2 hover:text-blue-600 transition-colors">
+                    <!-- BACK BUTTON -->
+                    <button type="button" onclick="backToMatches()"
+                        class="mb-6 neu-btn px-4 py-2 sm:px-5 sm:py-2.5 text-slate-700 font-bold text-xs sm:text-sm flex items-center gap-2 hover:text-blue-600 transition-colors cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
-                        Back to Matches
+                        <span>Back to Career Matches</span>
                     </button>
 
-                    <div class="neu-card p-5 sm:p-8 mb-6 sm:mb-10 relative overflow-hidden">
-                        <div class="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
-                            <div id="detail-icon" class="w-12 h-12 sm:w-16 sm:h-16 neu-circle flex items-center justify-center text-2xl sm:text-4xl shrink-0"></div>
-                            <div>
-                                <h2 id="detail-title" class="text-2xl sm:text-3xl font-black text-slate-800 mb-2 sm:mb-3 font-outfit leading-tight"></h2>
+                    <!-- CAREER HERO CARD -->
+                    <div class="neu-card p-5 sm:p-8 mb-6 sm:mb-8 relative overflow-hidden border border-white/80">
+                        <div class="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 mb-5">
+                            <div id="detail-icon" class="w-14 h-14 sm:w-16 sm:h-16 neu-circle flex items-center justify-center text-3xl sm:text-4xl shrink-0"></div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span id="detail-category-pill" class="neu-badge text-[10px] font-black text-blue-600 uppercase px-2.5 py-0.5">Technology & AI</span>
+                                </div>
+                                <h2 id="detail-title" class="text-2xl sm:text-3xl font-black text-slate-800 mb-2 font-outfit leading-tight"></h2>
                                 <p id="detail-desc" class="text-slate-600 text-xs sm:text-sm leading-relaxed font-medium"></p>
                             </div>
                         </div>
-                    </div>
 
-                    <h3 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-slate-800 font-outfit flex items-center gap-2.5 sm:gap-3">
-                        <span class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-blue-600 text-xs sm:text-sm shrink-0">📍</span>
-                        Step-by-Step Roadmap
-                    </h3>
-
-                    <!-- TIMELINE UI CONTAINER -->
-                    <div id="detail-roadmap" class="relative pl-4 sm:pl-6 border-l-2 border-indigo-300 space-y-4 sm:space-y-6 mb-8 sm:mb-12 ml-2 sm:ml-4">
-                        <!-- Phases injected here -->
-                    </div>
-
-                    <div class="pt-6 sm:pt-8 border-t border-slate-300">
-                        <div class="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
-                            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-outfit flex items-center gap-2.5 sm:gap-3">
-                                <span class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-indigo-600 text-xs sm:text-sm shrink-0">📚</span>
-                                Recommended Books
-                            </h3>
-                            <span class="neu-badge text-[10px] font-extrabold text-indigo-600 uppercase px-2.5 py-1">Roadmap Essential Reading</span>
+                        <!-- METADATA GRID -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-200/80 text-xs">
+                            <div class="neu-trench p-3 rounded-xl bg-slate-100/50">
+                                <span class="font-bold text-slate-800 block text-[10px] uppercase tracking-wider mb-0.5">Typical Work Style</span>
+                                <p id="detail-workstyle" class="text-slate-600 font-medium leading-relaxed"></p>
+                            </div>
+                            <div class="neu-trench p-3 rounded-xl bg-slate-100/50">
+                                <span class="font-bold text-slate-800 block text-[10px] uppercase tracking-wider mb-0.5">Environment</span>
+                                <p id="detail-environment" class="text-slate-600 font-medium leading-relaxed"></p>
+                            </div>
+                            <div class="neu-trench p-3 rounded-xl bg-amber-50/60 border border-amber-200/50">
+                                <span class="font-bold text-amber-900 block text-[10px] uppercase tracking-wider mb-0.5">Potential Friction</span>
+                                <p id="detail-friction" class="text-amber-800 font-medium leading-relaxed"></p>
+                            </div>
                         </div>
-                        <p class="text-xs sm:text-sm text-slate-500 font-medium mb-5 sm:mb-6 leading-relaxed">
-                            Handpicked foundational books tailored specifically to your chosen roadmap. Click any book to inspect details, key concepts, or read digital preview.
+
+                        <!-- INTEGRATION ACTION BUTTONS -->
+                        <div class="mt-5 pt-4 border-t border-slate-200/80 flex items-center gap-2.5 flex-wrap">
+                            <button type="button" onclick="openRealityCheckModal(CompassEngine.getState().selectedCareer?.id)"
+                                class="neu-btn px-3.5 py-2 text-xs font-black text-amber-700 bg-amber-100/60 hover:bg-amber-100 rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer">
+                                <span>⚡</span> Take 60s Reality Check
+                            </button>
+                            <button type="button" onclick="openAddToRoutineModal()"
+                                class="neu-btn px-3.5 py-2 text-xs font-black text-blue-700 bg-blue-100/60 hover:bg-blue-100 rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer">
+                                <span>📈</span> Add Roadmap to My Routine
+                            </button>
+                            <button type="button" onclick="launchCommunicationCoach()"
+                                class="neu-btn px-3.5 py-2 text-xs font-black text-indigo-700 bg-indigo-100/60 hover:bg-indigo-100 rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer">
+                                <span>🎙️</span> Practice Communication Coach
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 5-STAGE ROADMAP TIMELINE -->
+                    <div class="mb-8 sm:mb-12">
+                        <div class="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-2">
+                            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-outfit flex items-center gap-2.5">
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-blue-600 text-xs sm:text-sm shrink-0">📍</span>
+                                5-Stage Step-by-Step Roadmap
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <span id="roadmap-progress-text" class="text-xs font-extrabold text-blue-600 font-digital">0 of 5 Milestones Completed</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full neu-trench h-2 mb-6 overflow-hidden p-0.5">
+                            <div id="roadmap-progress-bar" class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+
+                        <!-- TIMELINE UI CONTAINER -->
+                        <div id="detail-roadmap" class="relative pl-6 border-l-2 border-indigo-300 space-y-4 sm:space-y-6 mb-6 ml-3">
+                            <!-- Phases injected dynamically with milestone checkboxes -->
+                        </div>
+
+                        <!-- POST-ROADMAP REFLECTION CHECKPOINT -->
+                        <div class="neu-card p-4 sm:p-6 bg-slate-100/70 border border-slate-200 text-center">
+                            <h4 class="text-xs sm:text-sm font-black text-slate-800 font-outfit mb-1.5">
+                                🧭 Roadmap Reflection Checkpoint
+                            </h4>
+                            <p class="text-xs text-slate-500 font-medium mb-3">
+                                After reviewing these milestones, has your genuine interest in this career direction:
+                            </p>
+                            <div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+                                <button type="button" onclick="recordMilestoneReflection('increased')" class="neu-btn px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 cursor-pointer">
+                                    🚀 Increased
+                                </button>
+                                <button type="button" onclick="recordMilestoneReflection('same')" class="neu-btn px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50 cursor-pointer">
+                                    ⚖️ Stayed the Same
+                                </button>
+                                <button type="button" onclick="recordMilestoneReflection('decreased')" class="neu-btn px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-50 cursor-pointer">
+                                    🧭 Decreased (Explore Others)
+                                </button>
+                            </div>
+                            <div id="reflection-result-box" class="hidden mt-3 text-left"></div>
+                        </div>
+                    </div>
+
+                    <!-- LEARNING RESOURCES HUB (Replaces Recommended Books) -->
+                    <div class="pt-6 sm:pt-8 border-t border-slate-300 mb-8 sm:mb-12">
+                        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-outfit flex items-center gap-2.5">
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 neu-circle flex items-center justify-center text-indigo-600 text-xs sm:text-sm shrink-0">📚</span>
+                                Learning Resources Hub
+                            </h3>
+                            <span class="neu-badge text-[10px] font-extrabold text-indigo-600 uppercase px-2.5 py-1">Roadmap-Aligned</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium mb-4 leading-relaxed">
+                            Curated resources mapped directly to your learning milestones across conceptual learning, challenge practice, capstone builds, foundational reading, and communities.
                         </p>
 
-                        <div id="detail-books" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                            <!-- Books injected dynamically -->
+                        <!-- Filter Tabs -->
+                        <div class="flex items-center gap-1.5 mb-5 flex-wrap">
+                            <button type="button" id="res-filter-all" onclick="setResourceFilter('all')" class="res-filter-btn neu-btn px-3 py-1 text-xs font-bold pressed text-blue-600 border border-blue-300 cursor-pointer">All</button>
+                            <button type="button" id="res-filter-learn" onclick="setResourceFilter('learn')" class="res-filter-btn neu-btn px-3 py-1 text-xs font-bold text-slate-700 cursor-pointer">🎓 Learn</button>
+                            <button type="button" id="res-filter-practice" onclick="setResourceFilter('practice')" class="res-filter-btn neu-btn px-3 py-1 text-xs font-bold text-slate-700 cursor-pointer">⚡ Practice</button>
+                            <button type="button" id="res-filter-build" onclick="setResourceFilter('build')" class="res-filter-btn neu-btn px-3 py-1 text-xs font-bold text-slate-700 cursor-pointer">🛠️ Build</button>
+                            <button type="button" id="res-filter-read" onclick="setResourceFilter('read')" class="res-filter-btn neu-btn px-3 py-1 text-xs font-bold text-slate-700 cursor-pointer">📚 Read (Books)</button>
+                            <button type="button" id="res-filter-explore" onclick="setResourceFilter('explore')" class="res-filter-btn neu-btn px-3 py-1 text-xs font-bold text-slate-700 cursor-pointer">🌐 Explore</button>
+                        </div>
+
+                        <!-- Resources Grid -->
+                        <div id="detail-resources-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                            <!-- Injected dynamically by compassUI.js -->
+                        </div>
+                    </div>
+
+                    <!-- COMMUNICATION COACH PREVIEW -->
+                    <div class="pt-6 sm:pt-8 border-t border-slate-300 mb-8">
+                        <div class="neu-card p-4 sm:p-6 bg-gradient-to-br from-indigo-50/40 via-blue-50/40 to-slate-50/40 border border-indigo-200/70" id="detail-coach-preview">
+                            <!-- Injected dynamically by compassUI.js -->
+                        </div>
+                    </div>
+
+                    <!-- CAREER PROGRESSION & ACTIVITIES -->
+                    <div class="pt-6 sm:pt-8 border-t border-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="neu-card p-4 sm:p-6">
+                            <h4 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider mb-2">Career Progression Ladder</h4>
+                            <p id="detail-progression" class="text-xs sm:text-sm text-blue-700 font-bold leading-relaxed"></p>
+                        </div>
+                        <div class="neu-card p-4 sm:p-6">
+                            <h4 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider mb-2">Typical Daily Activities</h4>
+                            <ul id="detail-activities" class="space-y-1.5"></ul>
                         </div>
                     </div>
                 </div>
 
-                <button onclick="location.reload()" class="mt-8 sm:mt-12 w-full neu-btn text-slate-700 font-bold text-sm sm:text-base py-3.5 sm:py-4 hover:text-blue-600 transition-all duration-300">
-                    Retake Assessment
+                <!-- RETAKE ASSESSMENT CTA -->
+                <button type="button" onclick="retakeCompassAssessment()"
+                    class="mt-8 sm:mt-12 w-full neu-btn text-slate-700 font-bold text-xs sm:text-sm py-3.5 sm:py-4 hover:text-blue-600 transition-all duration-300 cursor-pointer">
+                    Retake Assessment & Explore Anew
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- REALITY CHECK MODAL (60-SECOND WORKPLACE SIMULATION)          -->
+    <!-- ============================================================== -->
+    <div id="compass-reality-modal" class="fixed inset-0 z-[120] hidden items-center justify-center p-3 sm:p-6 bg-slate-900/50 backdrop-blur-sm fade-in">
+        <div class="neu-card w-full max-w-xl max-h-[90vh] overflow-y-auto custom-scrollbar p-5 sm:p-7 relative border border-white/80 shadow-2xl">
+            <button type="button" onclick="closeRealityCheckModal()" title="Close Reality Check"
+                class="neu-circle w-8 h-8 absolute top-4 right-4 flex items-center justify-center text-slate-600 hover:text-red-500 font-black text-sm cursor-pointer">
+                ✕
+            </button>
+            <div id="compass-reality-body">
+                <!-- Injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- CAREER COMPARISON MODAL (SIDE-BY-SIDE 2-3 CAREERS)             -->
+    <!-- ============================================================== -->
+    <div id="compass-comparison-modal" class="fixed inset-0 z-[120] hidden items-center justify-center p-2 sm:p-6 bg-slate-900/50 backdrop-blur-sm fade-in">
+        <div class="neu-card w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden relative border border-white/80 shadow-2xl">
+            <div class="p-4 sm:p-6 border-b border-slate-200/80 flex items-center justify-between shrink-0 bg-slate-100/60">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">⚖️</span>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-slate-800 font-outfit">Side-by-Side Career Comparison</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Evaluate multidimensional trade-offs, cadence, and trajectory.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeComparisonModal()" title="Close Comparison"
+                    class="neu-circle w-8 h-8 flex items-center justify-center text-slate-600 hover:text-red-500 font-black text-sm cursor-pointer">
+                    ✕
+                </button>
+            </div>
+            <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1">
+                <div id="compass-comparison-columns" class="flex flex-col md:flex-row gap-4">
+                    <!-- Injected dynamically by compassUI.js -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- ADD ROADMAP TO ROUTINE TRACKER MODAL                          -->
+    <!-- ============================================================== -->
+    <div id="compass-routine-modal" class="fixed inset-0 z-[120] hidden items-center justify-center p-3 sm:p-6 bg-slate-900/50 backdrop-blur-sm fade-in">
+        <div class="neu-card w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar p-5 sm:p-7 relative border border-white/80 shadow-2xl">
+            <button type="button" onclick="closeAddToRoutineModal()" title="Close Modal"
+                class="neu-circle w-8 h-8 absolute top-4 right-4 flex items-center justify-center text-slate-600 hover:text-red-500 font-black text-sm cursor-pointer">
+                ✕
+            </button>
+
+            <div class="flex items-center gap-2.5 mb-4">
+                <div class="w-10 h-10 neu-circle flex items-center justify-center text-xl text-blue-600 shrink-0">📈</div>
+                <div>
+                    <span class="neu-badge text-[9px] font-black text-blue-600 uppercase px-2 py-0.5">Discipline Engine</span>
+                    <h3 class="text-base sm:text-lg font-black text-slate-800 font-outfit">Add Roadmap to My Routine</h3>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-600 font-medium leading-relaxed mb-4">
+                Convert your selected career milestones directly into daily habit tracker entries and scheduled focus sprints.
+            </p>
+
+            <!-- Configuration Fields -->
+            <div class="space-y-3 mb-5">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Schedule Frequency</label>
+                    <select id="routine-freq-select" class="neu-input w-full p-2.5 text-xs text-slate-700 font-medium">
+                        <option value="Daily">Daily (7 Days/Week)</option>
+                        <option value="Weekdays" selected>Weekdays (Monday–Friday)</option>
+                        <option value="3x_Week">3 Days / Week (Mon, Wed, Fri)</option>
+                        <option value="Weekends">Weekends Only</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Focus Duration</label>
+                        <select id="routine-duration-select" class="neu-input w-full p-2.5 text-xs text-slate-700 font-medium">
+                            <option value="15">15 Minutes (Sprint)</option>
+                            <option value="30" selected>30 Minutes (Standard)</option>
+                            <option value="45">45 Minutes (Deep Work)</option>
+                            <option value="60">60 Minutes (Intensive)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Time of Day</label>
+                        <select id="routine-time-select" class="neu-input w-full p-2.5 text-xs text-slate-700 font-medium">
+                            <option value="Morning Routine" selected>Morning Routine</option>
+                            <option value="Afternoon Routine">Afternoon Routine</option>
+                            <option value="Evening Routine">Evening Routine</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">Select Roadmap Milestones to Import</label>
+                    <div id="compass-routine-tasks-list" class="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1 neu-trench rounded-xl bg-slate-100/60">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeAddToRoutineModal()" class="neu-btn px-4 py-2 text-xs font-bold text-slate-600 cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" onclick="saveRoadmapToRoutineFromModal()"
+                    class="neu-btn px-4 py-2 text-xs font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-transform">
+                    Save to My Routine Tracker &rarr;
                 </button>
             </div>
         </div>
@@ -2835,6 +3164,9 @@
         </div>
     </div>
 
+    <script src="/js/compassData.js"></script>
+    <script src="/js/compassEngine.js"></script>
+    <script src="/js/compassUI.js"></script>
     <script type="module" src="/app-firebase.js"></script>
     <script src="/script.js"></script>
 </body>

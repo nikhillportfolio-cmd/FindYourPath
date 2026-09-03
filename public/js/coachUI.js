@@ -151,11 +151,30 @@
             const data = await res.json();
             if (data.success && data.topics) {
                 allTopics = data.topics;
-                shuffleTopic();
             }
         } catch (err) {
             console.warn("Using fallback local topics:", err);
             allTopics = getFallbackTopics();
+        }
+
+        // Check if query params specify a custom drill from Career Compass!
+        const urlParams = new URLSearchParams(window.location.search);
+        const careerParam = urlParams.get('career');
+        const topicParam = urlParams.get('topic');
+        const promptParam = urlParams.get('prompt');
+        const frameworkParam = urlParams.get('framework');
+
+        if (topicParam && promptParam) {
+            currentTopic = {
+                title: topicParam,
+                prompt: promptParam,
+                framework: frameworkParam || "PREP: Point ➔ Reason ➔ Example ➔ Point",
+                category: careerParam ? `${careerParam} • Compass Drill` : "Career Drill",
+                duration: 90
+            };
+            applyCurrentTopicToUI();
+            showInAppToast("🎙️", `Preloaded speaking drill for ${careerParam || 'your roadmap'}!`, false);
+        } else {
             shuffleTopic();
         }
     }
@@ -174,12 +193,8 @@
         shuffleTopic();
     }
 
-    function shuffleTopic() {
-        const trackList = allTopics[currentTrack] || allTopics['express'] || [];
-        if (trackList.length === 0) return;
-        const randomIndex = Math.floor(Math.random() * trackList.length);
-        currentTopic = trackList[randomIndex];
-
+    function applyCurrentTopicToUI() {
+        if (!currentTopic) return;
         const titleEl = document.getElementById('topic-title');
         const promptEl = document.getElementById('topic-prompt');
         const badgeEl = document.getElementById('topic-category-badge');
@@ -193,6 +208,14 @@
         if (currentTopic.duration) {
             setTimerDuration(currentTopic.duration);
         }
+    }
+
+    function shuffleTopic() {
+        const trackList = allTopics[currentTrack] || allTopics['express'] || [];
+        if (trackList.length === 0) return;
+        const randomIndex = Math.floor(Math.random() * trackList.length);
+        currentTopic = trackList[randomIndex];
+        applyCurrentTopicToUI();
     }
 
     // =========================================================================
